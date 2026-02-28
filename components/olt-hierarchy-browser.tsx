@@ -156,7 +156,7 @@ function HierarchyTreeNode({
 // OLT Hierarchy Browser
 // ==========================================
 export function OLTHierarchyBrowser() {
-  const [selectedOLT, setSelectedOLT] = useState<OLT | null>(sampleOLTs[0])
+  const [selectedOLT, setSelectedOLT] = useState<OLT | null>(sampleOLTs.length > 0 ? sampleOLTs[0] : null)
   const [expandedRacks, setExpandedRacks] = useState<Set<string>>(new Set(["rk-001"]))
   const [expandedShelves, setExpandedShelves] = useState<Set<string>>(new Set(["sf-001"]))
   const [expandedSlots, setExpandedSlots] = useState<Set<string>>(new Set())
@@ -228,6 +228,24 @@ export function OLTHierarchyBrowser() {
 
   const currentItem = selectedPath[selectedPath.length - 1]
 
+  if (!selectedOLT || sampleOLTs.length === 0) {
+    return (
+      <div className="w-full flex items-center justify-center min-h-96">
+        <Card className="max-w-md w-full border-border/50">
+          <CardContent className="pt-8">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <Server className="h-12 w-12 text-muted-foreground/40" />
+              </div>
+              <h3 className="text-lg font-semibold">No OLTs Available</h3>
+              <p className="text-sm text-muted-foreground">No OLT data found. Please ensure the network data is properly configured.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full space-y-6">
       {/* Header */}
@@ -257,13 +275,13 @@ export function OLTHierarchyBrowser() {
 
             {/* Rack Tree */}
             <div className="space-y-1">
-              {selectedOLT?.racks.map((rack) => (
+              {selectedOLT?.racks?.map((rack) => (
                 <div key={rack.id}>
                   <HierarchyTreeNode
                     label={rack.name}
                     status={rack.status}
                     isSelected={currentItem?.id === rack.id}
-                    hasChildren={rack.shelves.length > 0}
+                    hasChildren={rack.shelves?.length > 0}
                     isOpen={expandedRacks.has(rack.id)}
                     onSelect={() => handleSelectRack(rack)}
                     onToggle={() => toggleRack(rack.id)}
