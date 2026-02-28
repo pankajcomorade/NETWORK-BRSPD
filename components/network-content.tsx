@@ -47,6 +47,7 @@ import {
   sampleONTs,
 } from "@/lib/network-data"
 import type { SubMenuId } from "@/lib/menu-config"
+import { OLTHierarchyBrowser } from "@/components/olt-hierarchy-browser"
 
 // ==========================================
 // Shared sub-components
@@ -482,9 +483,10 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
     setBreadcrumbs(newCrumbs)
   }, [])
 
-  // Render for Topology / Performance submenus
+  // Render for Topology / Performance / OLT Hierarchy submenus
   if (subMenu === ("net_topology" as SubMenuId)) return <NetworkTopology navigate={navigate} />
   if (subMenu === ("net_performance" as SubMenuId)) return <NetworkPerformance />
+  if (subMenu === ("net_olt_hierarchy" as SubMenuId)) return <OLTHierarchyBrowser />
 
   // ---- Overview submenu: full tree + detail layout ----
   const renderDetailPanel = () => {
