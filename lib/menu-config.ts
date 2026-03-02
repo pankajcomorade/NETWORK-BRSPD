@@ -78,6 +78,8 @@ export enum SubMenuId {
   NET_OVERVIEW = "net_overview",
   NET_TOPOLOGY = "net_topology",
   NET_PERFORMANCE = "net_performance",
+  NET_PHYSICAL_DEVICE = "net_physical_device",
+  NET_HIERARCHY = "net_hierarchy",
 
   // Locations
   LOC_SITES = "loc_sites",
@@ -174,6 +176,8 @@ export const MENU_CONFIG: MenuItem[] = [
       { id: SubMenuId.NET_OVERVIEW, label: "Overview", allowedRoles: [] },
       { id: SubMenuId.NET_TOPOLOGY, label: "Topology", allowedRoles: [] },
       { id: SubMenuId.NET_PERFORMANCE, label: "Performance", allowedRoles: [UserRole.ADMIN, UserRole.ENGINEER] },
+      { id: SubMenuId.NET_PHYSICAL_DEVICE, label: "Physical Device", allowedRoles: [] },
+      { id: SubMenuId.NET_HIERARCHY, label: "Hierarchy Explorer", allowedRoles: [] },
     ],
   },
   {

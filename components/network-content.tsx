@@ -48,6 +48,7 @@ import {
 } from "@/lib/network-data"
 import type { SubMenuId } from "@/lib/menu-config"
 import { VisualHierarchyExplorer } from "./visual-hierarchy-explorer"
+import { PhysicalDeviceGUI } from "./physical-device-gui"
 
 // ==========================================
 // Shared sub-components
@@ -499,9 +500,10 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
     setBreadcrumbs(newCrumbs)
   }, [])
 
-  // Render for Topology / Performance submenus
+  // Render for Topology / Performance / Physical Device submenus
   if (subMenu === ("net_topology" as SubMenuId)) return <NetworkTopology navigate={navigate} />
   if (subMenu === ("net_performance" as SubMenuId)) return <NetworkPerformance />
+  if (subMenu === ("net_physical_device" as SubMenuId)) return <PhysicalDeviceGUI olt={sampleOLTs[0]} />
   if (subMenu === ("net_hierarchy" as SubMenuId)) return <VisualHierarchyExplorer selectedOltId={sampleOLTs[0]?.id} />
 
   // ---- Overview submenu: full tree + detail layout ----
