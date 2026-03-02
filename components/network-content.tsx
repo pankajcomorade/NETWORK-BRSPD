@@ -47,7 +47,7 @@ import {
   sampleONTs,
 } from "@/lib/network-data"
 import type { SubMenuId } from "@/lib/menu-config"
-import { VisualHierarchyExplorer } from "@/components/visual-hierarchy-explorer"
+import { VisualHierarchyExplorer } from "./visual-hierarchy-explorer"
 
 // ==========================================
 // Shared sub-components
@@ -486,6 +486,7 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
   // Render for Topology / Performance submenus
   if (subMenu === ("net_topology" as SubMenuId)) return <NetworkTopology navigate={navigate} />
   if (subMenu === ("net_performance" as SubMenuId)) return <NetworkPerformance />
+  if (subMenu === ("net_hierarchy" as SubMenuId)) return <VisualHierarchyExplorer selectedOltId={sampleOLTs[0]?.id} />
 
   // ---- Overview submenu: full tree + detail layout ----
   const renderDetailPanel = () => {
@@ -542,7 +543,6 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
             </div>
           </CardContent>
         </Card>
-        <VisualHierarchyExplorer selectedOltId={sampleOLTs[0]?.id} />
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-foreground">OLT Devices</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
