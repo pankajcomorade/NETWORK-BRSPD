@@ -541,7 +541,7 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
               ))}
             </div>
           </CardContent>
-        </div>
+        </Card>
         <VisualHierarchyExplorer selectedOltId={sampleOLTs[0]?.id} />
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-foreground">OLT Devices</h3>
