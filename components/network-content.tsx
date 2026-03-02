@@ -432,7 +432,23 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
     const newCrumbs: BreadcrumbItem[] = [{ label: "Network", nodeType: "overview", nodeId: "overview" }]
     if (nodeType === "overview") { setBreadcrumbs(newCrumbs); return }
 
-    const olt = sampleOLTs.find((o) => o.id === nodeId || o.racks.some((r) => r.id === nodeId || r.shelves.some((s) => s.id === nodeId || s.slots.some((sl) => sl.id === nodeId || sl.card?.id === nodeId || sl.card?.ports.some((p) => p.id === nodeId)))) || o.feederCables.some((fc) => fc.id === nodeId))
+    const olt = sampleOLTs.find(
+      (o) =>
+        o.id === nodeId ||
+        o.feederCables.some((fc) => fc.id === nodeId) ||
+        o.racks.some((r) =>
+          r.id === nodeId ||
+          r.shelves.some((s) =>
+            s.id === nodeId ||
+            s.slots.some(
+              (sl) =>
+                sl.id === nodeId ||
+                sl.card?.id === nodeId ||
+                sl.card?.ports.some((p) => p.id === nodeId)
+            )
+          )
+        )
+    )
     if (olt) {
       newCrumbs.push({ label: olt.name, nodeType: "olt", nodeId: olt.id })
       if (nodeType !== "olt") {
