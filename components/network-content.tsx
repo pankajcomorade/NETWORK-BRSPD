@@ -47,6 +47,7 @@ import {
   sampleONTs,
 } from "@/lib/network-data"
 import type { SubMenuId } from "@/lib/menu-config"
+import { VisualHierarchyExplorer } from "@/components/visual-hierarchy-explorer"
 
 // ==========================================
 // Shared sub-components
@@ -540,7 +541,8 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </div>
+        <VisualHierarchyExplorer selectedOltId={sampleOLTs[0]?.id} />
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-foreground">OLT Devices</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
