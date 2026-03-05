@@ -620,17 +620,96 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
     if (!olt) return <p className="text-muted-foreground">OLT not found</p>
     return (
       <div className="space-y-6">
-        <div className="flex items-start justify-between flex-wrap gap-4"><div><h2 className="text-2xl font-bold text-foreground">Physical Device - Optical Line Terminal</h2><p className="text-muted-foreground mt-1">{olt.distinguishedName}</p></div><StatusBadge status={olt.status} /></div>
-        <HardwareImage type="olt" />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card className="rounded-xl border-border/50"><CardHeader className="pb-3"><CardTitle className="text-base text-foreground">Device Information</CardTitle></CardHeader><CardContent className="space-y-0"><DetailRow label="Distinguished Name" value={olt.distinguishedName} /><DetailRow label="Common Name" value={olt.commonName} /><DetailRow label="Specification" value={<span className="text-primary">{olt.specification}</span>} /><DetailRow label="Network Status" value={olt.networkStatus} /><DetailRow label="Created By" value={olt.createdBy} /><DetailRow label="Create Date" value={olt.createDate} /><DetailRow label="Last Updated By" value={olt.lastUpdatedBy} /><DetailRow label="Last Updated Date" value={olt.lastUpdatedDate} /></CardContent></Card>
-          <Card className="rounded-xl border-border/50"><CardHeader className="pb-3"><CardTitle className="text-base text-foreground">Containment Structure</CardTitle></CardHeader><CardContent><div className="rounded-lg border border-border/50 bg-secondary/20 p-3">
-            <TreeNode label={olt.distinguishedName} nodeType="olt" nodeId={olt.id} status={olt.status} isSelected={false} defaultOpen onSelect={navigate}>
-              {olt.racks.map((rack) => (<TreeNode key={rack.id} label={rack.name} nodeType="rack" nodeId={rack.id} status={rack.status} isSelected={false} defaultOpen onSelect={navigate} depth={1}>{rack.shelves.map((shelf) => (<TreeNode key={shelf.id} label={shelf.name} nodeType="shelf" nodeId={shelf.id} status={shelf.status} isSelected={false} defaultOpen onSelect={navigate} depth={2}>{shelf.slots.map((slot) => (<TreeNode key={slot.id} label={slot.name} nodeType="slot" nodeId={slot.id} status={slot.status} isSelected={false} defaultOpen={!!slot.card} onSelect={navigate} depth={3}>{slot.card && (<TreeNode key={slot.card.id} label={slot.card.name} nodeType="card" nodeId={slot.card.id} status={slot.card.status} isSelected={false} onSelect={navigate} depth={4}>{slot.card.ports.map((port) => (<div key={port.id} className="flex items-center gap-2 py-1 text-xs" style={{ paddingLeft: `${5 * 16 + 8}px` }}><StatusDot status={port.status} /><Zap className="h-3 w-3 text-muted-foreground" /><span className="text-muted-foreground">{port.name}</span></div>))}</TreeNode>)}</TreeNode>))}</TreeNode>))}</TreeNode>))}
-            </TreeNode>
-          </div></CardContent></Card>
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Physical Device - Optical Line Terminal</h2>
+            <p className="text-muted-foreground mt-1">{olt.distinguishedName}</p>
+          </div>
+          <StatusBadge status={olt.status} />
         </div>
-        <Card className="rounded-xl border-border/50"><CardHeader className="pb-3"><CardTitle className="text-base text-foreground">Feeder Cables</CardTitle></CardHeader><CardContent><div className="space-y-3">{olt.feederCables.map((fc) => (<button key={fc.id} onClick={() => navigate("feeder-cable", fc.id)} className="flex w-full items-center justify-between rounded-lg border border-border/50 bg-secondary/20 p-3 transition-colors hover:bg-secondary/40"><div className="flex items-center gap-3"><div className="flex h-8 w-8 items-center justify-center rounded-md bg-sky-500/15"><Cable className="h-4 w-4 text-sky-400" /></div><div className="text-left"><p className="text-sm font-medium text-foreground">{fc.name}</p><p className="text-xs text-muted-foreground">{fc.strandCount} strands</p></div></div><div className="flex items-center gap-2"><StatusBadge status={fc.status} /><ChevronRight className="h-4 w-4 text-muted-foreground" /></div></button>))}</div></CardContent></Card>
+        
+        {/* Interactive Device Visual */}
+        <Card className="rounded-xl border-border/50 overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-foreground">Device Explorer - Click to Drill Down</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <InteractiveDeviceVisual olt={olt} />
+          </CardContent>
+        </Card>
+
+        {/* Device Information */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card className="rounded-xl border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-foreground">Device Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-0">
+              <DetailRow label="Distinguished Name" value={olt.distinguishedName} />
+              <DetailRow label="Common Name" value={olt.commonName} />
+              <DetailRow label="Specification" value={<span className="text-primary">{olt.specification}</span>} />
+              <DetailRow label="Network Status" value={olt.networkStatus} />
+              <DetailRow label="Created By" value={olt.createdBy} />
+              <DetailRow label="Create Date" value={olt.createDate} />
+              <DetailRow label="Last Updated By" value={olt.lastUpdatedBy} />
+              <DetailRow label="Last Updated Date" value={olt.lastUpdatedDate} />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-foreground">Summary Statistics</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-3 rounded-lg bg-sky-500/10 border border-sky-500/20">
+                  <p className="text-xl font-bold text-sky-400">{olt.racks.length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Racks</p>
+                </div>
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <p className="text-xl font-bold text-emerald-400">{olt.racks.reduce((a, r) => a + r.shelves.reduce((b, s) => b + s.slots.filter((sl) => sl.card).length, 0), 0)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Cards</p>
+                </div>
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xl font-bold text-amber-400">{olt.feederCables.length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Feeders</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Feeder Cables */}
+        <Card className="rounded-xl border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-foreground">Feeder Cables</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {olt.feederCables.map((fc) => (
+                <button
+                  key={fc.id}
+                  onClick={() => navigate("feeder-cable", fc.id)}
+                  className="flex w-full items-center justify-between rounded-lg border border-border/50 bg-secondary/20 p-3 transition-colors hover:bg-secondary/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sky-500/15">
+                      <Cable className="h-4 w-4 text-sky-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-foreground">{fc.name}</p>
+                      <p className="text-xs text-muted-foreground">{fc.strandCount} strands</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={fc.status} />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
