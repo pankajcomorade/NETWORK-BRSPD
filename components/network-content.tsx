@@ -49,6 +49,7 @@ import {
 import type { SubMenuId } from "@/lib/menu-config"
 import { VisualHierarchyExplorer } from "./visual-hierarchy-explorer"
 import { PhysicalDeviceGUI } from "./physical-device-gui"
+import { InteractiveDeviceVisual } from "./interactive-device-visual"
 
 // ==========================================
 // Shared sub-components
