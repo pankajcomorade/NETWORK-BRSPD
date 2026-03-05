@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, lazy, Suspense } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ChevronRight,
@@ -49,7 +49,12 @@ import {
 import type { SubMenuId } from "@/lib/menu-config"
 import { VisualHierarchyExplorer } from "./visual-hierarchy-explorer"
 import { PhysicalDeviceGUI } from "./physical-device-gui"
-import { InteractiveDeviceVisual } from "./interactive-device-visual"
+
+const InteractiveDeviceVisual = lazy(() =>
+  import("./interactive-device-visual").then((mod) => ({
+    default: mod.InteractiveDeviceVisual,
+  }))
+)
 
 // ==========================================
 // Shared sub-components
@@ -635,7 +640,9 @@ export function NetworkContent({ subMenu }: { subMenu: SubMenuId }) {
             <CardTitle className="text-base text-foreground">Device Explorer - Click to Drill Down</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <InteractiveDeviceVisual olt={olt} />
+            <Suspense fallback={<div className="text-muted-foreground text-sm">Loading device explorer...</div>}>
+              <InteractiveDeviceVisual olt={olt} />
+            </Suspense>
           </CardContent>
         </Card>
 
