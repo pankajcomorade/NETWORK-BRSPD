@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { MenuId, SubMenuId } from "@/lib/menu-config"
+import { ResourceOverview } from "@/components/resource-overview"
 
 // ==========================================
 // Home Dashboard (rich, non-placeholder content)
@@ -588,6 +589,7 @@ export function PagePlaceholder({
 
   // Resources
   if (menuId === ("resources" as MenuId)) {
+    if (subMenuId === ("res_overview" as SubMenuId)) return <ResourceOverview />
     if (subMenuId === ("res_physical" as SubMenuId)) return <ResourcesPhysicalPage />
     return <GenericPlaceholder title={`${menuLabel} - ${subMenuLabel}`} description={`Manage ${subMenuLabel.toLowerCase()} resources in the network`} />
   }

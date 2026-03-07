@@ -71,6 +71,7 @@ export enum SubMenuId {
   ROLES_PERMISSIONS = "roles_permissions",
 
   // Resources
+  RES_OVERVIEW = "res_overview",
   RES_PHYSICAL = "res_physical",
   RES_LOGICAL = "res_logical",
 
@@ -163,6 +164,7 @@ export const MENU_CONFIG: MenuItem[] = [
     icon: Server,
     allowedRoles: [UserRole.ADMIN, UserRole.ENGINEER, UserRole.FIELD_TECH],
     subMenus: [
+      { id: SubMenuId.RES_OVERVIEW, label: "Overview", allowedRoles: [] },
       { id: SubMenuId.RES_PHYSICAL, label: "Physical", allowedRoles: [] },
       { id: SubMenuId.RES_LOGICAL, label: "Logical", allowedRoles: [UserRole.ADMIN, UserRole.ENGINEER] },
     ],
