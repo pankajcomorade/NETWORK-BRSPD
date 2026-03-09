@@ -35,17 +35,16 @@ export const DEFAULT_SEARCH_PARAMS: EquipmentSearchParams = {
 }
 
 /**
- * Fetch equipment hierarchy details from the API
+ * Fetch equipment hierarchy details from the API via internal proxy route
+ * This avoids CORS issues by routing through Next.js API route
  * @param params - Search parameters
- * @param env - Optional environment override
+ * @param useMockOnError - Whether to fallback to mock data on error (default: false)
  * @returns Equipment hierarchy response
  */
 export async function fetchEquipmentHierarchy(
   params: EquipmentSearchParams = DEFAULT_SEARCH_PARAMS,
-  env?: Environment
+  useMockOnError: boolean = false
 ): Promise<EquipmentHierarchyResponse> {
-  const baseUrl = getBaseUrl(env)
-  
   const queryParams = new URLSearchParams({
     equipmentName: params.equipmentName,
     equipCategory: params.equipCategory,
@@ -53,28 +52,39 @@ export async function fetchEquipmentHierarchy(
     ...(params.equipInstId && { equipInstId: params.equipInstId.toString() }),
   })
 
-  const url = `${baseUrl}/brspd/nextgenfiber/equipmentHierarchyDetails?${queryParams}`
+  // Use internal API route to avoid CORS issues
+  const url = `/api/equipment/hierarchy?${queryParams}`
 
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    })
+  console.log("[v0] Fetching equipment hierarchy:", url)
 
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    // Disable caching to ensure fresh data on each search
+    cache: "no-store",
+  })
+
+  console.log("[v0] API Response status:", response.status)
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    console.error("[v0] API Error:", errorData)
+    
+    if (useMockOnError) {
+      console.log("[v0] Falling back to mock data")
+      return getMockEquipmentHierarchy(params)
     }
-
-    const data = await response.json()
-    return data
-  } catch (error) {
-    console.error("[Equipment API] Fetch error:", error)
-    // Return mock data for development/testing when API is unavailable
-    return getMockEquipmentHierarchy(params)
+    
+    throw new Error(errorData.error || `API Error: ${response.status} ${response.statusText}`)
   }
+
+  const data = await response.json()
+  console.log("[v0] API Success - Equipment data received:", data.equipment?.name)
+  
+  return data
 }
 
 /**
