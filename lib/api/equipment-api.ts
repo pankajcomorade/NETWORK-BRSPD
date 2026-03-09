@@ -4,7 +4,7 @@ import { getBaseUrl, type Environment } from "@/lib/env-config"
 // Types based on API response structure
 export interface EquipmentNode {
   name: string
-  type: "OLT" | "FDH" | "AP" | "RACK" | "SHELF" | "SLOT" | "NETWORKCARD" | "PORT"
+  type: "OLT" | "FDH" | "AP" | "RACK" | "SHELF" | "SLOT" | "NETWORKCARD" | "NETWORK CARD" | "PORT"
   instanceID: number | null
   erId: string
   status: "ACTIVE" | "INACTIVE" | "WARNING" | "MAINTENANCE"
@@ -129,7 +129,7 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
                   nodes: [
                     {
                       name: "NC=001",
-                      type: "NETWORKCARD",
+                      type: "NETWORK CARD",
                       instanceID: null,
                       erId: "200121",
                       status: "ACTIVE",
@@ -151,7 +151,7 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
                   nodes: [
                     {
                       name: "NC=002",
-                      type: "NETWORKCARD",
+                      type: "NETWORK CARD",
                       instanceID: null,
                       erId: "200127",
                       status: "ACTIVE",
@@ -171,7 +171,7 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
                   nodes: [
                     {
                       name: "NC=001",
-                      type: "NETWORKCARD",
+                      type: "NETWORK CARD",
                       instanceID: null,
                       erId: "200150",
                       status: "ACTIVE",
@@ -192,7 +192,7 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
                   nodes: [
                     {
                       name: "NC=001",
-                      type: "NETWORKCARD",
+                      type: "NETWORK CARD",
                       instanceID: null,
                       erId: "200160",
                       status: "ACTIVE",
@@ -221,7 +221,7 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
                   nodes: [
                     {
                       name: "NC=001",
-                      type: "NETWORKCARD",
+                      type: "NETWORK CARD",
                       instanceID: null,
                       erId: "200134",
                       status: "ACTIVE",
@@ -242,7 +242,7 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
                   nodes: [
                     {
                       name: "NC=002",
-                      type: "NETWORKCARD",
+                      type: "NETWORK CARD",
                       instanceID: null,
                       erId: "200139",
                       status: "WARNING",

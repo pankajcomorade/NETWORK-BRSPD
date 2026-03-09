@@ -73,6 +73,7 @@ const getNodeIcon = (type: string) => {
     case "SLOT":
       return Box
     case "NETWORKCARD":
+    case "NETWORK CARD":
       return CircuitBoard
     case "PORT":
       return Zap
@@ -341,7 +342,7 @@ function DeviceGUIPanel({
       const slots = shelf.nodes.filter((n) => n.type === "SLOT")
       console.log("[v0] Shelf:", shelf.name, "Slots:", slots.length)
       slots.forEach((slot) => {
-        const card = slot.nodes.find((n) => n.type === "NETWORKCARD")
+        const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
         console.log("[v0]   Slot:", slot.name, "Card:", card?.name || "None", "Ports:", card?.nodes.length || 0)
       })
     })
@@ -396,7 +397,7 @@ function DeviceGUIPanel({
                   {shelf.nodes
                     .filter((n) => n.type === "SLOT")
                     .map((slot) => {
-                      const hasCard = slot.nodes.some((n) => n.type === "NETWORKCARD")
+                      const hasCard = slot.nodes.some((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
                       return (
                         <div
                           key={slot.erId}
@@ -429,7 +430,7 @@ function DeviceGUIPanel({
     
     console.log("[v0] Shelf View - Shelf:", viewState.shelf.name, "Slots found:", slots.length)
     slots.forEach((slot) => {
-      const card = slot.nodes.find((n) => n.type === "NETWORKCARD")
+      const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
       console.log("[v0] Slot:", slot.name, "Has card:", !!card, card ? `Card: ${card.name}` : "")
     })
 
@@ -449,7 +450,7 @@ function DeviceGUIPanel({
         <div className={cn("rounded-xl border-2 bg-card p-6 max-w-3xl mx-auto", getStatusBorder(viewState.shelf.status))}>
           <div className="grid grid-cols-4 gap-4">
             {slots.map((slot) => {
-              const card = slot.nodes.find((n) => n.type === "NETWORKCARD")
+              const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
               const hasCard = !!card
 
               return (
@@ -486,7 +487,7 @@ function DeviceGUIPanel({
   // Render Slot View - Show Network Card inside the slot
   const renderSlotView = () => {
     if (!viewState.slot || !viewState.shelf || !viewState.rack) return null
-    const card = viewState.slot.nodes.find((n) => n.type === "NETWORKCARD")
+    const card = viewState.slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
 
     return (
       <div className="space-y-4">
