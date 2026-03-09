@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Search,
@@ -14,6 +14,8 @@ import {
   ChevronDown,
   ArrowLeft,
   Filter,
+  Loader2,
+  AlertCircle,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -27,17 +29,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import {
+  fetchEquipmentHierarchy,
+  DEFAULT_SEARCH_PARAMS,
+  calculateHierarchySummary,
+  type EquipmentNode,
+  type EquipmentHierarchyResponse,
+  type EquipmentSearchParams,
+} from "@/lib/api/equipment-api"
+import { getCurrentEnvironment } from "@/lib/env-config"
 
-// Types based on API response structure
-interface EquipmentNode {
-  name: string
-  type: "OLT" | "FDH" | "AP" | "RACK" | "SHELF" | "SLOT" | "NETWORKCARD" | "PORT"
-  instanceID: number | null
-  erId: string
-  status: "ACTIVE" | "INACTIVE" | "WARNING" | "MAINTENANCE"
-  nodes: EquipmentNode[]
-}
-
+// Extended response type for UI
 interface EquipmentResponse {
   equipment: EquipmentNode
   summary: {
@@ -46,159 +48,18 @@ interface EquipmentResponse {
   }
 }
 
-// Sample API response data
-const sampleApiResponse: EquipmentResponse = {
-  equipment: {
-    name: "BUFTNCXAH07",
-    type: "OLT",
-    instanceID: 197670,
-    erId: "200117",
-    status: "ACTIVE",
-    nodes: [
-      {
-        name: "RK=001",
-        type: "RACK",
-        instanceID: null,
-        erId: "200118",
-        status: "ACTIVE",
-        nodes: [
-          {
-            name: "SF=001",
-            type: "SHELF",
-            instanceID: null,
-            erId: "200119",
-            status: "ACTIVE",
-            nodes: [
-              {
-                name: "SL=001",
-                type: "SLOT",
-                instanceID: null,
-                erId: "200120",
-                status: "ACTIVE",
-                nodes: [
-                  {
-                    name: "NC=001",
-                    type: "NETWORKCARD",
-                    instanceID: null,
-                    erId: "200121",
-                    status: "ACTIVE",
-                    nodes: [
-                      { name: "PP=001", type: "PORT", instanceID: 197873, erId: "200194", status: "ACTIVE", nodes: [] },
-                      { name: "PP=002", type: "PORT", instanceID: 197875, erId: "200236", status: "ACTIVE", nodes: [] },
-                      { name: "PP=003", type: "PORT", instanceID: 197887, erId: "200440", status: "ACTIVE", nodes: [] },
-                      { name: "PP=004", type: "PORT", instanceID: 197874, erId: "200207", status: "INACTIVE", nodes: [] },
-                      { name: "PP=005", type: "PORT", instanceID: 197884, erId: "200356", status: "ACTIVE", nodes: [] },
-                      { name: "PP=006", type: "PORT", instanceID: 197867, erId: "200122", status: "WARNING", nodes: [] },
-                    ],
-                  },
-                ],
-              },
-              {
-                name: "SL=002",
-                type: "SLOT",
-                instanceID: null,
-                erId: "200130",
-                status: "ACTIVE",
-                nodes: [
-                  {
-                    name: "NC=002",
-                    type: "NETWORKCARD",
-                    instanceID: null,
-                    erId: "200131",
-                    status: "ACTIVE",
-                    nodes: [
-                      { name: "PP=001", type: "PORT", instanceID: 197900, erId: "200300", status: "ACTIVE", nodes: [] },
-                      { name: "PP=002", type: "PORT", instanceID: 197901, erId: "200301", status: "ACTIVE", nodes: [] },
-                      { name: "PP=003", type: "PORT", instanceID: 197902, erId: "200302", status: "INACTIVE", nodes: [] },
-                      { name: "PP=004", type: "PORT", instanceID: 197903, erId: "200303", status: "ACTIVE", nodes: [] },
-                    ],
-                  },
-                ],
-              },
-              {
-                name: "SL=003",
-                type: "SLOT",
-                instanceID: null,
-                erId: "200140",
-                status: "INACTIVE",
-                nodes: [],
-              },
-              {
-                name: "SL=004",
-                type: "SLOT",
-                instanceID: null,
-                erId: "200150",
-                status: "INACTIVE",
-                nodes: [],
-              },
-            ],
-          },
-          {
-            name: "SF=002",
-            type: "SHELF",
-            instanceID: null,
-            erId: "200200",
-            status: "ACTIVE",
-            nodes: [
-              {
-                name: "SL=001",
-                type: "SLOT",
-                instanceID: null,
-                erId: "200201",
-                status: "ACTIVE",
-                nodes: [
-                  {
-                    name: "NC=001",
-                    type: "NETWORKCARD",
-                    instanceID: null,
-                    erId: "200202",
-                    status: "ACTIVE",
-                    nodes: [
-                      { name: "PP=001", type: "PORT", instanceID: 198000, erId: "200400", status: "ACTIVE", nodes: [] },
-                      { name: "PP=002", type: "PORT", instanceID: 198001, erId: "200401", status: "WARNING", nodes: [] },
-                      { name: "PP=003", type: "PORT", instanceID: 198002, erId: "200402", status: "ACTIVE", nodes: [] },
-                      { name: "PP=004", type: "PORT", instanceID: 198003, erId: "200403", status: "ACTIVE", nodes: [] },
-                    ],
-                  },
-                ],
-              },
-              {
-                name: "SL=002",
-                type: "SLOT",
-                instanceID: null,
-                erId: "200210",
-                status: "INACTIVE",
-                nodes: [],
-              },
-              {
-                name: "SL=003",
-                type: "SLOT",
-                instanceID: null,
-                erId: "200220",
-                status: "INACTIVE",
-                nodes: [],
-              },
-              {
-                name: "SL=004",
-                type: "SLOT",
-                instanceID: null,
-                erId: "200230",
-                status: "INACTIVE",
-                nodes: [],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  summary: {
-    countsByType: { OLT: 1, RACK: 1, SHELF: 2, SLOT: 8, NETWORKCARD: 4, PORT: 14 },
-    totalNodes: 30,
-  },
+// Current environment info
+const currentEnv = getCurrentEnvironment()
+
+// Helper to convert API response to UI format
+function toEquipmentResponse(apiResponse: EquipmentHierarchyResponse): EquipmentResponse {
+  return {
+    equipment: apiResponse.equipment,
+    summary: apiResponse.summary,
+  }
 }
 
-// Get icon for node type
+// Helper functions for node icons and styling
 const getNodeIcon = (type: string) => {
   switch (type) {
     case "OLT":
@@ -220,7 +81,6 @@ const getNodeIcon = (type: string) => {
   }
 }
 
-// Get status color
 const getStatusColor = (status: string) => {
   switch (status) {
     case "ACTIVE":
@@ -236,16 +96,25 @@ const getStatusColor = (status: string) => {
   }
 }
 
+const getPortColor = (status: string) => {
+  switch (status) {
+    case "ACTIVE":
+      return "bg-emerald-500"
+    case "WARNING":
+      return "bg-amber-500"
+    case "INACTIVE":
+    default:
+      return "bg-zinc-600"
+  }
+}
+
 const getStatusBorder = (status: string) => {
   switch (status) {
     case "ACTIVE":
-      return "border-emerald-500/50"
-    case "INACTIVE":
-      return "border-zinc-500/30"
+      return "border-emerald-500/30"
     case "WARNING":
-      return "border-amber-500/50"
-    case "MAINTENANCE":
-      return "border-sky-500/50"
+      return "border-amber-500/30"
+    case "INACTIVE":
     default:
       return "border-zinc-500/30"
   }
@@ -710,23 +579,49 @@ function DeviceGUIPanel({
 
 // Main Resource Overview Component
 export function ResourceOverview() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [category, setCategory] = useState<string>("all")
+  const [searchQuery, setSearchQuery] = useState(DEFAULT_SEARCH_PARAMS.equipmentName)
+  const [category, setCategory] = useState<string>(DEFAULT_SEARCH_PARAMS.equipCategory.toLowerCase())
   const [searchResult, setSearchResult] = useState<EquipmentResponse | null>(null)
   const [selectedNode, setSelectedNode] = useState<EquipmentNode | null>(null)
   const [isSearching, setIsSearching] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSearch = useCallback(() => {
-    if (!searchQuery.trim()) return
+  // Auto-load with default params on mount
+  useEffect(() => {
+    handleSearch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleSearch = useCallback(async () => {
+    const equipmentName = searchQuery.trim() || DEFAULT_SEARCH_PARAMS.equipmentName
 
     setIsSearching(true)
-    // Simulate API call - replace with actual API integration
-    setTimeout(() => {
-      setSearchResult(sampleApiResponse)
-      setSelectedNode(sampleApiResponse.equipment)
+    setError(null)
+
+    try {
+      // Build search params - using hardcoded values for now
+      const params: EquipmentSearchParams = {
+        equipmentName,
+        equipCategory: category === "all" ? DEFAULT_SEARCH_PARAMS.equipCategory : (category.toUpperCase() as "OLT" | "FDH" | "AP"),
+        portInstId: DEFAULT_SEARCH_PARAMS.portInstId,
+        equipInstId: DEFAULT_SEARCH_PARAMS.equipInstId,
+      }
+
+      // Call the API
+      const apiResponse = await fetchEquipmentHierarchy(params)
+      
+      // Convert to UI format
+      const result = toEquipmentResponse(apiResponse)
+      setSearchResult(result)
+      setSelectedNode(result.equipment)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch equipment hierarchy")
+      setSearchResult(null)
+      setSelectedNode(null)
+    } finally {
       setIsSearching(false)
-    }, 500)
-  }, [searchQuery])
+    }
+  }, [searchQuery, category])
 
   const handleNodeSelect = (node: EquipmentNode) => {
     setSelectedNode(node)
@@ -737,10 +632,15 @@ export function ResourceOverview() {
       {/* Search Section */}
       <Card className="rounded-xl border-border/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base text-foreground flex items-center gap-2">
-            <Search className="h-4 w-4 text-primary" />
-            Equipment Search
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base text-foreground flex items-center gap-2">
+              <Search className="h-4 w-4 text-primary" />
+              Equipment Search
+            </CardTitle>
+            <Badge variant="outline" className="text-[10px] uppercase">
+              ENV: {currentEnv}
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-center gap-3">
@@ -766,14 +666,37 @@ export function ResourceOverview() {
               </SelectContent>
             </Select>
             <Button onClick={handleSearch} disabled={isSearching} className="h-9">
-              {isSearching ? "Searching..." : "Search"}
+              {isSearching ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                "Search"
+              )}
             </Button>
           </div>
+          {error && (
+            <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <span className="text-sm text-destructive">{error}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Results Section */}
-      {!searchResult ? (
+      {isSearching ? (
+        <Card className="rounded-xl border-border/50">
+          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+            <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+            <h3 className="text-lg font-semibold text-foreground">Loading Equipment Hierarchy</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Fetching data from API...
+            </p>
+          </CardContent>
+        </Card>
+      ) : !searchResult ? (
         <Card className="rounded-xl border-border/50">
           <CardContent className="flex flex-col items-center justify-center py-20 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary mb-4">
