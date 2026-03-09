@@ -52,19 +52,26 @@ export async function fetchEquipmentHierarchy(
     ...(params.equipInstId && { equipInstId: params.equipInstId.toString() }),
   })
 
+  // Add timestamp to bust any browser cache
+  queryParams.set("_t", Date.now().toString())
+
   // Use internal API route to avoid CORS issues
   const url = `/api/equipment/hierarchy?${queryParams}`
 
-  console.log("[v0] Fetching equipment hierarchy:", url)
+  console.log("[v0] Fetching equipment hierarchy at", new Date().toISOString())
+  console.log("[v0] Request URL:", url)
 
   const response = await fetch(url, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
     },
     // Disable caching to ensure fresh data on each search
     cache: "no-store",
+    next: { revalidate: 0 },
   })
 
   console.log("[v0] API Response status:", response.status)

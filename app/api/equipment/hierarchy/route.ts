@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getBaseUrl } from "@/lib/env-config"
+import { getBaseUrl, getCurrentEnvironment } from "@/lib/env-config"
+
+// Disable static generation for this route
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -10,9 +14,12 @@ export async function GET(request: NextRequest) {
   const equipInstId = searchParams.get("equipInstId") || "12345678"
 
   const baseUrl = getBaseUrl()
+  const currentEnv = getCurrentEnvironment()
   const apiUrl = `${baseUrl}/brspd/nextgenfiber/equipmentHierarchyDetails?equipmentName=${equipmentName}&equipCategory=${equipCategory}&portInstId=${portInstId}&equipInstId=${equipInstId}`
 
-  console.log("[v0] Equipment API Request:", apiUrl)
+  console.log("[API Route] Environment:", currentEnv)
+  console.log("[API Route] Timestamp:", new Date().toISOString())
+  console.log("[API Route] External API URL:", apiUrl)
 
   try {
     const response = await fetch(apiUrl, {
@@ -20,6 +27,7 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
       },
       // Disable caching to ensure fresh data
       cache: "no-store",
@@ -42,9 +50,16 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    console.log("[v0] Equipment API Success - Data received")
+    console.log("[API Route] Success - Data received for:", data.equipment?.name || "unknown")
     
-    return NextResponse.json(data)
+    // Return with no-cache headers
+    return NextResponse.json(data, {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
+    })
   } catch (error) {
     console.error("[v0] Equipment API Fetch Error:", error)
     

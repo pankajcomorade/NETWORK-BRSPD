@@ -217,12 +217,24 @@ function DeviceGUIPanel({
     setViewState({ level: "shelf", rack, shelf })
   }
 
+  const navigateToSlot = (slot: EquipmentNode, shelf: EquipmentNode, rack: EquipmentNode) => {
+    setViewState({ level: "slot", rack, shelf, slot })
+  }
+
+  const navigateToCard = (card: EquipmentNode, slot: EquipmentNode, shelf: EquipmentNode, rack: EquipmentNode) => {
+    setViewState({ level: "card", rack, shelf, slot, card })
+  }
+
   const navigateToPorts = (shelf: EquipmentNode, slot: EquipmentNode, card: EquipmentNode, rack: EquipmentNode) => {
     setViewState({ level: "ports", rack, shelf, slot, card })
   }
 
   const goBack = () => {
     if (viewState.level === "ports") {
+      setViewState({ level: "card", rack: viewState.rack, shelf: viewState.shelf, slot: viewState.slot, card: viewState.card })
+    } else if (viewState.level === "card") {
+      setViewState({ level: "slot", rack: viewState.rack, shelf: viewState.shelf, slot: viewState.slot })
+    } else if (viewState.level === "slot") {
       setViewState({ level: "shelf", rack: viewState.rack, shelf: viewState.shelf })
     } else if (viewState.level === "shelf") {
       setViewState({ level: "rack", rack: viewState.rack })
@@ -280,13 +292,13 @@ function DeviceGUIPanel({
                         <div
                           key={shelf.erId}
                           className={cn(
-                            "p-2 rounded border text-center text-xs",
+                            "p-2 rounded border text-center text-xs font-mono",
                             shelf.status === "ACTIVE"
                               ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400"
                               : "bg-zinc-500/10 border-zinc-500/20 text-zinc-500"
                           )}
                         >
-                          {shelf.name.replace("SF=", "SH")}
+                          {shelf.name}
                         </div>
                       ))}
                   </div>
@@ -382,7 +394,7 @@ function DeviceGUIPanel({
                               : "bg-zinc-800/50 border-zinc-700/50 text-zinc-500"
                           )}
                         >
-                          {slot.name.replace("SL=", "SF")}
+                          {slot.name}
                         </div>
                       )
                     })}
@@ -395,7 +407,7 @@ function DeviceGUIPanel({
     )
   }
 
-  // Render Shelf View (slots with cards)
+  // Render Shelf View - Show individual slots as clickable items
   const renderShelfView = () => {
     if (!viewState.shelf || !viewState.rack) return null
     const slots = viewState.shelf.nodes.filter((n) => n.type === "SLOT")
@@ -409,7 +421,7 @@ function DeviceGUIPanel({
           </Button>
           <div>
             <h3 className="text-lg font-semibold text-foreground">{viewState.shelf.name}</h3>
-            <p className="text-sm text-muted-foreground">Click on a Card to view ports</p>
+            <p className="text-sm text-muted-foreground">Click on a Slot to view its contents</p>
           </div>
         </div>
 
@@ -422,39 +434,150 @@ function DeviceGUIPanel({
               return (
                 <motion.button
                   key={slot.erId}
-                  whileHover={hasCard ? { scale: 1.05 } : {}}
-                  whileTap={hasCard ? { scale: 0.95 } : {}}
-                  onClick={() => {
-                    if (hasCard && card) {
-                      navigateToPorts(viewState.shelf!, slot, card, viewState.rack!)
-                    }
-                  }}
-                  disabled={!hasCard}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigateToSlot(slot, viewState.shelf!, viewState.rack!)}
                   className={cn(
-                    "p-4 rounded-lg border-2 transition-all",
-                    hasCard
-                      ? cn(
-                          "bg-secondary/30 hover:bg-secondary/50 cursor-pointer",
-                          getStatusBorder(slot.status)
-                        )
-                      : "bg-zinc-900/30 border-zinc-800/50 cursor-not-allowed opacity-50"
+                    "p-4 rounded-lg border-2 transition-all cursor-pointer",
+                    "bg-secondary/30 hover:bg-secondary/50",
+                    getStatusBorder(slot.status)
                   )}
                 >
                   <div className="text-center">
-                    <Box className={cn("h-8 w-8 mx-auto mb-2", hasCard ? "text-primary" : "text-zinc-600")} />
-                    <p className="font-mono text-sm text-foreground">{slot.name.replace("SL=", "SF")}</p>
+                    <Box className={cn("h-8 w-8 mx-auto mb-2", hasCard ? "text-primary" : "text-zinc-500")} />
+                    <p className="font-mono text-sm text-foreground">{slot.name}</p>
                     {hasCard && card && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {card.nodes.length} ports
-                      </p>
+                      <p className="text-xs text-emerald-400 mt-1">{card.name}</p>
                     )}
                     {!hasCard && (
-                      <p className="text-xs text-zinc-600 mt-1">Empty</p>
+                      <p className="text-xs text-zinc-500 mt-1">Empty Slot</p>
                     )}
                   </div>
                 </motion.button>
               )
             })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Render Slot View - Show Network Card inside the slot
+  const renderSlotView = () => {
+    if (!viewState.slot || !viewState.shelf || !viewState.rack) return null
+    const card = viewState.slot.nodes.find((n) => n.type === "NETWORKCARD")
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="ghost" size="sm" onClick={goBack} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{viewState.slot.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {card ? "Click on the Network Card to view ports" : "This slot is empty"}
+            </p>
+          </div>
+        </div>
+
+        <div className={cn("rounded-xl border-2 bg-card p-6 max-w-2xl mx-auto", getStatusBorder(viewState.slot.status))}>
+          {card ? (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigateToCard(card, viewState.slot!, viewState.shelf!, viewState.rack!)}
+              className={cn(
+                "w-full p-6 rounded-lg border-2 transition-all cursor-pointer",
+                "bg-secondary/30 hover:bg-secondary/50",
+                getStatusBorder(card.status)
+              )}
+            >
+              <div className="flex items-center gap-4">
+                <CircuitBoard className="h-12 w-12 text-primary" />
+                <div className="text-left">
+                  <p className="font-mono text-lg text-foreground">{card.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {card.nodes.filter((n) => n.type === "PORT").length} Ports
+                  </p>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "mt-2 text-[10px]",
+                      card.status === "ACTIVE"
+                        ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                        : "border-zinc-500/30 text-zinc-400"
+                    )}
+                  >
+                    {card.status}
+                  </Badge>
+                </div>
+              </div>
+            </motion.button>
+          ) : (
+            <div className="text-center py-12">
+              <Box className="h-16 w-16 mx-auto text-zinc-600 mb-4" />
+              <p className="text-muted-foreground">No Network Card installed in this slot</p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Render Card View - Show ports inside the card
+  const renderCardView = () => {
+    if (!viewState.card || !viewState.slot || !viewState.shelf || !viewState.rack) return null
+    const ports = viewState.card.nodes.filter((n) => n.type === "PORT")
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="ghost" size="sm" onClick={goBack} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{viewState.card.name}</h3>
+            <p className="text-sm text-muted-foreground">Click on a Port to view details</p>
+          </div>
+        </div>
+
+        <div className={cn("rounded-xl border-2 bg-card p-6 max-w-3xl mx-auto", getStatusBorder(viewState.card.status))}>
+          <div className="grid grid-cols-4 gap-4">
+            {ports.map((port) => (
+              <motion.button
+                key={port.erId}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigateToPorts(viewState.shelf!, viewState.slot!, viewState.card!, viewState.rack!)}
+                className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-border/50 cursor-pointer transition-all"
+              >
+                <div
+                  className={cn(
+                    "h-10 w-10 rounded-full shadow-lg flex items-center justify-center",
+                    getPortColor(port.status)
+                  )}
+                >
+                  <Zap className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xs font-mono text-foreground">{port.name}</span>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[9px]",
+                    port.status === "ACTIVE"
+                      ? "border-emerald-500/30 text-emerald-400"
+                      : port.status === "WARNING"
+                      ? "border-amber-500/30 text-amber-400"
+                      : "border-zinc-500/30 text-zinc-400"
+                  )}
+                >
+                  {port.status}
+                </Badge>
+              </motion.button>
+            ))}
           </div>
         </div>
       </div>
@@ -571,6 +694,8 @@ function DeviceGUIPanel({
         {viewState.level === "container" && renderContainerView()}
         {viewState.level === "rack" && renderRackView()}
         {viewState.level === "shelf" && renderShelfView()}
+        {viewState.level === "slot" && renderSlotView()}
+        {viewState.level === "card" && renderCardView()}
         {viewState.level === "ports" && renderPortsView()}
       </motion.div>
     </AnimatePresence>
@@ -586,11 +711,7 @@ export function ResourceOverview() {
   const [isSearching, setIsSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Auto-load with default params on mount
-  useEffect(() => {
-    handleSearch()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Removed auto-load - user must click Search button to fetch data
 
   const handleSearch = useCallback(async () => {
     const equipmentName = searchQuery.trim() || DEFAULT_SEARCH_PARAMS.equipmentName
