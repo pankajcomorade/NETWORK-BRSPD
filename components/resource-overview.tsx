@@ -246,6 +246,11 @@ function DeviceGUIPanel({
   // Render Container View (OLT/FDH with racks)
   const renderContainerView = () => {
     const racks = equipment.nodes.filter((n) => n.type === "RACK")
+    
+    console.log("[v0] Container View - Equipment:", equipment.name, "Type:", equipment.type)
+    console.log("[v0] Racks found:", racks.length)
+    console.log("[v0] Full equipment structure:", JSON.stringify(equipment, null, 2))
+    
     return (
       <div className="space-y-4">
         <div className="text-center mb-6">
@@ -330,6 +335,16 @@ function DeviceGUIPanel({
   const renderRackView = () => {
     if (!viewState.rack) return null
     const shelves = viewState.rack.nodes.filter((n) => n.type === "SHELF")
+    
+    console.log("[v0] Rack View - Rack:", viewState.rack.name, "Shelves found:", shelves.length)
+    shelves.forEach((shelf) => {
+      const slots = shelf.nodes.filter((n) => n.type === "SLOT")
+      console.log("[v0] Shelf:", shelf.name, "Slots:", slots.length)
+      slots.forEach((slot) => {
+        const card = slot.nodes.find((n) => n.type === "NETWORKCARD")
+        console.log("[v0]   Slot:", slot.name, "Card:", card?.name || "None", "Ports:", card?.nodes.length || 0)
+      })
+    })
 
     return (
       <div className="space-y-4">
@@ -411,6 +426,12 @@ function DeviceGUIPanel({
   const renderShelfView = () => {
     if (!viewState.shelf || !viewState.rack) return null
     const slots = viewState.shelf.nodes.filter((n) => n.type === "SLOT")
+    
+    console.log("[v0] Shelf View - Shelf:", viewState.shelf.name, "Slots found:", slots.length)
+    slots.forEach((slot) => {
+      const card = slot.nodes.find((n) => n.type === "NETWORKCARD")
+      console.log("[v0] Slot:", slot.name, "Has card:", !!card, card ? `Card: ${card.name}` : "")
+    })
 
     return (
       <div className="space-y-4">
