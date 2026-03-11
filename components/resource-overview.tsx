@@ -98,14 +98,22 @@ const getStatusColor = (status: string) => {
 }
 
 const getPortColor = (status: string) => {
-  switch (status) {
+  switch (status?.toUpperCase()) {
     case "ACTIVE":
       return "bg-emerald-500"
+    case "PENDING":
+      return "bg-amber-400"
+    case "RETIRED":
+      return "bg-rose-500"
+    case "FREE":
+      return "bg-sky-400"
+    // legacy fallbacks
     case "WARNING":
-      return "bg-amber-500"
+      return "bg-amber-400"
     case "INACTIVE":
+      return "bg-zinc-400"
     default:
-      return "bg-zinc-600"
+      return "bg-zinc-400"
   }
 }
 
@@ -247,11 +255,6 @@ function DeviceGUIPanel({
   // Render Container View (OLT/FDH with racks)
   const renderContainerView = () => {
     const racks = equipment.nodes.filter((n) => n.type === "RACK")
-    
-    console.log("[v0] Container View - Equipment:", equipment.name, "Type:", equipment.type)
-    console.log("[v0] Racks found:", racks.length)
-    console.log("[v0] Full equipment structure:", JSON.stringify(equipment, null, 2))
-    
     return (
       <div className="space-y-4">
         <div className="text-center mb-6">
@@ -332,20 +335,10 @@ function DeviceGUIPanel({
     )
   }
 
-  // Render Rack View (shelves inside rack)
+  // Render Rack View — shelves expanded inline, slots are directly clickable
   const renderRackView = () => {
     if (!viewState.rack) return null
     const shelves = viewState.rack.nodes.filter((n) => n.type === "SHELF")
-    
-    console.log("[v0] Rack View - Rack:", viewState.rack.name, "Shelves found:", shelves.length)
-    shelves.forEach((shelf) => {
-      const slots = shelf.nodes.filter((n) => n.type === "SLOT")
-      console.log("[v0] Shelf:", shelf.name, "Slots:", slots.length)
-      slots.forEach((slot) => {
-        const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
-        console.log("[v0]   Slot:", slot.name, "Card:", card?.name || "None", "Ports:", card?.nodes.length || 0)
-      })
-    })
 
     return (
       <div className="space-y-4">
@@ -356,27 +349,19 @@ function DeviceGUIPanel({
           </Button>
           <div>
             <h3 className="text-lg font-semibold text-foreground">{viewState.rack.name}</h3>
-            <p className="text-sm text-muted-foreground">Click on a Shelf to view slots</p>
+            <p className="text-sm text-muted-foreground">Click on a Slot to drill in</p>
           </div>
         </div>
 
-        <div className={cn("rounded-xl border-2 bg-card p-6 max-w-2xl mx-auto", getStatusBorder(viewState.rack.status))}>
-          <div className="space-y-4">
-            {shelves.map((shelf) => (
-              <motion.button
-                key={shelf.erId}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => navigateToShelf(shelf, viewState.rack!)}
-                className={cn(
-                  "w-full p-4 rounded-lg border-2 transition-all text-left",
-                  "bg-secondary/30 hover:bg-secondary/50",
-                  getStatusBorder(shelf.status)
-                )}
-              >
-                <div className="flex items-center justify-between mb-3">
+        <div className={cn("rounded-xl border-2 bg-card p-6 space-y-5 max-w-3xl mx-auto", getStatusBorder(viewState.rack.status))}>
+          {shelves.map((shelf) => {
+            const slots = shelf.nodes.filter((n) => n.type === "SLOT")
+            return (
+              <div key={shelf.erId} className={cn("rounded-lg border-2 p-4", getStatusBorder(shelf.status))}>
+                {/* Shelf header */}
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-muted-foreground" />
+                    <Layers className="h-4 w-4 text-primary" />
                     <span className="font-medium text-foreground">{shelf.name}</span>
                   </div>
                   <Badge
@@ -384,55 +369,62 @@ function DeviceGUIPanel({
                     className={cn(
                       "text-[10px]",
                       shelf.status === "ACTIVE"
-                        ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
-                        : "border-zinc-500/30 text-zinc-400"
+                        ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                        : "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     {shelf.status}
                   </Badge>
                 </div>
 
-                {/* Slots Preview Grid */}
-                <div className="grid grid-cols-4 gap-2">
-                  {shelf.nodes
-                    .filter((n) => n.type === "SLOT")
-                    .map((slot) => {
-                      const hasCard = slot.nodes.some((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
-                      return (
-                        <div
-                          key={slot.erId}
+                {/* Slots grid — each directly clickable */}
+                <div className="grid grid-cols-4 gap-3">
+                  {slots.map((slot) => {
+                    const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
+                    const hasCard = !!card
+                    return (
+                      <motion.button
+                        key={slot.erId}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => navigateToSlot(slot, shelf, viewState.rack!)}
+                        className={cn(
+                          "p-4 rounded-lg border-2 cursor-pointer transition-all text-center",
+                          "bg-card hover:bg-secondary/50",
+                          hasCard
+                            ? "border-primary/40 hover:border-primary/70"
+                            : "border-border/50 hover:border-border"
+                        )}
+                      >
+                        <Box
                           className={cn(
-                            "p-2 rounded border text-center text-xs font-mono",
-                            hasCard
-                              ? slot.status === "ACTIVE"
-                                ? "bg-emerald-500/30 border-emerald-500/40 text-emerald-300"
-                                : "bg-amber-500/20 border-amber-500/30 text-amber-300"
-                              : "bg-zinc-800/50 border-zinc-700/50 text-zinc-500"
+                            "h-8 w-8 mx-auto mb-2",
+                            hasCard ? "text-primary" : "text-muted-foreground"
                           )}
-                        >
-                          {slot.name}
-                        </div>
-                      )
-                    })}
+                        />
+                        <p className="font-mono text-sm font-semibold text-foreground">{slot.name}</p>
+                        {hasCard && card ? (
+                          <p className="text-xs text-primary mt-1">{card.name}</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-1">Empty</p>
+                        )}
+                      </motion.button>
+                    )
+                  })}
                 </div>
-              </motion.button>
-            ))}
-          </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     )
   }
 
-  // Render Shelf View - Show individual slots as clickable items
+  // Shelf view kept as fallback but rack view now handles slot navigation directly
   const renderShelfView = () => {
+    // Redirect: if we land here from rack, go to slot directly
     if (!viewState.shelf || !viewState.rack) return null
     const slots = viewState.shelf.nodes.filter((n) => n.type === "SLOT")
-    
-    console.log("[v0] Shelf View - Shelf:", viewState.shelf.name, "Slots found:", slots.length)
-    slots.forEach((slot) => {
-      const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
-      console.log("[v0] Slot:", slot.name, "Has card:", !!card, card ? `Card: ${card.name}` : "")
-    })
 
     return (
       <div className="space-y-4">
@@ -452,7 +444,6 @@ function DeviceGUIPanel({
             {slots.map((slot) => {
               const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
               const hasCard = !!card
-
               return (
                 <motion.button
                   key={slot.erId}
@@ -460,21 +451,18 @@ function DeviceGUIPanel({
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigateToSlot(slot, viewState.shelf!, viewState.rack!)}
                   className={cn(
-                    "p-4 rounded-lg border-2 transition-all cursor-pointer",
-                    "bg-secondary/30 hover:bg-secondary/50",
-                    getStatusBorder(slot.status)
+                    "p-4 rounded-lg border-2 transition-all cursor-pointer text-center",
+                    "bg-card hover:bg-secondary/50",
+                    hasCard ? "border-primary/40 hover:border-primary/70" : "border-border/50"
                   )}
                 >
-                  <div className="text-center">
-                    <Box className={cn("h-8 w-8 mx-auto mb-2", hasCard ? "text-primary" : "text-zinc-500")} />
-                    <p className="font-mono text-sm text-foreground">{slot.name}</p>
-                    {hasCard && card && (
-                      <p className="text-xs text-emerald-400 mt-1">{card.name}</p>
-                    )}
-                    {!hasCard && (
-                      <p className="text-xs text-zinc-500 mt-1">Empty Slot</p>
-                    )}
-                  </div>
+                  <Box className={cn("h-8 w-8 mx-auto mb-2", hasCard ? "text-primary" : "text-muted-foreground")} />
+                  <p className="font-mono text-sm font-semibold text-foreground">{slot.name}</p>
+                  {hasCard && card ? (
+                    <p className="text-xs text-primary mt-1">{card.name}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-1">Empty</p>
+                  )}
                 </motion.button>
               )
             })}
@@ -571,29 +559,33 @@ function DeviceGUIPanel({
             {ports.map((port) => (
               <motion.button
                 key={port.erId}
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigateToPorts(viewState.shelf!, viewState.slot!, viewState.card!, viewState.rack!)}
-                className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 border border-border/50 cursor-pointer transition-all"
+                className="flex flex-col items-center gap-2 p-3 rounded-lg bg-card hover:bg-secondary/50 border border-border cursor-pointer transition-all"
               >
                 <div
                   className={cn(
-                    "h-10 w-10 rounded-full shadow-lg flex items-center justify-center",
+                    "h-11 w-11 rounded-full shadow-lg flex items-center justify-center",
                     getPortColor(port.status)
                   )}
                 >
                   <Zap className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xs font-mono text-foreground">{port.name}</span>
+                <span className="text-xs font-mono font-semibold text-foreground">{port.name}</span>
                 <Badge
                   variant="outline"
                   className={cn(
-                    "text-[9px]",
-                    port.status === "ACTIVE"
-                      ? "border-emerald-500/30 text-emerald-400"
-                      : port.status === "WARNING"
-                      ? "border-amber-500/30 text-amber-400"
-                      : "border-zinc-500/30 text-zinc-400"
+                    "text-[9px] capitalize",
+                    port.status?.toUpperCase() === "ACTIVE"
+                      ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                      : port.status?.toUpperCase() === "PENDING"
+                      ? "border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-400/10"
+                      : port.status?.toUpperCase() === "RETIRED"
+                      ? "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/10"
+                      : port.status?.toUpperCase() === "FREE"
+                      ? "border-sky-400/40 text-sky-600 dark:text-sky-400 bg-sky-400/10"
+                      : "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
                   )}
                 >
                   {port.status}
