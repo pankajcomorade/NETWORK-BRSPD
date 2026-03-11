@@ -41,6 +41,9 @@ import {
   fetchAddressDetails,
   fetchNextConnection,
   fetchEquipmentConnection,
+  getMockAddressDetails,
+  getMockNextConnection,
+  getMockEquipmentConnection,
   type AddressDetailsResponse,
   type NextConnectionResponse,
   type EquipmentConnectionResponse,
@@ -188,7 +191,7 @@ export function SearchByAddress() {
   const handleOntPortClick = useCallback(async (port: ONTPort) => {
     setIsLoading(true)
     try {
-      const data = await fetchNextConnection(port.instanceId)
+      const data = await fetchNextConnection(port.portInstId)
       
       if (!data || !data.dropTerminal) {
         setError("No connection found for this port")
@@ -233,14 +236,16 @@ export function SearchByAddress() {
   const handleDtPortClick = useCallback(async (port: DropTerminalPort) => {
     setIsLoading(true)
     try {
-      const data = await fetchEquipmentConnection(port.equipInstId, port.instanceId)
+      const data = await fetchEquipmentConnection(port.equipInstId || 0, port.portInstId)
       
-      if (!data || !data.equipment) {
+      if (!data || !data.targetEquipment) {
         setError("No equipment found for this port")
         return
       }
 
       setFdhData(data)
+      
+      const fdhEquip = data.targetEquipment as { fdhId: string; name: string; status: string }
 
       // Update DT node with cable info and add FDH
       setDevices((prev) => {
@@ -256,12 +261,12 @@ export function SearchByAddress() {
         // Remove any nodes after DT and add FDH
         const newDevices = updated.slice(0, dtIndex + 1)
         newDevices.push({
-          id: data.equipment.id,
+          id: fdhEquip.fdhId,
           type: "fdh",
-          name: data.equipment.name,
-          status: data.equipment.status,
+          name: fdhEquip.name,
+          status: fdhEquip.status,
           cableToNext: "Feeder Cable",
-          data: { ...data.equipment },
+          data: { ...data.targetEquipment },
         })
 
         return newDevices
@@ -272,17 +277,18 @@ export function SearchByAddress() {
       // Auto-fetch OLT after FDH
       setTimeout(async () => {
         try {
-          const oltResponse = await fetchEquipmentConnection(data.equipment.id + "-olt", 0)
-          if (oltResponse?.equipment) {
+          const oltResponse = await fetchEquipmentConnection(parseInt(fdhEquip.fdhId.replace(/\D/g, "") || "0"), 0)
+          if (oltResponse?.targetEquipment) {
+            const oltEquip = oltResponse.targetEquipment as { oltId: string; name: string; status: string }
             setOltData(oltResponse)
             setDevices((prev) => {
               const newDevices = [...prev]
               newDevices.push({
-                id: oltResponse.equipment.id,
+                id: oltEquip.oltId,
                 type: "olt",
-                name: oltResponse.equipment.name,
-                status: oltResponse.equipment.status,
-                data: { ...oltResponse.equipment },
+                name: oltEquip.name,
+                status: oltEquip.status,
+                data: { ...oltResponse.targetEquipment },
               })
               return newDevices
             })
@@ -535,7 +541,7 @@ export function SearchByAddress() {
                               <div className="flex gap-2">
                                 {addressData.ont.ports.map((port) => (
                                   <button
-                                    key={port.id}
+                                    key={port.portId}
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       handleOntPortClick(port)
@@ -546,7 +552,7 @@ export function SearchByAddress() {
                                     <div className={cn("h-6 w-6 rounded-full flex items-center justify-center", getPortColor(port.status))}>
                                       <Zap className="h-3 w-3 text-white" />
                                     </div>
-                                    <span className="text-[10px] font-mono text-foreground">{port.name}</span>
+                                    <span className="text-[10px] font-mono text-foreground">{port.portName}</span>
                                   </button>
                                 ))}
                               </div>
@@ -559,16 +565,19 @@ export function SearchByAddress() {
                               <div className="grid grid-cols-4 gap-1">
                                 {dropTerminalData.dropTerminal.ports.map((port) => (
                                   <button
-                                    key={port.id}
+                                    key={port.portId}
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       handleDtPortClick(port)
                                     }}
-                                    disabled={isLoading}
-                                    className="flex flex-col items-center gap-1 p-1 rounded bg-secondary/50 hover:bg-secondary transition-colors"
+                                    disabled={isLoading || !port.equipInstId}
+                                    className={cn(
+                                      "flex flex-col items-center gap-1 p-1 rounded bg-secondary/50 hover:bg-secondary transition-colors",
+                                      !port.equipInstId && "opacity-50 cursor-not-allowed"
+                                    )}
                                   >
                                     <div className={cn("h-4 w-4 rounded-full", getPortColor(port.status))} />
-                                    <span className="text-[8px] font-mono text-foreground">{port.name}</span>
+                                    <span className="text-[8px] font-mono text-foreground">{port.portName}</span>
                                   </button>
                                 ))}
                               </div>
@@ -687,28 +696,29 @@ export function SearchByAddress() {
           {dialogType === "customer" && addressData?.customer && (
             <div className="space-y-3">
               <DetailRow label="Name" value={addressData.customer.name} />
-              <DetailRow label="Account ID" value={addressData.customer.accountId} />
-              <DetailRow label="Phone" value={addressData.customer.phone} />
-              <DetailRow label="Email" value={addressData.customer.email} />
+              <DetailRow label="Account Number" value={addressData.customer.accountNumber} />
+              <DetailRow label="Phone" value={addressData.customer.phone || "N/A"} />
+              <DetailRow label="Email" value={addressData.customer.email || "N/A"} />
+              <DetailRow label="Service Address" value={addressData.customer.serviceAddress} />
             </div>
           )}
 
           {dialogType === "service" && addressData?.service && (
             <div className="space-y-3">
-              <DetailRow label="Service Type" value={addressData.service.type} />
-              <DetailRow label="Plan" value={addressData.service.plan} />
-              <DetailRow label="Speed" value={addressData.service.speed} />
+              <DetailRow label="Service Name" value={addressData.service.serviceName} />
+              <DetailRow label="Service Type" value={addressData.service.serviceType} />
+              <DetailRow label="Plan" value={addressData.service.planName || "N/A"} />
+              <DetailRow label="Speed" value={addressData.service.speed || "N/A"} />
               <DetailRow label="Status" value={addressData.service.status} />
-              <DetailRow label="Activation Date" value={addressData.service.activationDate} />
             </div>
           )}
 
           {dialogType === "cpe" && addressData?.cpe && (
             <div className="space-y-3">
               <DetailRow label="Model" value={addressData.cpe.model} />
-              <DetailRow label="MAC Address" value={addressData.cpe.macAddress} />
-              <DetailRow label="Serial Number" value={addressData.cpe.serialNumber} />
-              <DetailRow label="Firmware" value={addressData.cpe.firmware} />
+              <DetailRow label="Manufacturer" value={addressData.cpe.manufacturer} />
+              <DetailRow label="MAC Address" value={addressData.cpe.macAddress || "N/A"} />
+              <DetailRow label="Serial Number" value={addressData.cpe.serialNumber || "N/A"} />
               <DetailRow label="Status" value={addressData.cpe.status} />
             </div>
           )}
