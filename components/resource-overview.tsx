@@ -734,8 +734,6 @@ export function ResourceOverview() {
   const handleSearch = useCallback(async () => {
     const equipmentName = searchQuery.trim() || DEFAULT_SEARCH_PARAMS.equipmentName
 
-    console.log("[v0] Search button clicked - Equipment:", equipmentName, "Category:", category)
-    
     setIsSearching(true)
     setError(null)
 
@@ -748,19 +746,22 @@ export function ResourceOverview() {
         equipInstId: DEFAULT_SEARCH_PARAMS.equipInstId,
       }
 
-      console.log("[v0] Calling API with params:", params)
-
       // Call the API - do NOT use mock fallback, show actual errors
       const apiResponse = await fetchEquipmentHierarchy(params, false)
       
-      console.log("[v0] API Response received:", apiResponse?.equipment?.name)
+      // Check if equipment is null (no record found)
+      if (!apiResponse.equipment) {
+        setSearchResult(null)
+        setSelectedNode(null)
+        setError("No record found for the specified equipment. Please check the equipment name and category.")
+        return
+      }
       
       // Convert to UI format
       const result = toEquipmentResponse(apiResponse)
       setSearchResult(result)
       setSelectedNode(result.equipment)
     } catch (err) {
-      console.error("[v0] API Error:", err)
       setError(err instanceof Error ? err.message : "Failed to fetch equipment hierarchy")
       setSearchResult(null)
       setSelectedNode(null)
