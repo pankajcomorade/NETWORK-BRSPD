@@ -676,18 +676,22 @@ function DeviceGUIPanel({
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-zinc-700/50">
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-6 pt-4 border-t border-border/50">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-emerald-500" />
                 <span className="text-xs text-muted-foreground">Active</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-amber-500" />
-                <span className="text-xs text-muted-foreground">Warning</span>
+                <div className="h-3 w-3 rounded-full bg-amber-400" />
+                <span className="text-xs text-muted-foreground">Pending</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-zinc-600" />
-                <span className="text-xs text-muted-foreground">Inactive</span>
+                <div className="h-3 w-3 rounded-full bg-rose-500" />
+                <span className="text-xs text-muted-foreground">Retired</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-sky-400" />
+                <span className="text-xs text-muted-foreground">Free</span>
               </div>
             </div>
           </div>
