@@ -603,18 +603,18 @@ function DeviceGUIPanel({
     if (!viewState.card || !viewState.shelf) return null
     const ports = viewState.card.nodes.filter((n) => n.type === "PORT")
 
-    const getPortColor = (status: string) => {
-      switch (status) {
+    const getPortColorLocal = (status: string) => {
+      switch (status?.toUpperCase()) {
         case "ACTIVE":
           return "bg-emerald-500"
-        case "INACTIVE":
-          return "bg-zinc-600"
-        case "WARNING":
-          return "bg-amber-500"
-        case "MAINTENANCE":
-          return "bg-sky-500"
+        case "PENDING":
+          return "bg-amber-400"
+        case "RETIRED":
+          return "bg-rose-500"
+        case "FREE":
+          return "bg-sky-400"
         default:
-          return "bg-zinc-600"
+          return "bg-zinc-400"
       }
     }
 
@@ -663,14 +663,14 @@ function DeviceGUIPanel({
                   <div
                     className={cn(
                       "h-10 w-10 rounded-full shadow-lg flex items-center justify-center",
-                      getPortColor(port.status)
+                      getPortColorLocal(port.status)
                     )}
                   >
                     <Zap className="h-5 w-5 text-white" />
                   </div>
                   {/* Port Label */}
                   <span className="text-xs font-mono text-foreground">{port.name}</span>
-                  <span className="text-[10px] text-muted-foreground">{port.status}</span>
+                  <span className="text-[10px] text-muted-foreground capitalize">{port.status}</span>
                 </motion.div>
               ))}
             </div>
