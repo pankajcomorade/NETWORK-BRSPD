@@ -71,6 +71,8 @@ export enum SubMenuId {
   ROLES_PERMISSIONS = "roles_permissions",
 
   // Resources
+  RES_SEARCH_EQUIPMENT = "res_search_equipment",
+  RES_SEARCH_ADDRESS = "res_search_address",
   RES_PHYSICAL = "res_physical",
   RES_LOGICAL = "res_logical",
 
@@ -78,6 +80,8 @@ export enum SubMenuId {
   NET_OVERVIEW = "net_overview",
   NET_TOPOLOGY = "net_topology",
   NET_PERFORMANCE = "net_performance",
+  NET_PHYSICAL_DEVICE = "net_physical_device",
+  NET_HIERARCHY = "net_hierarchy",
 
   // Locations
   LOC_SITES = "loc_sites",
@@ -161,6 +165,8 @@ export const MENU_CONFIG: MenuItem[] = [
     icon: Server,
     allowedRoles: [UserRole.ADMIN, UserRole.ENGINEER, UserRole.FIELD_TECH],
     subMenus: [
+      { id: SubMenuId.RES_SEARCH_EQUIPMENT, label: "Search by Equipment", allowedRoles: [] },
+      { id: SubMenuId.RES_SEARCH_ADDRESS, label: "Search by Address", allowedRoles: [] },
       { id: SubMenuId.RES_PHYSICAL, label: "Physical", allowedRoles: [] },
       { id: SubMenuId.RES_LOGICAL, label: "Logical", allowedRoles: [UserRole.ADMIN, UserRole.ENGINEER] },
     ],
@@ -174,6 +180,8 @@ export const MENU_CONFIG: MenuItem[] = [
       { id: SubMenuId.NET_OVERVIEW, label: "Overview", allowedRoles: [] },
       { id: SubMenuId.NET_TOPOLOGY, label: "Topology", allowedRoles: [] },
       { id: SubMenuId.NET_PERFORMANCE, label: "Performance", allowedRoles: [UserRole.ADMIN, UserRole.ENGINEER] },
+      { id: SubMenuId.NET_PHYSICAL_DEVICE, label: "Physical Device", allowedRoles: [] },
+      { id: SubMenuId.NET_HIERARCHY, label: "Hierarchy Explorer", allowedRoles: [] },
     ],
   },
   {

@@ -30,6 +30,7 @@ import {
   getMenusForRole,
   MENU_CONFIG,
 } from "@/lib/menu-config"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // ==========================================
 // Content components (placeholder + network)
@@ -319,6 +320,7 @@ export function PortalShell() {
 
             {/* Right side actions */}
             <div className="ml-auto flex items-center gap-2">
+              <ThemeToggle />
               {user?.provider === "microsoft_sso" && (
                 <Badge variant="outline" className="rounded-md text-[10px] border-sky-500/30 text-sky-400 bg-sky-500/10">
                   SSO
