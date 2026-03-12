@@ -144,8 +144,16 @@ export function SearchByAddress() {
     try {
       const data = await fetchAddressDetails(addressId.trim())
       
+      console.log("[v0] API Response received:", data)
+      
       // Check if we got valid data
-      if (!data || !data.address) {
+      if (!data) {
+        setError("No response received from API")
+        return
+      }
+
+      if (!data.address) {
+        console.log("[v0] No address in response:", data)
         setError("No record found for the specified Address ID")
         return
       }
@@ -209,10 +217,13 @@ export function SearchByAddress() {
     
     setIsLoading(true)
     try {
+      console.log("[v0] Calling fetchNextConnection with portInstId:", ont.portInstId)
       const data = await fetchNextConnection(ont.portInstId)
       
-      if (!data || !data.dropTerminal) {
-        setError("No connection found for this port")
+      console.log("[v0] fetchNextConnection response:", data)
+      
+      if (!data) {
+        setError("No response from connection API")
         return
       }
 
@@ -225,26 +236,33 @@ export function SearchByAddress() {
         if (ontIndex !== -1) {
           updated[ontIndex] = {
             ...updated[ontIndex],
-            cableToNext: data.cableName || "Drop Cable",
+            cableToNext: "Drop Cable",
           }
         }
 
         // Remove any nodes after ONT and add Drop Terminal
         const newDevices = updated.slice(0, ontIndex + 1)
-        newDevices.push({
-          id: data.dropTerminal.dropTerminalId,
-          type: "drop-terminal",
-          name: data.dropTerminal.name,
-          status: data.dropTerminal.status,
-          data: { ...data.dropTerminal },
-        })
+        
+        // Add Drop Terminal if available in response
+        if (data.dropTerminal || data.terminal) {
+          const terminalInfo = data.dropTerminal || data.terminal
+          newDevices.push({
+            id: terminalInfo.terminalId || terminalInfo.id || "dt-unknown",
+            type: "drop-terminal",
+            name: terminalInfo.name || "Drop Terminal",
+            status: terminalInfo.status || "Unknown",
+            cableToNext: "Distribution Cable",
+            data: { ...terminalInfo },
+          })
+        }
 
         return newDevices
       })
 
       setActiveIndex((prev) => prev + 1)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch connection")
+      console.error("[v0] Error fetching next connection:", err)
+      setError(err instanceof Error ? err.message : "Failed to fetch connection details")
     } finally {
       setIsLoading(false)
     }
