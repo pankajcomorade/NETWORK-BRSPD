@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { getCurrentEnvironment } from "@/lib/env-config"
+import { useToast } from "@/components/ui/use-toast"
 import {
   fetchAddressDetails,
   fetchNextConnection,
@@ -108,6 +109,7 @@ const getStatusBadgeClass = (status: string) => {
 }
 
 export function SearchByAddress() {
+  const { toast } = useToast()
   const [addressId, setAddressId] = useState("300000014542955")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -144,17 +146,22 @@ export function SearchByAddress() {
     try {
       const data = await fetchAddressDetails(addressId.trim())
       
-      console.log("[v0] API Response received:", data)
-      
       // Check if we got valid data
       if (!data) {
-        setError("No response received from API")
+        toast({
+          title: "Error",
+          description: "No response received from API",
+          variant: "destructive",
+        })
         return
       }
 
       if (!data.address) {
-        console.log("[v0] No address in response:", data)
-        setError("No record found for the specified Address ID")
+        toast({
+          title: "Error",
+          description: "No record found for the specified Address ID",
+          variant: "destructive",
+        })
         return
       }
 
@@ -202,16 +209,25 @@ export function SearchByAddress() {
       setDevices(deviceNodes)
       setActiveIndex(0)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch address details")
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch address details"
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
-  }, [addressId])
+  }, [addressId, toast])
 
   // Handle ONT port click - fetch Drop Terminal
   const handleOntPortClick = useCallback(async (ont: ONTInfo) => {
     if (!ont.portInstId) {
-      setError("No port information available for this ONT")
+      toast({
+        title: "Error",
+        description: "No port information available for this ONT",
+        variant: "destructive",
+      })
       return
     }
     
@@ -223,7 +239,21 @@ export function SearchByAddress() {
       console.log("[v0] fetchNextConnection response:", data)
       
       if (!data) {
-        setError("No response from connection API")
+        toast({
+          title: "Error",
+          description: "No response from connection API",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Handle error response from API
+      if (data.error) {
+        toast({
+          title: "Connection Error",
+          description: data.error,
+          variant: "destructive",
+        })
         return
       }
 
@@ -240,19 +270,25 @@ export function SearchByAddress() {
           }
         }
 
-        // Remove any nodes after ONT and add Drop Terminal
+        // Remove any nodes after ONT and add Drop Terminal/connected device
         const newDevices = updated.slice(0, ontIndex + 1)
         
-        // Add Drop Terminal if available in response
-        if (data.dropTerminal || data.terminal) {
-          const terminalInfo = data.dropTerminal || data.terminal
+        // The API returns link.peer which is the connected equipment
+        if (data.link && data.link.peer) {
+          const peer = data.link.peer
+          const cableName = data.link.cable?.name || "Drop Cable"
+          
           newDevices.push({
-            id: terminalInfo.terminalId || terminalInfo.id || "dt-unknown",
+            id: `dt-${peer.equipInstId || "unknown"}`,
             type: "drop-terminal",
-            name: terminalInfo.name || "Drop Terminal",
-            status: terminalInfo.status || "Unknown",
+            name: peer.portName || `Equipment-${peer.equipInstId}`,
+            status: peer.portStatus || "Unknown",
             cableToNext: "Distribution Cable",
-            data: { ...terminalInfo },
+            data: {
+              ...peer,
+              linkStatus: data.link.status,
+              cableName: cableName,
+            },
           })
         }
 
@@ -260,13 +296,23 @@ export function SearchByAddress() {
       })
 
       setActiveIndex((prev) => prev + 1)
+      
+      toast({
+        title: "Success",
+        description: "Connection trace completed",
+      })
     } catch (err) {
       console.error("[v0] Error fetching next connection:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch connection details")
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch connection details"
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [toast])
 
   // Handle Drop Terminal port click - fetch FDH
   const handleDtPortClick = useCallback(async (port: DropTerminalPort) => {
