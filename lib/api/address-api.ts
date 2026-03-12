@@ -118,7 +118,7 @@ export async function fetchAddressDetails(
     },
     cache: "no-store",
   })
-
+  
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
     throw new Error(errorData.error || `API Error: ${response.status}`)
