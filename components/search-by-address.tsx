@@ -146,7 +146,6 @@ export function SearchByAddress() {
 
     try {
       const data = await fetchAddressDetails(addressId.trim())
-      
       if (!data || !data.customer) {
         setError("No record found for the specified Address ID")
         return
