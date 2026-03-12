@@ -41,14 +41,11 @@ import {
   fetchAddressDetails,
   fetchNextConnection,
   fetchEquipmentConnection,
-  getMockAddressDetails,
-  getMockNextConnection,
-  getMockEquipmentConnection,
   type AddressDetailsResponse,
   type NextConnectionResponse,
   type EquipmentConnectionResponse,
-  type ONTPort,
   type DropTerminalPort,
+  type ONTInfo,
 } from "@/lib/api/address-api"
 
 const currentEnv = getCurrentEnvironment()
@@ -111,7 +108,7 @@ const getStatusBadgeClass = (status: string) => {
 }
 
 export function SearchByAddress() {
-  const [addressId, setAddressId] = useState("12345678")
+  const [addressId, setAddressId] = useState("300000014542955")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -146,38 +143,55 @@ export function SearchByAddress() {
 
     try {
       const data = await fetchAddressDetails(addressId.trim())
-      if (!data || !data.customer) {
+      
+      // Check if we got valid data
+      if (!data || !data.address) {
         setError("No record found for the specified Address ID")
         return
       }
 
       setAddressData(data)
 
-      // Build initial device chain with Home and ONT
+      // Build address string
+      const addressStr = [
+        data.address.addressLine1,
+        data.address.addressLine2,
+        data.address.city,
+        data.address.state,
+        data.address.postalCode
+      ].filter(Boolean).join(", ")
+
+      // Build initial device chain with Home
       const homeNode: DeviceNode = {
         id: "home-" + addressId,
         type: "home",
-        name: data.address || "Home",
+        name: addressStr || "Home",
         status: "active",
         cableToNext: "Drop Cable",
         data: {
-          customer: data.customer,
-          service: data.service,
-          cpe: data.cpe,
+          address: data.address,
+          customer: data.primaryCustomer,
+          service: data.primaryService,
         },
       }
 
-      const ontNode: DeviceNode = {
-        id: data.ont.id,
-        type: "ont",
-        name: data.ont.model,
-        status: data.ont.status,
-        data: {
-          ...data.ont,
-        },
+      const deviceNodes: DeviceNode[] = [homeNode]
+
+      // Add ONT node if available
+      if (data.ont) {
+        const ontNode: DeviceNode = {
+          id: `ont-${data.ont.ontId}`,
+          type: "ont",
+          name: data.ont.model || `ONT-${data.ont.ontId}`,
+          status: data.ont.status || "Unknown",
+          data: {
+            ...data.ont,
+          },
+        }
+        deviceNodes.push(ontNode)
       }
 
-      setDevices([homeNode, ontNode])
+      setDevices(deviceNodes)
       setActiveIndex(0)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch address details")
@@ -187,10 +201,15 @@ export function SearchByAddress() {
   }, [addressId])
 
   // Handle ONT port click - fetch Drop Terminal
-  const handleOntPortClick = useCallback(async (port: ONTPort) => {
+  const handleOntPortClick = useCallback(async (ont: ONTInfo) => {
+    if (!ont.portInstId) {
+      setError("No port information available for this ONT")
+      return
+    }
+    
     setIsLoading(true)
     try {
-      const data = await fetchNextConnection(port.portInstId)
+      const data = await fetchNextConnection(ont.portInstId)
       
       if (!data || !data.dropTerminal) {
         setError("No connection found for this port")
@@ -213,7 +232,7 @@ export function SearchByAddress() {
         // Remove any nodes after ONT and add Drop Terminal
         const newDevices = updated.slice(0, ontIndex + 1)
         newDevices.push({
-          id: data.dropTerminal.id,
+          id: data.dropTerminal.dropTerminalId,
           type: "drop-terminal",
           name: data.dropTerminal.name,
           status: data.dropTerminal.status,
@@ -521,13 +540,17 @@ export function SearchByAddress() {
                                           e.stopPropagation()
                                           openDialog("cpe")
                                         }}
-                                        className="flex-1 p-2 rounded-lg bg-secondary/50 hover:bg-secondary text-xs text-center transition-colors"
+                                        disabled={!addressData?.ont}
+                                        className={cn(
+                                          "flex-1 p-2 rounded-lg bg-secondary/50 hover:bg-secondary text-xs text-center transition-colors",
+                                          !addressData?.ont && "opacity-50 cursor-not-allowed"
+                                        )}
                                       >
                                         <Router className="h-3.5 w-3.5 mx-auto mb-1 text-primary" />
-                                        CPE
+                                        ONT
                                       </button>
                                     </TooltipTrigger>
-                                    <TooltipContent>Click for details</TooltipContent>
+                                    <TooltipContent>Click for ONT details</TooltipContent>
                                   </Tooltip>
                                 </div>
                               </TooltipProvider>
@@ -536,25 +559,26 @@ export function SearchByAddress() {
 
                           {device.type === "ont" && addressData?.ont && (
                             <div className="mt-3">
-                              <p className="text-[10px] text-muted-foreground mb-2">Click a port to trace connection</p>
-                              <div className="flex gap-2">
-                                {addressData.ont.ports.map((port) => (
-                                  <button
-                                    key={port.portId}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleOntPortClick(port)
-                                    }}
-                                    disabled={isLoading}
-                                    className="flex flex-col items-center gap-1 p-2 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-                                  >
-                                    <div className={cn("h-6 w-6 rounded-full flex items-center justify-center", getPortColor(port.status))}>
-                                      <Zap className="h-3 w-3 text-white" />
-                                    </div>
-                                    <span className="text-[10px] font-mono text-foreground">{port.portName}</span>
-                                  </button>
-                                ))}
-                              </div>
+                              <p className="text-[10px] text-muted-foreground mb-2">
+                                ONT ID: {addressData.ont.ontId} | Serial: {addressData.ont.ontSerial || "N/A"}
+                              </p>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleOntPortClick(addressData.ont!)
+                                }}
+                                disabled={isLoading || !addressData.ont.portInstId}
+                                className={cn(
+                                  "flex items-center gap-2 p-2 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors w-full justify-center",
+                                  (!addressData.ont.portInstId) && "opacity-50 cursor-not-allowed"
+                                )}
+                              >
+                                <div className={cn("h-6 w-6 rounded-full flex items-center justify-center", getPortColor(addressData.ont.status))}>
+                                  <Zap className="h-3 w-3 text-white" />
+                                </div>
+                                <span className="text-xs font-medium text-foreground">Trace Connection</span>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              </button>
                             </div>
                           )}
 
@@ -688,37 +712,42 @@ export function SearchByAddress() {
               {dialogType === "cpe" && <Router className="h-5 w-5 text-primary" />}
               {dialogType === "customer" && "Customer Details"}
               {dialogType === "service" && "Service Details"}
-              {dialogType === "cpe" && "CPE Details"}
+              {dialogType === "cpe" && "ONT Details"}
             </DialogTitle>
           </DialogHeader>
 
-          {dialogType === "customer" && addressData?.customer && (
+          {dialogType === "customer" && addressData?.primaryCustomer && (
             <div className="space-y-3">
-              <DetailRow label="Name" value={addressData.customer.name} />
-              <DetailRow label="Account Number" value={addressData.customer.accountNumber} />
-              <DetailRow label="Phone" value={addressData.customer.phone || "N/A"} />
-              <DetailRow label="Email" value={addressData.customer.email || "N/A"} />
-              <DetailRow label="Service Address" value={addressData.customer.serviceAddress} />
+              <DetailRow 
+                label="Name" 
+                value={[addressData.primaryCustomer.customerFirstName, addressData.primaryCustomer.customerLastName].filter(Boolean).join(" ") || "N/A"} 
+              />
+              <DetailRow label="Customer ID" value={addressData.primaryCustomer.customerId || "N/A"} />
+              <DetailRow label="Customer Type" value={addressData.primaryCustomer.customerType || "N/A"} />
+              <DetailRow label="Total Services" value={String(addressData.primaryCustomer.services?.length || 0)} />
             </div>
           )}
 
-          {dialogType === "service" && addressData?.service && (
+          {dialogType === "service" && addressData?.primaryService && (
             <div className="space-y-3">
-              <DetailRow label="Service Name" value={addressData.service.serviceName} />
-              <DetailRow label="Service Type" value={addressData.service.serviceType} />
-              <DetailRow label="Plan" value={addressData.service.planName || "N/A"} />
-              <DetailRow label="Speed" value={addressData.service.speed || "N/A"} />
-              <DetailRow label="Status" value={addressData.service.status} />
+              <DetailRow label="Service ID" value={String(addressData.primaryService.serviceId)} />
+              <DetailRow label="Service Name" value={addressData.primaryService.serviceName || "N/A"} />
+              <DetailRow label="Service Type" value={addressData.primaryService.serviceType || "N/A"} />
+              <DetailRow label="Status" value={addressData.primaryService.serviceStatus} />
+              <DetailRow label="Speed" value={addressData.primaryService.speed || "N/A"} />
+              <DetailRow label="VLAN" value={addressData.primaryService.vlan || "N/A"} />
+              <DetailRow label="Activation Date" value={addressData.primaryService.activationDate || "N/A"} />
             </div>
           )}
 
-          {dialogType === "cpe" && addressData?.cpe && (
+          {dialogType === "cpe" && addressData?.ont && (
             <div className="space-y-3">
-              <DetailRow label="Model" value={addressData.cpe.model} />
-              <DetailRow label="Manufacturer" value={addressData.cpe.manufacturer} />
-              <DetailRow label="MAC Address" value={addressData.cpe.macAddress || "N/A"} />
-              <DetailRow label="Serial Number" value={addressData.cpe.serialNumber || "N/A"} />
-              <DetailRow label="Status" value={addressData.cpe.status} />
+              <DetailRow label="ONT ID" value={String(addressData.ont.ontId)} />
+              <DetailRow label="Model" value={addressData.ont.model || "N/A"} />
+              <DetailRow label="Serial Number" value={addressData.ont.ontSerial || "N/A"} />
+              <DetailRow label="Status" value={addressData.ont.status} />
+              <DetailRow label="Port Instance ID" value={String(addressData.ont.portInstId)} />
+              <DetailRow label="Equipment Instance ID" value={String(addressData.ont.equipInstId)} />
             </div>
           )}
         </DialogContent>

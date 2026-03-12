@@ -1,56 +1,66 @@
 // Address Search API Service
 import { getBaseUrl, type Environment } from "@/lib/env-config"
 
-// Types based on wireframe flow
-export interface CustomerInfo {
-  customerId: string
-  name: string
-  accountNumber: string
-  phone?: string
-  email?: string
-  serviceAddress: string
+// Types based on actual API response structure
+// GET /brspd/nextgenfiber/fetchAddressDetails?addressId={addressId}
+
+export interface AddressCoordinates {
+  lat: number
+  lon: number
 }
 
-export interface ServiceInfo {
-  serviceId: string
-  serviceName: string
-  serviceType: string
-  status: "Active" | "Pending" | "Suspended" | "Inactive"
-  speed?: string
-  planName?: string
-}
-
-export interface CPEInfo {
-  cpeId: string
-  model: string
-  manufacturer: string
-  macAddress?: string
-  serialNumber?: string
-  status: "Online" | "Offline" | "Pending"
-}
-
-export interface ONTPort {
-  portId: string
-  portInstId: number
-  portName: string
-  status: "Active" | "Pending" | "Free" | "Retired"
+export interface AddressInfo {
+  addressId: string
+  addressLine1: string
+  addressLine2: string | null
+  city: string
+  state: string
+  postalCode: string | null
+  country: string | null
+  coordinates: AddressCoordinates | null
+  status: string | null
 }
 
 export interface ONTInfo {
-  ontId: string
-  ontInstId: number
-  model: string
-  serialNumber: string
-  status: "Active" | "Pending" | "Offline"
-  ports: ONTPort[]
+  ontId: number
+  ontSerial: string | null
+  model: string | null
+  status: string
+  portInstId: number
+  equipInstId: number
 }
 
+export interface ServiceInfo {
+  serviceId: number
+  serviceType: string | null
+  serviceName: string | null
+  serviceStatus: string
+  speed: string | null
+  vlan: string | null
+  activationDate: string | null
+  ont: ONTInfo | null
+}
+
+export interface CustomerInfo {
+  customerId: string | null
+  customerFirstName: string | null
+  customerLastName: string | null
+  customerType: string | null
+  services: ServiceInfo[]
+}
+
+export interface AddressDetailsAPIResponse {
+  address: AddressInfo | null
+  customers: CustomerInfo[]
+}
+
+// Transformed response for UI consumption
 export interface AddressDetailsResponse {
-  addressId: string
-  address: string
-  customer: CustomerInfo | null
-  service: ServiceInfo | null
-  cpe: CPEInfo | null
+  address: AddressInfo | null
+  customers: CustomerInfo[]
+  // Computed helpers for easier UI access
+  primaryCustomer: CustomerInfo | null
+  primaryService: ServiceInfo | null
   ont: ONTInfo | null
 }
 
@@ -102,8 +112,25 @@ export interface EquipmentConnectionResponse {
 }
 
 /**
+ * Transform raw API response to UI-friendly format
+ */
+function transformAddressResponse(raw: AddressDetailsAPIResponse): AddressDetailsResponse {
+  const primaryCustomer = raw.customers?.[0] || null
+  const primaryService = primaryCustomer?.services?.[0] || null
+  const ont = primaryService?.ont || null
+
+  return {
+    address: raw.address,
+    customers: raw.customers || [],
+    primaryCustomer,
+    primaryService,
+    ont,
+  }
+}
+
+/**
  * Fetch address details from the API
- * Returns customer, service, CPE, and ONT information for a given address ID
+ * Returns address, customer, service, and ONT information for a given address ID
  */
 export async function fetchAddressDetails(
   addressId: string
@@ -124,7 +151,8 @@ export async function fetchAddressDetails(
     throw new Error(errorData.error || `API Error: ${response.status}`)
   }
 
-  return response.json()
+  const data: AddressDetailsAPIResponse = await response.json()
+  return transformAddressResponse(data)
 }
 
 /**
@@ -180,100 +208,4 @@ export async function fetchEquipmentConnection(
   return response.json()
 }
 
-// Mock data generators for development
-export function getMockAddressDetails(addressId: string): AddressDetailsResponse {
-  return {
-    addressId,
-    address: "123 Main Street, Buffalo, NY 14201",
-    customer: {
-      customerId: "CUST-" + addressId,
-      name: "John Smith",
-      accountNumber: "ACC-123456789",
-      phone: "(716) 555-0123",
-      email: "john.smith@email.com",
-      serviceAddress: "123 Main Street, Buffalo, NY 14201",
-    },
-    service: {
-      serviceId: "SVC-" + addressId,
-      serviceName: "Fiber Internet",
-      serviceType: "Residential Fiber",
-      status: "Active",
-      speed: "1 Gbps",
-      planName: "Brightspeed Fiber 1G",
-    },
-    cpe: {
-      cpeId: "CPE-" + addressId,
-      model: "RAX50",
-      manufacturer: "NETGEAR",
-      macAddress: "AA:BB:CC:DD:EE:FF",
-      serialNumber: "SN-12345678",
-      status: "Online",
-    },
-    ont: {
-      ontId: "ONT-" + addressId,
-      ontInstId: 987654,
-      model: "GP1100X",
-      serialNumber: "ONT-SN-87654321",
-      status: "Active",
-      ports: [
-        { portId: "P1", portInstId: 197873, portName: "GE1", status: "Active" },
-        { portId: "P2", portInstId: 197874, portName: "GE2", status: "Free" },
-      ],
-    },
-  }
-}
-
-export function getMockNextConnection(portInstId: number): NextConnectionResponse {
-  return {
-    dropTerminal: {
-      dropTerminalId: "DT-" + portInstId,
-      dropTerminalInstId: 456789,
-      name: "DT-MAIN-001",
-      model: "DT-4P",
-      status: "Active",
-      ports: [
-        { portId: "DP1", portInstId: 300001, portName: "P1", status: "Active", equipInstId: 12345 },
-        { portId: "DP2", portInstId: 300002, portName: "P2", status: "Active", equipInstId: 12345 },
-        { portId: "DP3", portInstId: 300003, portName: "P3", status: "Free" },
-        { portId: "DP4", portInstId: 300004, portName: "P4", status: "Pending" },
-      ],
-    },
-    cableName: "Drop Cable DC-001",
-    cableType: "Drop",
-  }
-}
-
-export function getMockEquipmentConnection(
-  equipInstId: number,
-  portInstId: number,
-  type: "FDH" | "OLT"
-): EquipmentConnectionResponse {
-  if (type === "FDH") {
-    return {
-      sourceEquipment: "Drop Terminal",
-      targetEquipment: {
-        fdhId: "FDH-" + equipInstId,
-        fdhInstId: equipInstId,
-        name: "FDH-BUFFALO-001",
-        status: "Active",
-        location: "Buffalo Central Office",
-      } as FDHInfo,
-      cableName: "Distribution Cable DIST-001",
-      cableType: "Distribution",
-      equipmentType: "FDH",
-    }
-  }
-  return {
-    sourceEquipment: "FDH",
-    targetEquipment: {
-      oltId: "OLT-" + equipInstId,
-      oltInstId: equipInstId,
-      name: "BUFTNCXAH07",
-      status: "Active",
-      location: "Buffalo Main Hub",
-    } as OLTInfo,
-    cableName: "Feeder Cable FDR-001",
-    cableType: "Feeder",
-    equipmentType: "OLT",
-  }
-}
+// Mock data generators removed - using real API only
