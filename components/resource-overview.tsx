@@ -12,6 +12,7 @@ import {
   Zap,
   ChevronRight,
   ChevronDown,
+  ChevronLeft,
   ArrowLeft,
   Filter,
   Loader2,
@@ -529,7 +530,7 @@ function DeviceGUIPanel({
               )}
             >
               <div className="flex items-center gap-4">
-                <CircuitBoard className="h-12 w-12 text-primary" />
+                <Cpu className="h-12 w-12 text-primary" />
                 <div className="text-left">
                   <p className="font-mono text-lg text-foreground">{card.name}</p>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -943,74 +944,99 @@ export function ResourceOverview() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-          {/* Hierarchy Tree Panel - Left Side */}
-          {showHierarchy && (
-            <Card className="lg:col-span-3 rounded-lg border-border/50 h-fit">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm text-foreground">Hierarchy</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowHierarchy(false)}
-                    className="h-6 w-6 p-0"
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="max-h-[500px] overflow-y-auto px-3 pb-2">
-                  <HierarchyTreeNode
-                    node={searchResult.equipment}
-                    onSelect={handleNodeSelect}
-                    selectedNode={selectedNode}
-                  />
-                </div>
-
-                {/* Summary Stats */}
-                {showSummary && (
-                  <div className="border-t border-border/50 px-3 py-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[10px] text-muted-foreground">Summary</p>
+          {/* Hierarchy Tree Panel - Left Side with Slide Animation */}
+          <AnimatePresence>
+            {showHierarchy && (
+              <motion.div
+                initial={{ x: -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -300, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="lg:col-span-3"
+              >
+                <Card className="rounded-lg border-border/50 h-fit">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm text-foreground">Hierarchy</CardTitle>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setShowSummary(false)}
-                        className="h-5 w-5 p-0"
+                        onClick={() => setShowHierarchy(false)}
+                        className="h-6 w-6 p-0"
                       >
-                        <X className="h-3 w-3" />
+                        <ChevronLeft className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-3 gap-1">
-                      {Object.entries(searchResult.summary.countsByType).map(([type, count]) => (
-                        <div
-                          key={type}
-                          className="text-center p-1 rounded bg-secondary/30 border border-border/30"
-                        >
-                          <p className="text-xs font-bold text-foreground">{count}</p>
-                          <p className="text-[8px] text-muted-foreground">{type}</p>
-                        </div>
-                      ))}
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="max-h-[500px] overflow-y-auto px-3 pb-2">
+                      <HierarchyTreeNode
+                        node={searchResult.equipment}
+                        onSelect={handleNodeSelect}
+                        selectedNode={selectedNode}
+                      />
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
 
-          {/* Toggle to show/hide hierarchy */}
+                    {/* Summary Stats - Toggle Show/Hide */}
+                    <motion.div
+                      initial={showSummary ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }}
+                      animate={showSummary ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="border-t border-border/50 px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-[10px] text-muted-foreground">Summary</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowSummary(!showSummary)}
+                          className="h-5 w-5 p-0"
+                        >
+                          {showSummary ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                      {showSummary && (
+                        <div className="grid grid-cols-3 gap-1">
+                          {Object.entries(searchResult.summary.countsByType).map(([type, count]) => (
+                            <div
+                              key={type}
+                              className="text-center p-1 rounded bg-secondary/30 border border-border/30"
+                            >
+                              <p className="text-xs font-bold text-foreground">{count}</p>
+                              <p className="text-[8px] text-muted-foreground">{type}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Toggle Button to show/hide hierarchy - Slide in from left */}
           {!showHierarchy && (
-            <div className="lg:col-span-1 flex items-center justify-center">
+            <motion.div
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -50, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="lg:col-span-1 flex items-center justify-center"
+            >
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowHierarchy(true)}
                 className="h-8 px-2 text-xs"
               >
-                <ChevronDown className="h-3 w-3" />
+                <ChevronRight className="h-3 w-3" />
               </Button>
-            </div>
+            </motion.div>
           )}
 
           {/* Device GUI Panel - Right Side */}

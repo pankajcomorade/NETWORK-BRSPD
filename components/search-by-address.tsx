@@ -126,7 +126,8 @@ export function SearchByAddress() {
 
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [dialogType, setDialogType] = useState<"customer" | "service" | "cpe" | null>(null)
+  const [dialogType, setDialogType] = useState<"customer" | "service" | "cpe" | "olt" | null>(null)
+  const [selectedOlt, setSelectedOlt] = useState<DeviceNode | null>(null)
 
   // Search handler
   const handleSearch = useCallback(async () => {
@@ -681,18 +682,30 @@ export function SearchByAddress() {
                           {device.type === "olt" && (
                             <div className="mt-3">
                               <p className="text-[10px] text-muted-foreground">Connected via Feeder Cable</p>
-                              <p className="text-xs text-foreground mt-1">ID: {device.id}</p>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedOlt(device)
+                                  setDialogType("olt")
+                                  setDialogOpen(true)
+                                }}
+                                className="text-xs text-foreground hover:text-primary transition-colors mt-1"
+                              >
+                                ID: <span className="cursor-pointer underline underline-offset-2 hover:no-underline">{device.id}</span>
+                              </button>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 className="mt-2 h-7 text-xs w-full"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  // Navigate to Equipment Search with this OLT
+                                  setSelectedOlt(device)
+                                  setDialogType("olt")
+                                  setDialogOpen(true)
                                 }}
                               >
                                 <Info className="h-3 w-3 mr-1" />
-                                View Hierarchy
+                                View Details
                               </Button>
                             </div>
                           )}
@@ -774,9 +787,11 @@ export function SearchByAddress() {
               {dialogType === "customer" && <User className="h-5 w-5 text-primary" />}
               {dialogType === "service" && <Wifi className="h-5 w-5 text-primary" />}
               {dialogType === "cpe" && <Router className="h-5 w-5 text-primary" />}
+              {dialogType === "olt" && <Server className="h-5 w-5 text-primary" />}
               {dialogType === "customer" && "Customer Details"}
               {dialogType === "service" && "Service Details"}
               {dialogType === "cpe" && "ONT Details"}
+              {dialogType === "olt" && "OLT Details"}
             </DialogTitle>
           </DialogHeader>
 
@@ -812,6 +827,20 @@ export function SearchByAddress() {
               <DetailRow label="Status" value={addressData.ont.status} />
               <DetailRow label="Port Instance ID" value={String(addressData.ont.portInstId)} />
               <DetailRow label="Equipment Instance ID" value={String(addressData.ont.equipInstId)} />
+            </div>
+          )}
+
+          {dialogType === "olt" && selectedOlt && (
+            <div className="space-y-3">
+              <DetailRow label="Name" value={selectedOlt.name} />
+              <DetailRow label="Type" value={selectedOlt.type} />
+              <DetailRow label="Status" value={selectedOlt.status} />
+              <DetailRow label="Equipment ID" value={selectedOlt.id} />
+              {selectedOlt.data && Object.entries(selectedOlt.data).length > 0 && (
+                <>
+                  <DetailRow label="Total Connections" value={String(Object.keys(selectedOlt.data).length)} />
+                </>
+              )}
             </div>
           )}
         </DialogContent>
