@@ -808,6 +808,7 @@ export function ResourceOverview() {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="olt">OLT</SelectItem>
+                <SelectItem value="ont">ONT</SelectItem>
                 <SelectItem value="fdh">FDH</SelectItem>
                 <SelectItem value="ap">Access Point</SelectItem>
               </SelectContent>
