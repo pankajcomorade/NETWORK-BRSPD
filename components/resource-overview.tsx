@@ -590,8 +590,8 @@ function DeviceGUIPanel({
                 disabled={!isPortClickable(port.status)}
                 className={cn(
                   "flex flex-col items-center gap-1 p-2 rounded-lg border transition-all",
-                  isPortClickable(port.status) 
-                    ? "bg-card hover:bg-secondary/50 cursor-pointer border-border" 
+                  isPortClickable(port.status)
+                    ? "bg-card hover:bg-secondary/50 cursor-pointer border-border"
                     : "bg-card cursor-not-allowed border-border opacity-50"
                 )}
               >
@@ -611,12 +611,12 @@ function DeviceGUIPanel({
                     port.status?.toUpperCase() === "FREE"
                       ? "border-green-500/40 text-green-600 dark:text-green-400 bg-green-500/10"
                       : port.status?.toUpperCase() === "BUSY"
-                      ? "border-red-500/40 text-red-600 dark:text-red-400 bg-red-500/10"
-                      : port.status?.toUpperCase() === "PENDING"
-                      ? "border-yellow-400/40 text-yellow-600 dark:text-yellow-400 bg-yellow-400/10"
-                      : port.status?.toUpperCase() === "RETIRED"
-                      ? "border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10"
-                      : "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
+                        ? "border-red-500/40 text-red-600 dark:text-red-400 bg-red-500/10"
+                        : port.status?.toUpperCase() === "PENDING"
+                          ? "border-yellow-400/40 text-yellow-600 dark:text-yellow-400 bg-yellow-400/10"
+                          : port.status?.toUpperCase() === "RETIRED"
+                            ? "border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10"
+                            : "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
                   )}
                 >
                   {port.status}
@@ -833,7 +833,7 @@ export function ResourceOverview() {
 
       // Call the API - do NOT use mock fallback, show actual errors
       const apiResponse = await fetchEquipmentHierarchy(params, false)
-      
+
       // Check if equipment is null (no record found)
       if (!apiResponse.equipment) {
         setSearchResult(null)
@@ -841,7 +841,7 @@ export function ResourceOverview() {
         setError("No record found for the specified equipment. Please check the equipment name and category.")
         return
       }
-      
+
       // Convert to UI format
       const result = toEquipmentResponse(apiResponse)
       setSearchResult(result)
@@ -891,7 +891,7 @@ export function ResourceOverview() {
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="">All Categories</SelectItem>
                 <SelectItem value="olt">OLT</SelectItem>
                 <SelectItem value="ont">ONT</SelectItem>
                 <SelectItem value="fdh">FDH</SelectItem>
