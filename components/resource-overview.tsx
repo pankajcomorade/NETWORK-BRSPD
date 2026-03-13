@@ -979,8 +979,8 @@ export function ResourceOverview() {
 
                     {/* Summary Stats - Toggle Show/Hide */}
                     <motion.div
-                      initial={showSummary ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }}
-                      animate={showSummary ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }}
+                      initial={showSummary ? { opacity: 1, height: "auto" } : { opacity: 1, height: "auto" }}
+                      animate={showSummary ? { opacity: 1, height: "auto" } : { opacity: 1, height: "auto" }}
                       transition={{ duration: 0.2 }}
                       className="border-t border-border/50 px-3 py-2"
                     >
