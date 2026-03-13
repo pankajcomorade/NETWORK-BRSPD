@@ -21,7 +21,7 @@ export interface EquipmentHierarchyResponse {
 
 export interface EquipmentSearchParams {
   equipmentName: string
-  equipCategory: "OLT" | "FDH" | "AP"
+  equipCategory: "OLT" | "FDH" | "AP" | "";
   portInstId?: number
   equipInstId?: number
 }
@@ -29,7 +29,7 @@ export interface EquipmentSearchParams {
 // Default hardcoded params for initial implementation
 export const DEFAULT_SEARCH_PARAMS: EquipmentSearchParams = {
   equipmentName: "BUFTNCXAH07",
-  equipCategory: "OLT",
+  equipCategory: "",
   portInstId: 197873,
   equipInstId: 12345678,
 }
@@ -79,18 +79,18 @@ export async function fetchEquipmentHierarchy(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
     console.error("[v0] API Error:", errorData)
-    
+
     if (useMockOnError) {
       console.log("[v0] Falling back to mock data")
       return getMockEquipmentHierarchy(params)
     }
-    
+
     throw new Error(errorData.error || `API Error: ${response.status} ${response.statusText}`)
   }
 
   const data = await response.json()
   console.log("[v0] API Success - Equipment data received:", data.equipment?.name)
-  
+
   return data
 }
 
@@ -278,12 +278,12 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
  */
 export function calculateHierarchySummary(node: EquipmentNode): Record<string, number> {
   const counts: Record<string, number> = {}
-  
+
   function traverse(n: EquipmentNode) {
     counts[n.type] = (counts[n.type] || 0) + 1
     n.nodes.forEach(traverse)
   }
-  
+
   traverse(node)
   return counts
 }
