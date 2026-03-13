@@ -21,7 +21,7 @@ export interface EquipmentHierarchyResponse {
 
 export interface EquipmentSearchParams {
   equipmentName: string
-  equipCategory: "OLT" | "FDH" | "AP" | "";
+  equipCategory: "OLT" | "FDH" | "AP" | 'all';
   portInstId?: number
   equipInstId?: number
 }
@@ -29,7 +29,7 @@ export interface EquipmentSearchParams {
 // Default hardcoded params for initial implementation
 export const DEFAULT_SEARCH_PARAMS: EquipmentSearchParams = {
   equipmentName: "BUFTNCXAH07",
-  equipCategory: "",
+  equipCategory: "all",
   portInstId: 197873,
   equipInstId: 12345678,
 }
@@ -47,7 +47,7 @@ export async function fetchEquipmentHierarchy(
 ): Promise<EquipmentHierarchyResponse> {
   const queryParams = new URLSearchParams({
     equipmentName: params.equipmentName,
-    equipCategory: params.equipCategory,
+    equipCategory: params.equipCategory == 'all' ? '' : params.equipCategory,
     ...(params.portInstId && { portInstId: params.portInstId.toString() }),
     ...(params.equipInstId && { equipInstId: params.equipInstId.toString() }),
   })

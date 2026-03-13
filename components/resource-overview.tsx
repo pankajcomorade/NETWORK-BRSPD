@@ -891,7 +891,7 @@ export function ResourceOverview() {
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="olt">OLT</SelectItem>
                 <SelectItem value="ont">ONT</SelectItem>
                 <SelectItem value="fdh">FDH</SelectItem>
