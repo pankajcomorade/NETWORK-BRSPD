@@ -367,7 +367,7 @@ function DeviceGUIPanel({
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-1 mb-4">
           <Button variant="ghost" size="sm" onClick={goBack} className="gap-1">
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -403,7 +403,7 @@ function DeviceGUIPanel({
                 </div>
 
                 {/* Slots grid — each directly clickable */}
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-1">
                   {slots.map((slot) => {
                     const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
                     const hasCard = !!card
@@ -453,7 +453,7 @@ function DeviceGUIPanel({
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-1 mb-4">
           <Button variant="ghost" size="sm" onClick={goBack} className="gap-1">
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -504,7 +504,7 @@ function DeviceGUIPanel({
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-1 mb-4">
           <Button variant="ghost" size="sm" onClick={goBack} className="gap-1">
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -651,9 +651,9 @@ function DeviceGUIPanel({
 
     return (
       <div className="space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Button variant="ghost" size="sm" onClick={goBack} className="gap-1 h-8">
-            <ArrowLeft className="h-3 w-3" />
+        <div className="flex items-center gap-1 mb-2">
+          <Button variant="ghost" size="sm" onClick={goBack} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
           <div>
@@ -714,7 +714,7 @@ function DeviceGUIPanel({
             </div>
 
             {/* Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-3 pt-2 border-t border-border/50">
+            <div className="flex flex-wrap items-center justify-center gap-1 mt-3 pt-2 border-t border-border/50">
               <div className="flex items-center gap-1">
                 <div className="h-2 w-2 rounded-full bg-green-500" />
                 <span className="text-[8px] text-muted-foreground">Free</span>
@@ -860,7 +860,7 @@ export function ResourceOverview() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       {/* Search Section */}
       <Card className="rounded-lg border-border/50">
         <CardHeader className="pb-2">
@@ -943,7 +943,7 @@ export function ResourceOverview() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-1">
           {/* Hierarchy Tree Panel - Left Side with Slide Animation */}
           <AnimatePresence>
             {showHierarchy && (
