@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getBaseUrl } from "@/lib/env-config"
-import { getMockAddressDetails } from "@/lib/api/address-api"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -27,22 +26,28 @@ export async function GET(request: NextRequest) {
     })
 
     if (!response.ok) {
-      // Return mock data for development when API is unavailable
-      console.log("[API] External API unavailable, returning mock data")
-      return NextResponse.json(getMockAddressDetails(addressId))
+      return NextResponse.json(
+        { error: `API returned ${response.status}: ${response.statusText}` },
+        { status: response.status }
+      )
     }
 
     const data = await response.json()
     
-    // If API returns empty/null, return mock data
-    if (!data || !data.customer) {
-      return NextResponse.json(getMockAddressDetails(addressId))
+    // Check if valid data was returned
+    if (!data || (!data.address && (!data.customers || data.customers.length === 0))) {
+      return NextResponse.json(
+        { error: "No record found for the specified Address ID" },
+        { status: 404 }
+      )
     }
     
     return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Address details fetch error:", error)
-    // Return mock data on error for development
-    return NextResponse.json(getMockAddressDetails(addressId))
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to fetch address details" },
+      { status: 500 }
+    )
   }
 }

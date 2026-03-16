@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getBaseUrl } from "@/lib/env-config"
-import { getMockNextConnection } from "@/lib/api/address-api"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -27,19 +26,23 @@ export async function GET(request: NextRequest) {
     })
 
     if (!response.ok) {
-      console.log("[API] External API unavailable, returning mock data")
-      return NextResponse.json(getMockNextConnection(parseInt(portInstId)))
+      const errorText = await response.text()
+      console.error("[API] Next connection error:", response.status, errorText)
+      return NextResponse.json(
+        { error: `API Error: ${response.status}` },
+        { status: response.status }
+      )
     }
 
     const data = await response.json()
-    
-    if (!data || !data.dropTerminal) {
-      return NextResponse.json(getMockNextConnection(parseInt(portInstId)))
-    }
+    console.log("[API] Next connection response received for portInstId:", portInstId, "Data:", data)
     
     return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Next connection fetch error:", error)
-    return NextResponse.json(getMockNextConnection(parseInt(portInstId)))
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to fetch connection data" },
+      { status: 500 }
+    )
   }
 }
