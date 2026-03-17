@@ -318,7 +318,7 @@ export function OrderDetails() {
       cancelled: { label: "Cancelled", color: "border-red-500/30 text-red-400 bg-red-500/10" },
     }
 
-    const config = statusConfig[status]
+    const config = statusConfig[status] || { label: status || "Unknown", color: "border-zinc-500/30 text-zinc-400 bg-zinc-500/10" }
     return (
       <Badge variant="outline" className={cn("rounded-md text-[10px]", config.color)}>
         {config.label}
