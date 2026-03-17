@@ -148,26 +148,92 @@ export function OrderDetails() {
 
     setIsLoading(true)
     try {
-      // Simulate API call to fetch orders
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      console.log("[v0] Fetching orders for:", searchQuery)
+      
+      const apiUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchOrderNum?orderNum=${encodeURIComponent(searchQuery)}`
+      console.log("[v0] API URL:", apiUrl)
+      
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      })
 
-      // Filter orders by search query (simulate API search)
-      const filtered = mockOrders.filter((order) =>
-        order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      console.log("[v0] API Response status:", response.status)
 
-      if (filtered.length === 0) {
-        toast({ title: "No Results", description: `No orders found for "${searchQuery}"`, variant: "destructive" })
-      } else {
-        toast({ title: "Success", description: `Found ${filtered.length} order(s)` })
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[v0] API Error:", response.status, errorText)
+        toast({ title: "Error", description: `Failed to fetch orders: ${response.status}`, variant: "destructive" })
+        setOrders([])
+        setFilteredOrders([])
+        return
       }
 
-      setOrders(filtered)
-      setFilteredOrders(filtered)
+      const data = await response.json()
+      console.log("[v0] API Response data:", data)
+
+      // Handle different response structures
+      let fetchedOrders: OrderRecord[] = []
+      
+      if (Array.isArray(data)) {
+        // If response is directly an array
+        fetchedOrders = data.map((order: any, index: number) => ({
+          id: order.id || order.orderId || String(index),
+          orderNumber: order.orderNumber || order.orderNum || "N/A",
+          customerId: order.customerId || "N/A",
+          customerName: order.customerName || "N/A",
+          address: order.address || "N/A",
+          serviceType: order.serviceType || "FTTH",
+          status: order.status?.toLowerCase() || "pending" as any,
+          createdDate: order.createdDate || new Date().toISOString().split('T')[0],
+          lci: order.lci || `LCI-${index}`,
+        }))
+      } else if (data.orders && Array.isArray(data.orders)) {
+        // If response has orders array
+        fetchedOrders = data.orders.map((order: any, index: number) => ({
+          id: order.id || order.orderId || String(index),
+          orderNumber: order.orderNumber || order.orderNum || "N/A",
+          customerId: order.customerId || "N/A",
+          customerName: order.customerName || "N/A",
+          address: order.address || "N/A",
+          serviceType: order.serviceType || "FTTH",
+          status: order.status?.toLowerCase() || "pending" as any,
+          createdDate: order.createdDate || new Date().toISOString().split('T')[0],
+          lci: order.lci || `LCI-${index}`,
+        }))
+      } else if (data.data && Array.isArray(data.data)) {
+        // If response has data array
+        fetchedOrders = data.data.map((order: any, index: number) => ({
+          id: order.id || order.orderId || String(index),
+          orderNumber: order.orderNumber || order.orderNum || "N/A",
+          customerId: order.customerId || "N/A",
+          customerName: order.customerName || "N/A",
+          address: order.address || "N/A",
+          serviceType: order.serviceType || "FTTH",
+          status: order.status?.toLowerCase() || "pending" as any,
+          createdDate: order.createdDate || new Date().toISOString().split('T')[0],
+          lci: order.lci || `LCI-${index}`,
+        }))
+      }
+
+      if (fetchedOrders.length === 0) {
+        toast({ title: "No Results", description: `No orders found for "${searchQuery}"`, variant: "default" })
+      } else {
+        toast({ title: "Success", description: `Found ${fetchedOrders.length} order(s)` })
+      }
+
+      setOrders(fetchedOrders)
+      setFilteredOrders(fetchedOrders)
       setCurrentPage(1)
       setSelectedRows(new Set())
     } catch (error) {
-      toast({ title: "Error", description: "Failed to fetch orders", variant: "destructive" })
+      console.error("[v0] Fetch error:", error)
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to fetch orders", variant: "destructive" })
+      setOrders([])
+      setFilteredOrders([])
     } finally {
       setIsLoading(false)
     }
@@ -345,7 +411,7 @@ export function OrderDetails() {
                     <Checkbox
                       checked={selectedRows.size === paginatedOrders.length && paginatedOrders.length > 0}
                       indeterminate={selectedRows.size > 0 && selectedRows.size < paginatedOrders.length}
-                      onChange={toggleSelectAll}
+                      onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
                   <TableHead
@@ -392,7 +458,7 @@ export function OrderDetails() {
                     <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedRows.has(order.id)}
-                        onChange={() => toggleRow(order.id)}
+                        onCheckedChange={() => toggleRow(order.id)}
                       />
                     </TableCell>
                     <TableCell className="px-4 py-3 font-mono text-foreground">{order.orderNumber}</TableCell>
