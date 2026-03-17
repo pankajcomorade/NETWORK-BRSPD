@@ -487,7 +487,10 @@ function DeviceGUIPanel({
           <div className="grid grid-cols-4 gap-4">
             {slots.map((slot) => {
               const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
-              const hasCard = !!card
+              const splitter = slot.nodes.find((n) => n.type === "SPLITTER")
+              const component = card || splitter
+              const hasComponent = !!component
+              const label = card ? card.name : splitter ? splitter.name : null
               return (
                 <motion.button
                   key={slot.erId}
@@ -495,15 +498,21 @@ function DeviceGUIPanel({
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigateToSlot(slot, viewState.shelf!, viewState.rack!)}
                   className={cn(
-                    "p-4 rounded-lg border-2 transition-all cursor-pointer text-center",
+                    "p-4 rounded-lg border-2 transition-all cursor-pointer text-center flex flex-col",
                     "bg-card hover:bg-secondary/50",
-                    hasCard ? "border-primary/40 hover:border-primary/70" : "border-border/50"
+                    hasComponent ? "border-primary/40 hover:border-primary/70" : "border-border/50"
                   )}
                 >
-                  <Box className={cn("h-8 w-8 mx-auto mb-2", hasCard ? "text-primary" : "text-muted-foreground")} />
+                  <Box className={cn("h-8 w-8 mx-auto mb-2", hasComponent ? "text-primary" : "text-muted-foreground")} />
                   <p className="font-mono text-sm font-semibold text-foreground">{slot.name}</p>
-                  {hasCard && card ? (
-                    <p className="text-xs text-primary mt-1">{card.name}</p>
+                  {hasComponent && label ? (
+                    <div className="mt-1">
+                      <p className="text-xs text-primary">{label}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {card && `${card.nodes.filter((n) => n.type === "PORT").length} Ports`}
+                        {splitter && `${splitter.nodes.filter((n) => n.type === "SPLITTER LEG").length} Legs`}
+                      </p>
+                    </div>
                   ) : (
                     <p className="text-xs text-muted-foreground mt-1">Empty</p>
                   )}
@@ -1026,13 +1035,13 @@ export function ResourceOverview() {
           {/* Hierarchy Tree Panel - Left Side with Slide Animation */}
           <AnimatePresence>
             {showHierarchy && (
-              <motion.div
-                initial={{ x: -300, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -300, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="lg:col-span-3"
-              >
+            <motion.div
+              initial={{ x: -300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -300, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="lg:col-span-4"
+            >
                 <Card className="rounded-lg border-border/50 h-fit">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
@@ -1119,7 +1128,7 @@ export function ResourceOverview() {
           )}
 
           {/* Device GUI Panel - Right Side */}
-          <Card className={cn("rounded-lg border-border/50 overflow-auto max-h-[70vh]", showHierarchy ? "lg:col-span-9" : "lg:col-span-12")}>
+          <Card className={cn("rounded-lg border-border/50 overflow-auto max-h-[70vh]", showHierarchy ? "lg:col-span-8" : "lg:col-span-12")}>
             <CardHeader className="pb-2 sticky top-0 bg-card z-10 border-b border-border/50">
               <CardTitle className="text-sm text-foreground">Device Explorer</CardTitle>
             </CardHeader>
