@@ -150,7 +150,8 @@ export function OrderDetails() {
     try {
       console.log("[v0] Fetching orders for:", searchQuery)
       
-      const apiUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchOrderNum?orderNum=${encodeURIComponent(searchQuery)}`
+      // Use internal API route to avoid CORS issues
+      const apiUrl = `/api/orders/search?orderNum=${encodeURIComponent(searchQuery)}`
       console.log("[v0] API URL:", apiUrl)
       
       const response = await fetch(apiUrl, {
@@ -159,6 +160,7 @@ export function OrderDetails() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
+        cache: "no-store",
       })
 
       console.log("[v0] API Response status:", response.status)
