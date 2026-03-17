@@ -19,6 +19,7 @@ import {
   AlertCircle,
   ChevronUp,
   X,
+  GitBranch,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -274,6 +275,8 @@ function DeviceGUIPanel({
   const goBack = () => {
     if (viewState.level === "ports") {
       setViewState({ level: "card", rack: viewState.rack, shelf: viewState.shelf, slot: viewState.slot, card: viewState.card })
+    } else if (viewState.level === "splitter") {
+      setViewState({ level: "slot", rack: viewState.rack, shelf: viewState.shelf, slot: viewState.slot })
     } else if (viewState.level === "card") {
       setViewState({ level: "slot", rack: viewState.rack, shelf: viewState.shelf, slot: viewState.slot })
     } else if (viewState.level === "slot") {
@@ -681,8 +684,8 @@ function DeviceGUIPanel({
                   "bg-card border-border"
                 )}
               >
-                <div className={cn("h-9 w-9 rounded-full shadow-lg flex items-center justify-center", "bg-orange-500")}>
-                  <Zap className="h-4 w-4 text-white" />
+                <div className={cn("h-9 w-9 rounded-full shadow-lg flex items-center justify-center", "bg-purple-500")}>
+                  <GitBranch className="h-4 w-4 text-white" />
                 </div>
                 <span className="text-[10px] font-mono font-semibold text-foreground">{leg.name}</span>
                 <Badge
@@ -690,7 +693,7 @@ function DeviceGUIPanel({
                   className={cn(
                     "text-[7px] capitalize px-1 py-0 h-3",
                     leg.status?.toUpperCase() === "ACTIVE"
-                      ? "border-orange-500/40 text-orange-600 dark:text-orange-400 bg-orange-500/10"
+                      ? "border-purple-500/40 text-purple-600 dark:text-purple-400 bg-purple-500/10"
                       : "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
                   )}
                 >
@@ -1045,7 +1048,7 @@ export function ResourceOverview() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="max-h-[500px] overflow-y-auto px-3 pb-2">
+                    <div className="max-h-[60vh] overflow-y-auto px-3 pb-2">
                       <HierarchyTreeNode
                         node={searchResult.equipment}
                         onSelect={handleNodeSelect}
@@ -1116,8 +1119,8 @@ export function ResourceOverview() {
           )}
 
           {/* Device GUI Panel - Right Side */}
-          <Card className={cn("rounded-lg border-border/50", showHierarchy ? "lg:col-span-9" : "lg:col-span-12")}>
-            <CardHeader className="pb-2">
+          <Card className={cn("rounded-lg border-border/50 overflow-auto max-h-[70vh]", showHierarchy ? "lg:col-span-9" : "lg:col-span-12")}>
+            <CardHeader className="pb-2 sticky top-0 bg-card z-10 border-b border-border/50">
               <CardTitle className="text-sm text-foreground">Device Explorer</CardTitle>
             </CardHeader>
             <CardContent className="pt-2">
