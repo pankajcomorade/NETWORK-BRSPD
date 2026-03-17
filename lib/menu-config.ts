@@ -73,6 +73,7 @@ export enum SubMenuId {
   // Resources
   RES_SEARCH_EQUIPMENT = "res_search_equipment",
   RES_SEARCH_ADDRESS = "res_search_address",
+  RES_ORDER_DETAILS = "res_order_details",
   RES_PHYSICAL = "res_physical",
   RES_LOGICAL = "res_logical",
 
@@ -167,6 +168,7 @@ export const MENU_CONFIG: MenuItem[] = [
     subMenus: [
       { id: SubMenuId.RES_SEARCH_EQUIPMENT, label: "Search by Equipment", allowedRoles: [] },
       { id: SubMenuId.RES_SEARCH_ADDRESS, label: "Search by Address", allowedRoles: [] },
+      { id: SubMenuId.RES_ORDER_DETAILS, label: "Order Details", allowedRoles: [] },
       { id: SubMenuId.RES_PHYSICAL, label: "Physical", allowedRoles: [] },
       { id: SubMenuId.RES_LOGICAL, label: "Logical", allowedRoles: [UserRole.ADMIN, UserRole.ENGINEER] },
     ],
