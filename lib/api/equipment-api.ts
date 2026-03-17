@@ -4,7 +4,7 @@ import { getBaseUrl, type Environment } from "@/lib/env-config"
 // Types based on API response structure
 export interface EquipmentNode {
   name: string
-  type: "OLT" | "FDH" | "AP" | "RACK" | "SHELF" | "SLOT" | "NETWORKCARD" | "NETWORK CARD" | "PORT"
+  type: "OLT" | "FDH" | "AP" | "RACK" | "SHELF" | "SLOT" | "NETWORKCARD" | "NETWORK CARD" | "PORT" | "SPLITTER" | "SPLITTER LEG"
   instanceID: number | null
   erId: string
   status: "ACTIVE" | "INACTIVE" | "WARNING" | "MAINTENANCE"
@@ -45,12 +45,26 @@ export async function fetchEquipmentHierarchy(
   params: EquipmentSearchParams = DEFAULT_SEARCH_PARAMS,
   useMockOnError: boolean = false
 ): Promise<EquipmentHierarchyResponse> {
-  const queryParams = new URLSearchParams({
-    equipmentName: params.equipmentName,
-    equipCategory: params.equipCategory == 'all' ? '' : params.equipCategory,
-    ...(params.portInstId && { portInstId: params.portInstId.toString() }),
-    ...(params.equipInstId && { equipInstId: params.equipInstId.toString() }),
-  })
+  const queryParams = new URLSearchParams()
+  
+  // Only add equipmentName if searching by name
+  if (params.equipmentName) {
+    queryParams.set("equipmentName", params.equipmentName)
+    // Do NOT add equipInstId or portInstId when using equipmentName
+  } else {
+    // If not searching by name, these can be optional
+    if (params.portInstId) {
+      queryParams.set("portInstId", params.portInstId.toString())
+    }
+    if (params.equipInstId) {
+      queryParams.set("equipInstId", params.equipInstId.toString())
+    }
+  }
+  
+  // Always add category if not 'all'
+  if (params.equipCategory && params.equipCategory !== 'all') {
+    queryParams.set("equipCategory", params.equipCategory)
+  }
 
   // Add timestamp to bust any browser cache
   queryParams.set("_t", Date.now().toString())
@@ -237,18 +251,19 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
                   name: "SL=002",
                   type: "SLOT",
                   instanceID: null,
-                  erId: "200138",
+                  erId: "200140",
                   status: "ACTIVE",
                   nodes: [
                     {
-                      name: "NC=002",
-                      type: "NETWORK CARD",
-                      instanceID: null,
-                      erId: "200139",
-                      status: "WARNING",
+                      name: "SP=001",
+                      type: "SPLITTER",
+                      instanceID: 197890,
+                      erId: "200141",
+                      status: "ACTIVE",
                       nodes: [
-                        { name: "PP=001", type: "PORT", instanceID: 197882, erId: "200140", status: "WARNING", nodes: [] },
-                        { name: "PP=002", type: "PORT", instanceID: 197883, erId: "200141", status: "INACTIVE", nodes: [] },
+                        { name: "LG=001", type: "SPLITTER LEG", instanceID: 197891, erId: "200142", status: "ACTIVE", nodes: [] },
+                        { name: "LG=002", type: "SPLITTER LEG", instanceID: 197892, erId: "200143", status: "ACTIVE", nodes: [] },
+                        { name: "LG=003", type: "SPLITTER LEG", instanceID: 197893, erId: "200144", status: "ACTIVE", nodes: [] },
                       ],
                     },
                   ],
@@ -264,11 +279,13 @@ function getMockEquipmentHierarchy(params: EquipmentSearchParams): EquipmentHier
         OLT: 1,
         RACK: 1,
         SHELF: 2,
-        SLOT: 6,
-        NETWORKCARD: 6,
-        PORT: 16,
+        SLOT: 7,
+        NETWORKCARD: 5,
+        PORT: 14,
+        SPLITTER: 1,
+        "SPLITTER LEG": 3,
       },
-      totalNodes: 25,
+      totalNodes: 27,
     },
   }
 }

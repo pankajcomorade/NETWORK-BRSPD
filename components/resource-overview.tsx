@@ -211,7 +211,7 @@ function HierarchyTreeNode({
 }
 
 // Device GUI View Types
-type GUIViewLevel = "container" | "rack" | "shelf" | "slot" | "card" | "ports"
+type GUIViewLevel = "container" | "rack" | "shelf" | "slot" | "card" | "splitter" | "ports"
 
 interface GUIViewState {
   level: GUIViewLevel
@@ -248,7 +248,23 @@ function DeviceGUIPanel({
   }
 
   const navigateToCard = (card: EquipmentNode, slot: EquipmentNode, shelf: EquipmentNode, rack: EquipmentNode) => {
-    setViewState({ level: "card", rack, shelf, slot, card })
+    setViewState({
+      level: "card",
+      rack,
+      shelf,
+      slot,
+      card,
+    })
+  }
+
+  const navigateToSplitter = (splitter: EquipmentNode, slot: EquipmentNode, shelf: EquipmentNode, rack: EquipmentNode) => {
+    setViewState({
+      level: "splitter",
+      rack,
+      shelf,
+      slot,
+      card: splitter,
+    })
   }
 
   const navigateToPorts = (shelf: EquipmentNode, slot: EquipmentNode, card: EquipmentNode, rack: EquipmentNode) => {
@@ -497,10 +513,12 @@ function DeviceGUIPanel({
     )
   }
 
-  // Render Slot View - Show Network Card inside the slot
+  // Render Slot View - Show Network Card or Splitter inside the slot
   const renderSlotView = () => {
     if (!viewState.slot || !viewState.shelf || !viewState.rack) return null
     const card = viewState.slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
+    const splitter = viewState.slot.nodes.find((n) => n.type === "SPLITTER")
+    const component = card || splitter
 
     return (
       <div className="space-y-4">
@@ -512,40 +530,46 @@ function DeviceGUIPanel({
           <div>
             <h3 className="text-lg font-semibold text-foreground">{viewState.slot.name}</h3>
             <p className="text-sm text-muted-foreground">
-              {card ? "Click on the Network Card to view ports" : "This slot is empty"}
+              {card ? "Click on the Network Card to view ports" : splitter ? "Click on the Splitter to view legs" : "This slot is empty"}
             </p>
           </div>
         </div>
 
         <div className={cn("rounded-xl border-2 bg-card p-6 max-w-2xl mx-auto", getStatusBorder(viewState.slot.status))}>
-          {card ? (
+          {component ? (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigateToCard(card, viewState.slot!, viewState.shelf!, viewState.rack!)}
+              onClick={() => 
+                card 
+                  ? navigateToCard(card, viewState.slot!, viewState.shelf!, viewState.rack!)
+                  : splitter && navigateToSplitter(splitter, viewState.slot!, viewState.shelf!, viewState.rack!)
+              }
               className={cn(
                 "w-full p-6 rounded-lg border-2 transition-all cursor-pointer",
                 "bg-secondary/30 hover:bg-secondary/50",
-                getStatusBorder(card.status)
+                getStatusBorder(component.status)
               )}
             >
               <div className="flex items-center gap-4">
-                <Cpu className="h-12 w-12 text-primary" />
+                {card && <Cpu className="h-12 w-12 text-primary" />}
+                {splitter && <Box className="h-12 w-12 text-orange-500" />}
                 <div className="text-left">
-                  <p className="font-mono text-lg text-foreground">{card.name}</p>
+                  <p className="font-mono text-lg text-foreground">{component.name}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {card.nodes.filter((n) => n.type === "PORT").length} Ports
+                    {card && `${card.nodes.filter((n) => n.type === "PORT").length} Ports`}
+                    {splitter && `${splitter.nodes.filter((n) => n.type === "SPLITTER LEG").length} Legs`}
                   </p>
                   <Badge
                     variant="outline"
                     className={cn(
                       "mt-2 text-[10px]",
-                      card.status === "ACTIVE"
+                      component.status === "ACTIVE"
                         ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
                         : "border-zinc-500/30 text-zinc-400"
                     )}
                   >
-                    {card.status}
+                    {component.status}
                   </Badge>
                 </div>
               </div>
@@ -553,7 +577,7 @@ function DeviceGUIPanel({
           ) : (
             <div className="text-center py-12">
               <Box className="h-16 w-16 mx-auto text-zinc-600 mb-4" />
-              <p className="text-muted-foreground">No Network Card installed in this slot</p>
+              <p className="text-muted-foreground">No Network Card or Splitter installed in this slot</p>
             </div>
           )}
         </div>
@@ -622,6 +646,57 @@ function DeviceGUIPanel({
                   {port.status}
                 </Badge>
               </motion.button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Render Splitter View - Show splitter legs
+  const renderSplitterView = () => {
+    if (!viewState.card || !viewState.slot || !viewState.shelf || !viewState.rack) return null
+    const legs = viewState.card.nodes.filter((n) => n.type === "SPLITTER LEG")
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="ghost" size="sm" onClick={goBack} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{viewState.card.name}</h3>
+            <p className="text-sm text-muted-foreground">Splitter legs overview</p>
+          </div>
+        </div>
+
+        <div className={cn("rounded-lg border-2 bg-card p-4 max-w-2xl mx-auto", getStatusBorder(viewState.card.status))}>
+          <div className="grid grid-cols-4 gap-2">
+            {legs.map((leg) => (
+              <div
+                key={leg.erId}
+                className={cn(
+                  "flex flex-col items-center gap-1 p-2 rounded-lg border",
+                  "bg-card border-border"
+                )}
+              >
+                <div className={cn("h-9 w-9 rounded-full shadow-lg flex items-center justify-center", "bg-orange-500")}>
+                  <Zap className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-[10px] font-mono font-semibold text-foreground">{leg.name}</span>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[7px] capitalize px-1 py-0 h-3",
+                    leg.status?.toUpperCase() === "ACTIVE"
+                      ? "border-orange-500/40 text-orange-600 dark:text-orange-400 bg-orange-500/10"
+                      : "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
+                  )}
+                >
+                  {leg.status}
+                </Badge>
+              </div>
             ))}
           </div>
         </div>
@@ -796,6 +871,7 @@ function DeviceGUIPanel({
           {viewState.level === "shelf" && renderShelfView()}
           {viewState.level === "slot" && renderSlotView()}
           {viewState.level === "card" && renderCardView()}
+          {viewState.level === "splitter" && renderSplitterView()}
           {viewState.level === "ports" && renderPortsView()}
         </motion.div>
       </AnimatePresence>
