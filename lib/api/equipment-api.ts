@@ -66,9 +66,6 @@ export async function fetchEquipmentHierarchy(
     queryParams.set("equipCategory", params.equipCategory)
   }
 
-  // Add timestamp to bust any browser cache
-  queryParams.set("_t", Date.now().toString())
-
   // Use internal API route to avoid CORS issues
   const url = `/api/equipment/hierarchy?${queryParams}`
 
