@@ -8,14 +8,22 @@ export const revalidate = 0
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   
-  const equipmentName = searchParams.get("equipmentName") || "BUFTNCXAH07"
-  const equipCategory = searchParams.get("equipCategory") || "OLT"
-  const portInstId = searchParams.get("portInstId") || "197873"
-  const equipInstId = searchParams.get("equipInstId") || "12345678"
+  const equipmentName = searchParams.get("equipmentName")
+  const equipCategory = searchParams.get("equipCategory")
+  const portInstId = searchParams.get("portInstId")
+  const equipInstId = searchParams.get("equipInstId")
 
   const baseUrl = getBaseUrl()
   const currentEnv = getCurrentEnvironment()
-  const apiUrl = `${baseUrl}/brspd/nextgenfiber/equipmentHierarchyDetails?equipmentName=${equipmentName}&equipCategory=${equipCategory}&portInstId=${portInstId}&equipInstId=${equipInstId}`
+  
+  // Build query string dynamically - only include params that are provided
+  const queryParams = new URLSearchParams()
+  if (equipmentName) queryParams.set("equipmentName", equipmentName)
+  if (equipCategory) queryParams.set("equipCategory", equipCategory)
+  if (portInstId) queryParams.set("portInstId", portInstId)
+  if (equipInstId) queryParams.set("equipInstId", equipInstId)
+  
+  const apiUrl = `${baseUrl}/brspd/nextgenfiber/equipmentHierarchyDetails?${queryParams.toString()}`
 
   console.log("[API Route] Environment:", currentEnv)
   console.log("[API Route] Timestamp:", new Date().toISOString())

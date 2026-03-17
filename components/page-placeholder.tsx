@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils"
 import type { MenuId, SubMenuId } from "@/lib/menu-config"
 import { ResourceOverview } from "@/components/resource-overview"
 import { SearchByAddress } from "@/components/search-by-address"
+import { OrderDetails } from "@/components/order-details"
 
 // ==========================================
 // Home Dashboard (rich, non-placeholder content)
@@ -592,6 +593,7 @@ export function PagePlaceholder({
   if (menuId === ("resources" as MenuId)) {
     if (subMenuId === ("res_search_equipment" as SubMenuId)) return <ResourceOverview />
     if (subMenuId === ("res_search_address" as SubMenuId)) return <SearchByAddress />
+    if (subMenuId === ("res_order_details" as SubMenuId)) return <OrderDetails />
     if (subMenuId === ("res_physical" as SubMenuId)) return <ResourcesPhysicalPage />
     return <GenericPlaceholder title={`${menuLabel} - ${subMenuLabel}`} description={`Manage ${subMenuLabel.toLowerCase()} resources in the network`} />
   }
