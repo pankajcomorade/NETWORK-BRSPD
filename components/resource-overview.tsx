@@ -425,7 +425,9 @@ function DeviceGUIPanel({
                 <div className="grid grid-cols-4 gap-1">
                   {slots.map((slot) => {
                     const card = slot.nodes.find((n) => n.type === "NETWORKCARD" || n.type === "NETWORK CARD")
-                    const hasCard = !!card
+                    const splitter = slot.nodes.find((n) => n.type === "SPLITTER")
+                    const component = card || splitter
+                    const hasComponent = !!component
                     return (
                       <motion.button
                         key={slot.erId}
@@ -435,7 +437,7 @@ function DeviceGUIPanel({
                         className={cn(
                           "p-4 rounded-lg border-2 cursor-pointer transition-all text-center",
                           "bg-card hover:bg-secondary/50",
-                          hasCard
+                          hasComponent
                             ? "border-primary/40 hover:border-primary/70"
                             : "border-border/50 hover:border-border"
                         )}
@@ -443,12 +445,12 @@ function DeviceGUIPanel({
                         <Box
                           className={cn(
                             "h-8 w-8 mx-auto mb-2",
-                            hasCard ? "text-primary" : "text-muted-foreground"
+                            hasComponent ? "text-primary" : "text-muted-foreground"
                           )}
                         />
                         <p className="font-mono text-sm font-semibold text-foreground">{slot.name}</p>
-                        {hasCard && card ? (
-                          <p className="text-xs text-primary mt-1">{card.name}</p>
+                        {hasComponent && component ? (
+                          <p className="text-xs text-primary mt-1">{component.name}</p>
                         ) : (
                           <p className="text-xs text-muted-foreground mt-1">Empty</p>
                         )}
