@@ -80,7 +80,7 @@ type SortOrder = "asc" | "desc"
 
 export function OrderDetails() {
   const { toast } = useToast()
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("AR1100028159")
   const [orders, setOrders] = useState<OrderRecord[]>([])
   const [filteredOrders, setFilteredOrders] = useState<OrderRecord[]>([])
   const [selectedRows, setSelectedRows] = useState<Set<string | number>>(new Set())
