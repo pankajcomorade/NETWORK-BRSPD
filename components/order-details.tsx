@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/pagination"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
+import { OrderDetailsDock } from "@/components/order-details-dock"
 
 // Interface matching actual API response
 interface OrderRecord {
@@ -507,107 +508,13 @@ export function OrderDetails() {
         </div>
       )}
 
-      {/* Side Dock - Order Details */}
-      <AnimatePresence>
-        {detailsOpen && selectedOrder && (
-          <div className="fixed inset-0 z-50 flex items-start justify-end">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setDetailsOpen(false)}
-              className="absolute inset-0 bg-black/50"
-            />
-
-            {/* Dock Panel */}
-            <motion.div
-              initial={{ x: 400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 400, opacity: 0 }}
-              transition={{ type: "spring", damping: 20 }}
-              className="relative w-full sm:max-w-md md:max-w-lg bg-card border-l border-border/50 h-full overflow-y-auto shadow-2xl"
-            >
-              {/* Dock Header */}
-              <div className="sticky top-0 border-b border-border/50 bg-card p-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">Order Details</h3>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setDetailsOpen(false)}
-                  className="p-1 hover:bg-secondary rounded-lg transition-colors"
-                >
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </motion.button>
-              </div>
-
-              {/* Dock Content */}
-              <div className="p-6 space-y-6">
-                {/* Order Header */}
-                <div className="space-y-2">
-                  <h4 className="text-2xl font-bold text-foreground font-mono">{selectedOrder.orderNumber}</h4>
-                  <p className="text-sm text-muted-foreground">Order ID: {selectedOrder.id}</p>
-                </div>
-
-                {/* Details Grid */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">Customer ID</p>
-                      <p className="text-sm font-mono text-foreground">{selectedOrder.customerId}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">LCI</p>
-                      <p className="text-sm font-mono text-foreground">{selectedOrder.lci}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">Customer Name</p>
-                    <p className="text-sm text-foreground">{selectedOrder.customerName}</p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">Address</p>
-                    <p className="text-sm text-foreground">{selectedOrder.address}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">Service Type</p>
-                      <p className="text-sm text-foreground">{selectedOrder.serviceType}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">Status</p>
-                      {getStatusBadge(selectedOrder.status)}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">Created Date</p>
-                    <p className="text-sm font-mono text-foreground">{selectedOrder.createdDate}</p>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="border-t border-border/30" />
-
-                {/* Actions */}
-                <div className="space-y-3">
-                  <Button variant="default" className="w-full gap-1">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Sign Off
-                  </Button>
-                  <Button variant="outline" className="w-full gap-1 text-red-400 hover:text-red-300">
-                    <Trash2 className="h-4 w-4" />
-                    Cancel Order
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Order Details Dock */}
+      <OrderDetailsDock
+        isOpen={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        orderNumber={selectedOrder?.orderNumber || ""}
+        lci={selectedOrder?.lci || ""}
+      />
     </div>
   )
 }
