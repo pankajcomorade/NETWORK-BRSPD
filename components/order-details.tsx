@@ -39,86 +39,40 @@ import {
 } from "@/components/ui/pagination"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
+import { OrderDetailsDock } from "@/components/order-details-dock"
 
-// Mock order data
+// Interface matching actual API response
 interface OrderRecord {
-  id: string
+  orderId: string | number
   orderNumber: string
-  customerId: string
-  customerName: string
-  address: string
-  serviceType: string
-  status: "pending" | "active" | "completed" | "cancelled"
-  createdDate: string
+  status: string
   lci: string
+  circuit: string
+  type: string
+  dueDate: string
+  co: string
 }
 
 const mockOrders: OrderRecord[] = [
   {
-    id: "1",
-    orderNumber: "ORD-001234",
-    customerId: "CUST-5001",
-    customerName: "John Smith",
-    address: "123 Main St",
-    serviceType: "FTTH",
-    status: "active",
-    createdDate: "2026-02-20",
-    lci: "LCI-001",
+    orderId: "123460",
+    orderNumber: "AR1100028159",
+    status: "CANC",
+    lci: "1",
+    circuit: "555-333-1237",
+    type: "CIASN",
+    dueDate: "2025-10-28",
+    co: "CNTRARXA",
   },
   {
-    id: "2",
-    orderNumber: "ORD-001235",
-    customerId: "CUST-5002",
-    customerName: "Sarah Johnson",
-    address: "456 Oak Ave",
-    serviceType: "FTTH",
-    status: "pending",
-    createdDate: "2026-02-21",
-    lci: "LCI-002",
-  },
-  {
-    id: "3",
-    orderNumber: "ORD-001236",
-    customerId: "CUST-5003",
-    customerName: "Michael Brown",
-    address: "789 Elm St",
-    serviceType: "FTTH",
-    status: "active",
-    createdDate: "2026-02-19",
-    lci: "LCI-003",
-  },
-  {
-    id: "4",
-    orderNumber: "ORD-001237",
-    customerId: "CUST-5004",
-    customerName: "Emily Davis",
-    address: "321 Pine Rd",
-    serviceType: "FTTH",
-    status: "completed",
-    createdDate: "2026-02-15",
-    lci: "LCI-004",
-  },
-  {
-    id: "5",
-    orderNumber: "ORD-001238",
-    customerId: "CUST-5005",
-    customerName: "David Wilson",
-    address: "654 Birch Ln",
-    serviceType: "FTTH",
-    status: "pending",
-    createdDate: "2026-02-22",
-    lci: "LCI-005",
-  },
-  {
-    id: "6",
-    orderNumber: "ORD-001239",
-    customerId: "CUST-5006",
-    customerName: "Jennifer Moore",
-    address: "987 Cedar Dr",
-    serviceType: "FTTH",
-    status: "active",
-    createdDate: "2026-02-18",
-    lci: "LCI-006",
+    orderId: "123461",
+    orderNumber: "AR1100028160",
+    status: "ACT",
+    lci: "2",
+    circuit: "555-333-1238",
+    type: "CIASN",
+    dueDate: "2025-11-15",
+    co: "CNTRARXB",
   },
 ]
 
@@ -127,17 +81,32 @@ type SortOrder = "asc" | "desc"
 
 export function OrderDetails() {
   const { toast } = useToast()
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("AR1100028159")
   const [orders, setOrders] = useState<OrderRecord[]>([])
   const [filteredOrders, setFilteredOrders] = useState<OrderRecord[]>([])
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
-  const [sortField, setSortField] = useState<SortField>("createdDate")
+  const [selectedRows, setSelectedRows] = useState<Set<string | number>>(new Set())
+  const [sortField, setSortField] = useState<SortField>("orderNumber")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
   const [currentPage, setCurrentPage] = useState(1)
   const [recordsPerPage] = useState(10)
   const [isLoading, setIsLoading] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null)
+  const [fetchDetailsFunction, setFetchDetailsFunction] = useState<(() => Promise<void>) | null>(null)
+
+  // Format date to MM-DD-YYYY
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return "N/A"
+    try {
+      const date = new Date(dateString)
+      const month = String(date.getMonth() + 1).padStart(2, "0")
+      const day = String(date.getDate()).padStart(2, "0")
+      const year = date.getFullYear()
+      return `${month}-${day}-${year}`
+    } catch {
+      return dateString || "N/A"
+    }
+  }
 
   // Handle search/find
   const handleFind = useCallback(async () => {
@@ -149,11 +118,11 @@ export function OrderDetails() {
     setIsLoading(true)
     try {
       console.log("[v0] Fetching orders for:", searchQuery)
-      
+
       // Use internal API route to avoid CORS issues
       const apiUrl = `/api/orders/search?orderNum=${encodeURIComponent(searchQuery)}`
       console.log("[v0] API URL:", apiUrl)
-      
+
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -177,48 +146,32 @@ export function OrderDetails() {
       const data = await response.json()
       console.log("[v0] API Response data:", data)
 
-      // Handle different response structures
+      // Handle different response structures and map to OrderRecord
       let fetchedOrders: OrderRecord[] = []
-      
+
+      const mapOrderRecord = (order: any): OrderRecord => ({
+        orderId: order.orderId || "N/A",
+        orderNumber: order.orderNumber || "N/A",
+        status: order.status || "UNKNOWN",
+        lci: order.lci || "N/A",
+        circuit: order.circuit || "N/A",
+        type: order.type || "N/A",
+        dueDate: order.dueDate || null,
+        co: order.co || "N/A",
+      })
+
       if (Array.isArray(data)) {
         // If response is directly an array
-        fetchedOrders = data.map((order: any, index: number) => ({
-          id: order.id || order.orderId || String(index),
-          orderNumber: order.orderNumber || order.orderNum || "N/A",
-          customerId: order.customerId || "N/A",
-          customerName: order.customerName || "N/A",
-          address: order.address || "N/A",
-          serviceType: order.serviceType || "FTTH",
-          status: order.status?.toLowerCase() || "pending" as any,
-          createdDate: order.createdDate || new Date().toISOString().split('T')[0],
-          lci: order.lci || `LCI-${index}`,
-        }))
+        fetchedOrders = data.map(mapOrderRecord)
       } else if (data.orders && Array.isArray(data.orders)) {
         // If response has orders array
-        fetchedOrders = data.orders.map((order: any, index: number) => ({
-          id: order.id || order.orderId || String(index),
-          orderNumber: order.orderNumber || order.orderNum || "N/A",
-          customerId: order.customerId || "N/A",
-          customerName: order.customerName || "N/A",
-          address: order.address || "N/A",
-          serviceType: order.serviceType || "FTTH",
-          status: order.status?.toLowerCase() || "pending" as any,
-          createdDate: order.createdDate || new Date().toISOString().split('T')[0],
-          lci: order.lci || `LCI-${index}`,
-        }))
+        fetchedOrders = data.orders.map(mapOrderRecord)
       } else if (data.data && Array.isArray(data.data)) {
         // If response has data array
-        fetchedOrders = data.data.map((order: any, index: number) => ({
-          id: order.id || order.orderId || String(index),
-          orderNumber: order.orderNumber || order.orderNum || "N/A",
-          customerId: order.customerId || "N/A",
-          customerName: order.customerName || "N/A",
-          address: order.address || "N/A",
-          serviceType: order.serviceType || "FTTH",
-          status: order.status?.toLowerCase() || "pending" as any,
-          createdDate: order.createdDate || new Date().toISOString().split('T')[0],
-          lci: order.lci || `LCI-${index}`,
-        }))
+        fetchedOrders = data.data.map(mapOrderRecord)
+      } else if (data.orderId) {
+        // If response is a single order object
+        fetchedOrders = [mapOrderRecord(data)]
       }
 
       if (fetchedOrders.length === 0) {
@@ -265,12 +218,12 @@ export function OrderDetails() {
   }, [sortedOrders, currentPage, recordsPerPage])
 
   // Handle row selection
-  const toggleRow = (id: string) => {
+  const toggleRow = (orderId: string | number) => {
     const newSelected = new Set(selectedRows)
-    if (newSelected.has(id)) {
-      newSelected.delete(id)
+    if (newSelected.has(orderId)) {
+      newSelected.delete(orderId)
     } else {
-      newSelected.add(id)
+      newSelected.add(orderId)
     }
     setSelectedRows(newSelected)
   }
@@ -280,7 +233,7 @@ export function OrderDetails() {
     if (selectedRows.size === paginatedOrders.length) {
       setSelectedRows(new Set())
     } else {
-      setSelectedRows(new Set(paginatedOrders.map((o) => o.id)))
+      setSelectedRows(new Set(paginatedOrders.map((o) => o.orderId)))
     }
   }
 
@@ -294,7 +247,7 @@ export function OrderDetails() {
     }
   }
 
-  // Handle open details
+  // Handle open details - trigger API call immediately
   const handleOpenDetails = () => {
     if (selectedRows.size !== 1) {
       toast({ title: "Error", description: "Please select exactly one order", variant: "destructive" })
@@ -302,20 +255,31 @@ export function OrderDetails() {
     }
 
     const orderId = Array.from(selectedRows)[0]
-    const order = filteredOrders.find((o) => o.id === orderId)
+    const order = filteredOrders.find((o) => o.orderId === orderId)
     if (order) {
       setSelectedOrder(order)
       setDetailsOpen(true)
+      
+      // Trigger API call after dock is opened
+      setTimeout(() => {
+        if (fetchDetailsFunction) {
+          fetchDetailsFunction()
+        }
+      }, 100)
     }
   }
 
   // Get status badge
   const getStatusBadge = (status: OrderRecord["status"]) => {
-    const statusConfig = {
-      pending: { label: "Pending", color: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
-      active: { label: "Active", color: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
-      completed: { label: "Completed", color: "border-sky-500/30 text-sky-400 bg-sky-500/10" },
-      cancelled: { label: "Cancelled", color: "border-red-500/30 text-red-400 bg-red-500/10" },
+    const statusConfig: Record<string, { label: string; color: string }> = {
+      "ACT": { label: "Active", color: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+      "CANC": { label: "Cancelled", color: "border-red-500/30 text-red-400 bg-red-500/10" },
+      "PEND": { label: "Pending", color: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+      "COMP": { label: "Completed", color: "border-sky-500/30 text-sky-400 bg-sky-500/10" },
+      "pending": { label: "Pending", color: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+      "active": { label: "Active", color: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+      "completed": { label: "Completed", color: "border-sky-500/30 text-sky-400 bg-sky-500/10" },
+      "cancelled": { label: "Cancelled", color: "border-red-500/30 text-red-400 bg-red-500/10" },
     }
 
     const config = statusConfig[status] || { label: status || "Unknown", color: "border-zinc-500/30 text-zinc-400 bg-zinc-500/10" }
@@ -341,7 +305,7 @@ export function OrderDetails() {
           <CardTitle className="text-sm text-foreground">Search by Order Number</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-1">
             <Input
               placeholder="Enter order number (e.g., ORD-001234)"
               value={searchQuery}
@@ -352,7 +316,7 @@ export function OrderDetails() {
             <Button
               onClick={handleFind}
               disabled={isLoading}
-              className="gap-2 whitespace-nowrap"
+              className="gap-1 whitespace-nowrap"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               Find
@@ -365,40 +329,6 @@ export function OrderDetails() {
       {filteredOrders.length > 0 && (
         <div className="text-sm text-muted-foreground">
           Found {filteredOrders.length} order(s) · Showing {Math.min(recordsPerPage, paginatedOrders.length)} of {filteredOrders.length}
-        </div>
-      )}
-
-      {/* Action Buttons (Top Right) */}
-      {filteredOrders.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenDetails}
-            disabled={!isDetailsButtonEnabled}
-            className="gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            Open Details
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={selectedRows.size === 0}
-            className="gap-2"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Sign Off
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={selectedRows.size === 0}
-            className="gap-2 text-red-400 hover:text-red-300"
-          >
-            <Trash2 className="h-4 w-4" />
-            Cancel Order
-          </Button>
         </div>
       )}
 
@@ -420,22 +350,26 @@ export function OrderDetails() {
                     className="px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
                     onClick={() => handleSort("orderNumber")}
                   >
-                    Order Number {sortField === "orderNumber" && (sortOrder === "asc" ? "↑" : "↓")}
+                    SO Number {sortField === "orderNumber" && (sortOrder === "asc" ? "↑" : "↓")}
                   </TableHead>
                   <TableHead
                     className="px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
-                    onClick={() => handleSort("customerId")}
+                    onClick={() => handleSort("orderId")}
                   >
-                    Customer ID {sortField === "customerId" && (sortOrder === "asc" ? "↑" : "↓")}
+                    Service Id {sortField === "orderId" && (sortOrder === "asc" ? "↑" : "↓")}
                   </TableHead>
                   <TableHead
                     className="px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
-                    onClick={() => handleSort("customerName")}
+                    onClick={() => handleSort("lci")}
                   >
-                    Customer Name {sortField === "customerName" && (sortOrder === "asc" ? "↑" : "↓")}
+                    LCI Number {sortField === "lci" && (sortOrder === "asc" ? "↑" : "↓")}
                   </TableHead>
-                  <TableHead className="px-4 py-3 text-xs font-medium text-muted-foreground">Address</TableHead>
-                  <TableHead className="px-4 py-3 text-xs font-medium text-muted-foreground">Service Type</TableHead>
+                  <TableHead
+                    className="px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort("type")}
+                  >
+                    Order Type {sortField === "type" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableHead>
                   <TableHead
                     className="px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
                     onClick={() => handleSort("status")}
@@ -444,32 +378,45 @@ export function OrderDetails() {
                   </TableHead>
                   <TableHead
                     className="px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
-                    onClick={() => handleSort("createdDate")}
+                    onClick={() => handleSort("dueDate")}
                   >
-                    Created {sortField === "createdDate" && (sortOrder === "asc" ? "↑" : "↓")}
+                    Due Date {sortField === "dueDate" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead
+                    className="px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort("co")}
+                  >
+                    CO {sortField === "co" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead
+                    className="px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort("circuit")}
+                  >
+                    TN {sortField === "circuit" && (sortOrder === "asc" ? "↑" : "↓")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedOrders.map((order) => (
                   <TableRow
-                    key={order.id}
+                    key={order.orderId}
                     className="border-b border-border/20 hover:bg-secondary/20 cursor-pointer"
-                    onClick={() => toggleRow(order.id)}
+                    onClick={() => toggleRow(order.orderId)}
                   >
                     <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
-                        checked={selectedRows.has(order.id)}
-                        onCheckedChange={() => toggleRow(order.id)}
+                        checked={selectedRows.has(order.orderId)}
+                        onCheckedChange={() => toggleRow(order.orderId)}
                       />
                     </TableCell>
                     <TableCell className="px-4 py-3 font-mono text-foreground">{order.orderNumber}</TableCell>
-                    <TableCell className="px-4 py-3 font-mono text-muted-foreground">{order.customerId}</TableCell>
-                    <TableCell className="px-4 py-3 text-foreground">{order.customerName}</TableCell>
-                    <TableCell className="px-4 py-3 text-muted-foreground max-w-xs truncate">{order.address}</TableCell>
-                    <TableCell className="px-4 py-3 text-foreground">{order.serviceType}</TableCell>
+                    <TableCell className="px-4 py-3 font-mono text-muted-foreground">{order.orderId}</TableCell>
+                    <TableCell className="px-4 py-3 text-foreground">{order.lci}</TableCell>
+                    <TableCell className="px-4 py-3 text-muted-foreground">{order.type}</TableCell>
                     <TableCell className="px-4 py-3">{getStatusBadge(order.status)}</TableCell>
-                    <TableCell className="px-4 py-3 text-muted-foreground text-xs font-mono">{order.createdDate}</TableCell>
+                    <TableCell className="px-4 py-3 text-muted-foreground text-xs font-mono">{formatDate(order.dueDate)}</TableCell>
+                    <TableCell className="px-4 py-3 text-foreground">{order.co}</TableCell>
+                    <TableCell className="px-4 py-3 text-foreground font-mono">{order.circuit}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -537,13 +484,13 @@ export function OrderDetails() {
 
       {/* Action Buttons (Bottom Right) */}
       {filteredOrders.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-end">
+        <div className="flex flex-wrap gap-1 justify-end">
           <Button
             variant="outline"
             size="sm"
             onClick={handleOpenDetails}
             disabled={!isDetailsButtonEnabled}
-            className="gap-2"
+            className="gap-1"
           >
             <Eye className="h-4 w-4" />
             Open Details
@@ -552,7 +499,7 @@ export function OrderDetails() {
             variant="outline"
             size="sm"
             disabled={selectedRows.size === 0}
-            className="gap-2"
+            className="gap-1"
           >
             <CheckCircle2 className="h-4 w-4" />
             Sign Off
@@ -561,7 +508,7 @@ export function OrderDetails() {
             variant="outline"
             size="sm"
             disabled={selectedRows.size === 0}
-            className="gap-2 text-red-400 hover:text-red-300"
+            className="gap-1 text-red-400 hover:text-red-300"
           >
             <Trash2 className="h-4 w-4" />
             Cancel Order
@@ -569,107 +516,17 @@ export function OrderDetails() {
         </div>
       )}
 
-      {/* Side Dock - Order Details */}
-      <AnimatePresence>
-        {detailsOpen && selectedOrder && (
-          <div className="fixed inset-0 z-50 flex items-start justify-end">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setDetailsOpen(false)}
-              className="absolute inset-0 bg-black/50"
-            />
-
-            {/* Dock Panel */}
-            <motion.div
-              initial={{ x: 400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 400, opacity: 0 }}
-              transition={{ type: "spring", damping: 20 }}
-              className="relative w-full sm:max-w-md md:max-w-lg bg-card border-l border-border/50 h-full overflow-y-auto shadow-2xl"
-            >
-              {/* Dock Header */}
-              <div className="sticky top-0 border-b border-border/50 bg-card p-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">Order Details</h3>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setDetailsOpen(false)}
-                  className="p-1 hover:bg-secondary rounded-lg transition-colors"
-                >
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </motion.button>
-              </div>
-
-              {/* Dock Content */}
-              <div className="p-6 space-y-6">
-                {/* Order Header */}
-                <div className="space-y-2">
-                  <h4 className="text-2xl font-bold text-foreground font-mono">{selectedOrder.orderNumber}</h4>
-                  <p className="text-sm text-muted-foreground">Order ID: {selectedOrder.id}</p>
-                </div>
-
-                {/* Details Grid */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">Customer ID</p>
-                      <p className="text-sm font-mono text-foreground">{selectedOrder.customerId}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">LCI</p>
-                      <p className="text-sm font-mono text-foreground">{selectedOrder.lci}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">Customer Name</p>
-                    <p className="text-sm text-foreground">{selectedOrder.customerName}</p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">Address</p>
-                    <p className="text-sm text-foreground">{selectedOrder.address}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">Service Type</p>
-                      <p className="text-sm text-foreground">{selectedOrder.serviceType}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground font-medium">Status</p>
-                      {getStatusBadge(selectedOrder.status)}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground font-medium">Created Date</p>
-                    <p className="text-sm font-mono text-foreground">{selectedOrder.createdDate}</p>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="border-t border-border/30" />
-
-                {/* Actions */}
-                <div className="space-y-3">
-                  <Button variant="default" className="w-full gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Sign Off
-                  </Button>
-                  <Button variant="outline" className="w-full gap-2 text-red-400 hover:text-red-300">
-                    <Trash2 className="h-4 w-4" />
-                    Cancel Order
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Order Details Dock */}
+      <OrderDetailsDock
+        isOpen={detailsOpen}
+        onClose={() => {
+          setDetailsOpen(false)
+          setSelectedOrder(null)
+        }}
+        orderNumber={selectedOrder?.orderNumber || ""}
+        lci={selectedOrder?.lci || ""}
+        onFetch={setFetchDetailsFunction}
+      />
     </div>
   )
 }

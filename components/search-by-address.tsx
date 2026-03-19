@@ -146,7 +146,7 @@ export function SearchByAddress() {
 
     try {
       const data = await fetchAddressDetails(addressId.trim())
-      
+
       // Check if we got valid data
       if (!data) {
         toast({
@@ -231,14 +231,14 @@ export function SearchByAddress() {
       })
       return
     }
-    
+
     setIsLoading(true)
     try {
       console.log("[v0] Calling fetchNextConnection with portInstId:", ont.portInstId)
       const data = await fetchNextConnection(ont.portInstId)
-      
+
       console.log("[v0] fetchNextConnection response:", data)
-      
+
       if (!data) {
         toast({
           title: "Error",
@@ -273,12 +273,12 @@ export function SearchByAddress() {
 
         // Remove any nodes after ONT and add Drop Terminal/connected device
         const newDevices = updated.slice(0, ontIndex + 1)
-        
+
         // The API returns link.peer which is the connected equipment
         if (data.link && data.link.peer) {
           const peer = data.link.peer
           const cableName = data.link.cable?.name || "Drop Cable"
-          
+
           newDevices.push({
             id: `dt-${peer.equipInstId || "unknown"}`,
             type: "drop-terminal",
@@ -297,7 +297,7 @@ export function SearchByAddress() {
       })
 
       setActiveIndex((prev) => prev + 1)
-      
+
       toast({
         title: "Success",
         description: "Connection trace completed",
@@ -320,14 +320,14 @@ export function SearchByAddress() {
     setIsLoading(true)
     try {
       const data = await fetchEquipmentConnection(port.equipInstId || 0, port.portInstId)
-      
+
       if (!data || !data.targetEquipment) {
         setError("No equipment found for this port")
         return
       }
 
       setFdhData(data)
-      
+
       const fdhEquip = data.targetEquipment as { fdhId: string; name: string; status: string }
 
       // Update DT node with cable info and add FDH
@@ -409,7 +409,7 @@ export function SearchByAddress() {
       <Card className="rounded-xl border-border/50">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base text-foreground flex items-center gap-2">
+            <CardTitle className="text-base text-foreground flex items-center gap-1">
               <Search className="h-4 w-4 text-primary" />
               Search by Address ID
             </CardTitle>
@@ -419,14 +419,14 @@ export function SearchByAddress() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 max-w-md">
+          <div className="flex items-center gap-1">
+            <div className="flex-1">
               <Input
                 placeholder="Enter Address ID..."
                 value={addressId}
                 onChange={(e) => setAddressId(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="h-9"
+                className="flex-1"
               />
             </div>
             <Button onClick={handleSearch} disabled={isLoading} className="h-9">
@@ -444,7 +444,7 @@ export function SearchByAddress() {
             </Button>
           </div>
           {error && (
-            <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+            <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-1">
               <AlertCircle className="h-4 w-4 text-destructive" />
               <span className="text-sm text-destructive">{error}</span>
             </div>
@@ -461,7 +461,7 @@ export function SearchByAddress() {
         >
           {/* Breadcrumb Chips + Navigation */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 flex-wrap">
               {devices.map((device, idx) => {
                 const Icon = getDeviceIcon(device.type)
                 return (
@@ -469,7 +469,7 @@ export function SearchByAddress() {
                     <button
                       onClick={() => setActiveIndex(idx)}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all",
+                        "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm transition-all",
                         idx === activeIndex
                           ? "bg-primary text-primary-foreground"
                           : "bg-secondary hover:bg-secondary/80 text-foreground"
@@ -491,7 +491,7 @@ export function SearchByAddress() {
             </div>
 
             {/* Prev/Next Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button
                 variant="outline"
                 size="sm"
@@ -540,7 +540,7 @@ export function SearchByAddress() {
                           )}
                         >
                           {/* Device Header */}
-                          <div className="flex items-center gap-3 mb-3">
+                          <div className="flex items-center gap-1 mb-3">
                             <div
                               className={cn(
                                 "flex h-10 w-10 items-center justify-center rounded-lg",
@@ -567,7 +567,7 @@ export function SearchByAddress() {
                           {device.type === "home" && (
                             <div className="mt-3 space-y-2">
                               <TooltipProvider>
-                                <div className="flex gap-2">
+                                <div className="flex gap-1">
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <button
@@ -634,7 +634,7 @@ export function SearchByAddress() {
                                 }}
                                 disabled={isLoading || !addressData.ont.portInstId}
                                 className={cn(
-                                  "flex items-center gap-2 p-2 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors w-full justify-center",
+                                  "flex items-center gap-1 p-2 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors w-full justify-center",
                                   (!addressData.ont.portInstId) && "opacity-50 cursor-not-allowed"
                                 )}
                               >
@@ -741,19 +741,19 @@ export function SearchByAddress() {
 
               {/* Port Status Legend */}
               <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border/50">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <div className="h-3 w-3 rounded-full bg-emerald-500" />
                   <span className="text-xs text-muted-foreground">Active</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <div className="h-3 w-3 rounded-full bg-amber-400" />
                   <span className="text-xs text-muted-foreground">Pending</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <div className="h-3 w-3 rounded-full bg-rose-500" />
                   <span className="text-xs text-muted-foreground">Retired</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <div className="h-3 w-3 rounded-full bg-sky-400" />
                   <span className="text-xs text-muted-foreground">Free</span>
                 </div>
@@ -783,7 +783,7 @@ export function SearchByAddress() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-1">
               {dialogType === "customer" && <User className="h-5 w-5 text-primary" />}
               {dialogType === "service" && <Wifi className="h-5 w-5 text-primary" />}
               {dialogType === "cpe" && <Router className="h-5 w-5 text-primary" />}
@@ -797,9 +797,9 @@ export function SearchByAddress() {
 
           {dialogType === "customer" && addressData?.primaryCustomer && (
             <div className="space-y-3">
-              <DetailRow 
-                label="Name" 
-                value={[addressData.primaryCustomer.customerFirstName, addressData.primaryCustomer.customerLastName].filter(Boolean).join(" ") || "N/A"} 
+              <DetailRow
+                label="Name"
+                value={[addressData.primaryCustomer.customerFirstName, addressData.primaryCustomer.customerLastName].filter(Boolean).join(" ") || "N/A"}
               />
               <DetailRow label="Customer ID" value={addressData.primaryCustomer.customerId || "N/A"} />
               <DetailRow label="Customer Type" value={addressData.primaryCustomer.customerType || "N/A"} />
