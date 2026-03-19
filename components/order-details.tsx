@@ -92,6 +92,7 @@ export function OrderDetails() {
   const [isLoading, setIsLoading] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null)
+  const [fetchDetailsFunction, setFetchDetailsFunction] = useState<(() => Promise<void>) | null>(null)
 
   // Format date to MM-DD-YYYY
   const formatDate = (dateString: string | null | undefined): string => {
@@ -246,7 +247,7 @@ export function OrderDetails() {
     }
   }
 
-  // Handle open details
+  // Handle open details - trigger API call immediately
   const handleOpenDetails = () => {
     if (selectedRows.size !== 1) {
       toast({ title: "Error", description: "Please select exactly one order", variant: "destructive" })
@@ -258,6 +259,13 @@ export function OrderDetails() {
     if (order) {
       setSelectedOrder(order)
       setDetailsOpen(true)
+      
+      // Trigger API call after dock is opened
+      setTimeout(() => {
+        if (fetchDetailsFunction) {
+          fetchDetailsFunction()
+        }
+      }, 100)
     }
   }
 
@@ -511,9 +519,13 @@ export function OrderDetails() {
       {/* Order Details Dock */}
       <OrderDetailsDock
         isOpen={detailsOpen}
-        onClose={() => setDetailsOpen(false)}
+        onClose={() => {
+          setDetailsOpen(false)
+          setSelectedOrder(null)
+        }}
         orderNumber={selectedOrder?.orderNumber || ""}
         lci={selectedOrder?.lci || ""}
+        onFetch={setFetchDetailsFunction}
       />
     </div>
   )

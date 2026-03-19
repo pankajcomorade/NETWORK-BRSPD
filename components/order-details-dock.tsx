@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -54,17 +54,21 @@ interface OrderDetailsDockProps {
   onClose: () => void
   orderNumber: string
   lci: string
+  onFetch?: (fetch: () => Promise<void>) => void
 }
 
-export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci }: OrderDetailsDockProps) {
+export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }: OrderDetailsDockProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<OrderDetailsResponse | null>(null)
 
-  // Fetch order details on mount when order number and LCI are available
+  // Fetch order details
   const fetchOrderDetails = useCallback(async () => {
-    if (!orderNumber || !lci) return
+    if (!orderNumber || !lci) {
+      setError("Order number and LCI are required")
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -89,7 +93,8 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci }: OrderDet
       if (!response.ok) {
         const errorText = await response.text()
         console.error("[v0] API Error:", response.status, errorText)
-        setError(`Failed to fetch order details: ${response.status}`)
+        setError(`Failed to fetch order details: ${response.status} - ${errorText}`)
+        toast({ title: "Error", description: `Failed to fetch order details: ${response.status}`, variant: "destructive" })
         return
       }
 
@@ -97,6 +102,8 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci }: OrderDet
       console.log("[v0] Order details response:", responseData)
 
       setData(responseData)
+      setError(null)
+      toast({ title: "Success", description: "Order details loaded successfully" })
     } catch (err) {
       console.error("[v0] Fetch error:", err)
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch order details"
@@ -107,12 +114,12 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci }: OrderDet
     }
   }, [orderNumber, lci, toast])
 
-  // Fetch data when dock opens
-  const handleOpenChange = (open: boolean) => {
-    if (open && !data && !loading) {
-      fetchOrderDetails()
+  // Expose the fetch method to parent
+  useEffect(() => {
+    if (onFetch) {
+      onFetch(fetchOrderDetails)
     }
-  }
+  }, [onFetch, fetchOrderDetails])
 
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return "N/A"
