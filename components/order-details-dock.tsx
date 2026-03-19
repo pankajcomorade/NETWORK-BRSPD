@@ -234,7 +234,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                           <p className="text-sm text-foreground">{formatDate(data.order.dueDate)}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground font-medium">Circuit</p>
+                          <p className="text-xs text-muted-foreground font-medium">TN</p>
                           <p className="text-sm text-foreground font-mono">{lciData.service.circuit}</p>
                         </div>
                       </div>
