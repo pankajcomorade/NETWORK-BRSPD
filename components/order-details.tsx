@@ -116,11 +116,11 @@ export function OrderDetails() {
     setIsLoading(true)
     try {
       console.log("[v0] Fetching orders for:", searchQuery)
-      
+
       // Use internal API route to avoid CORS issues
       const apiUrl = `/api/orders/search?orderNum=${encodeURIComponent(searchQuery)}`
       console.log("[v0] API URL:", apiUrl)
-      
+
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -146,7 +146,7 @@ export function OrderDetails() {
 
       // Handle different response structures and map to OrderRecord
       let fetchedOrders: OrderRecord[] = []
-      
+
       const mapOrderRecord = (order: any): OrderRecord => ({
         orderId: order.orderId || "N/A",
         orderNumber: order.orderNumber || "N/A",
@@ -157,7 +157,7 @@ export function OrderDetails() {
         dueDate: order.dueDate || null,
         co: order.co || "N/A",
       })
-      
+
       if (Array.isArray(data)) {
         // If response is directly an array
         fetchedOrders = data.map(mapOrderRecord)
@@ -296,7 +296,7 @@ export function OrderDetails() {
           <CardTitle className="text-sm text-foreground">Search by Order Number</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-1">
             <Input
               placeholder="Enter order number (e.g., ORD-001234)"
               value={searchQuery}
@@ -307,7 +307,7 @@ export function OrderDetails() {
             <Button
               onClick={handleFind}
               disabled={isLoading}
-              className="gap-2 whitespace-nowrap"
+              className="gap-1 whitespace-nowrap"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               Find
@@ -320,40 +320,6 @@ export function OrderDetails() {
       {filteredOrders.length > 0 && (
         <div className="text-sm text-muted-foreground">
           Found {filteredOrders.length} order(s) · Showing {Math.min(recordsPerPage, paginatedOrders.length)} of {filteredOrders.length}
-        </div>
-      )}
-
-      {/* Action Buttons (Top Right) */}
-      {filteredOrders.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenDetails}
-            disabled={!isDetailsButtonEnabled}
-            className="gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            Open Details
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={selectedRows.size === 0}
-            className="gap-2"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Sign Off
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={selectedRows.size === 0}
-            className="gap-2 text-red-400 hover:text-red-300"
-          >
-            <Trash2 className="h-4 w-4" />
-            Cancel Order
-          </Button>
         </div>
       )}
 
@@ -509,13 +475,13 @@ export function OrderDetails() {
 
       {/* Action Buttons (Bottom Right) */}
       {filteredOrders.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-end">
+        <div className="flex flex-wrap gap-1 justify-end">
           <Button
             variant="outline"
             size="sm"
             onClick={handleOpenDetails}
             disabled={!isDetailsButtonEnabled}
-            className="gap-2"
+            className="gap-1"
           >
             <Eye className="h-4 w-4" />
             Open Details
@@ -524,7 +490,7 @@ export function OrderDetails() {
             variant="outline"
             size="sm"
             disabled={selectedRows.size === 0}
-            className="gap-2"
+            className="gap-1"
           >
             <CheckCircle2 className="h-4 w-4" />
             Sign Off
@@ -533,7 +499,7 @@ export function OrderDetails() {
             variant="outline"
             size="sm"
             disabled={selectedRows.size === 0}
-            className="gap-2 text-red-400 hover:text-red-300"
+            className="gap-1 text-red-400 hover:text-red-300"
           >
             <Trash2 className="h-4 w-4" />
             Cancel Order
@@ -628,11 +594,11 @@ export function OrderDetails() {
 
                 {/* Actions */}
                 <div className="space-y-3">
-                  <Button variant="default" className="w-full gap-2">
+                  <Button variant="default" className="w-full gap-1">
                     <CheckCircle2 className="h-4 w-4" />
                     Sign Off
                   </Button>
-                  <Button variant="outline" className="w-full gap-2 text-red-400 hover:text-red-300">
+                  <Button variant="outline" className="w-full gap-1 text-red-400 hover:text-red-300">
                     <Trash2 className="h-4 w-4" />
                     Cancel Order
                   </Button>
