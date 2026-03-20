@@ -45,7 +45,7 @@ export function PhysicalResourceDetail() {
 
     try {
       console.log("[v0] Fetching equipment with type:", type, "WC:", wcName)
-      const url = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchEquipments?type=${type}&WC=${wcName}`
+      const url = `/api/physical-resources/fetch-equipments?type=${encodeURIComponent(type)}&WC=${encodeURIComponent(wcName)}`
       const response = await fetch(url, {
         method: "GET",
         headers: {
