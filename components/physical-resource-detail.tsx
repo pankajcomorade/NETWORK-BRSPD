@@ -27,7 +27,7 @@ interface Equipment {
 }
 
 export function PhysicalResourceDetail() {
-  const [wcName, setWcName] = useState("")
+  const [wcName, setWcName] = useState("CNTRARXA")
   const [type, setType] = useState("OLT")
   const [isLoading, setIsLoading] = useState(false)
   const [equipment, setEquipment] = useState<Equipment[]>([])
@@ -125,6 +125,8 @@ export function PhysicalResourceDetail() {
                 <SelectContent>
                   <SelectItem value="OLT">OLT</SelectItem>
                   <SelectItem value="ONT">ONT</SelectItem>
+                  <SelectItem value="FDH">FDH</SelectItem>
+                  <SelectItem value="AP">Access Point</SelectItem>
                 </SelectContent>
               </Select>
             </div>
