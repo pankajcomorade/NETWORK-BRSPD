@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Search, MapPin, Zap, Info } from "lucide-react"
+import { Search, MapPin, View, Info } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -242,7 +242,7 @@ export function PhysicalResourceDetail() {
                           size="sm"
                           className="h-7 text-xs"
                         >
-                          <Zap className="h-3.5 w-3.5 text-primary" />
+                          <View className="h-3.5 w-3.5 text-primary" />
                         </Button>
                       </td>
                     </tr>
