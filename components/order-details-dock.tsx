@@ -311,8 +311,8 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                           <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground font-medium">ODIN Reservation</p>
-                                <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">ORSv-299998988</p>
+                                <p className="text-xs text-muted-foreground font-medium">Speed</p>
+                                <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">1G</p>
                               </div>
                               <div className="space-y-1">
                                 <p className="text-xs text-muted-foreground font-medium">Port Type</p>
