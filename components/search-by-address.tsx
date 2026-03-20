@@ -521,11 +521,6 @@ export function SearchByAddress() {
     }
   }, [toast])
 
-  // Handle opening hierarchy modal for equipment
-  const handleViewHierarchy = (equipInstId: number, equipmentName: string) => {
-    setSelectedEquipment({ equipInstId, name: equipmentName })
-    setHierarchyModalOpen(true)
-  }
   const goToPrev = () => {
     if (activeIndex > 0) setActiveIndex(activeIndex - 1)
   }
