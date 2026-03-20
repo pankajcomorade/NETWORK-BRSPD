@@ -154,14 +154,10 @@ export function PhysicalResourceDetail() {
       {/* Results Panel */}
       {equipment.length > 0 && (
         <Card className="rounded-xl border-border/50">
-          <CardHeader className="pb-3 flex items-center justify-between">
+          <CardHeader className="pb-3 flex">
             <CardTitle className="text-base text-foreground">
               Results ({equipment.length} found)
             </CardTitle>
-            <Button variant="outline" size="sm" className="text-xs h-8">
-              <Info className="h-3 w-3 mr-1" />
-              Hierarchy
-            </Button>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -217,7 +213,7 @@ export function PhysicalResourceDetail() {
                           className={cn(
                             "text-[10px]",
                             item.nodeStatus?.toLowerCase() === "active" ||
-                            item.nodeStatus?.toLowerCase() === "up"
+                              item.nodeStatus?.toLowerCase() === "up"
                               ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
                               : "border-amber-500/30 text-amber-400 bg-amber-500/10"
                           )}
