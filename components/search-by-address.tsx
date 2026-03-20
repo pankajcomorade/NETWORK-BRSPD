@@ -42,12 +42,15 @@ import {
   fetchAddressDetails,
   fetchNextConnection,
   fetchEquipmentConnection,
+  fetchPONConnectivity,
   type AddressDetailsResponse,
   type NextConnectionResponse,
   type EquipmentConnectionResponse,
+  type PONConnectivityResponse,
   type DropTerminalPort,
   type ONTInfo,
 } from "@/lib/api/address-api"
+import { EquipmentHierarchyModal } from "@/components/equipment-hierarchy-modal"
 
 const currentEnv = getCurrentEnvironment()
 
@@ -128,6 +131,15 @@ export function SearchByAddress() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogType, setDialogType] = useState<"customer" | "service" | "cpe" | "olt" | null>(null)
   const [selectedOlt, setSelectedOlt] = useState<DeviceNode | null>(null)
+
+  // PON Connectivity states
+  const [ponConnectivityData, setPonConnectivityData] = useState<PONConnectivityResponse | null>(null)
+  const [hierarchyModalOpen, setHierarchyModalOpen] = useState(false)
+  const [selectedEquipment, setSelectedEquipment] = useState<{
+    equipInstId: number
+    portInstId: number
+    name: string
+  } | null>(null)
 
   // Search handler
   const handleSearch = useCallback(async () => {
@@ -387,7 +399,56 @@ export function SearchByAddress() {
     }
   }, [])
 
-  // Navigate between devices
+  // Handle PON Connectivity - Fetch connections when ONT port is clicked
+  const handleFetchPONConnectivity = useCallback(async (ont: ONTInfo) => {
+    if (!ont.portInstId || !ont.equipInstId) {
+      toast({
+        title: "Error",
+        description: "Missing ONT port or equipment information",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      console.log("[v0] Fetching PON connectivity with ontPortId:", ont.portInstId, "ontInstId:", ont.equipInstId)
+      const data = await fetchPONConnectivity(ont.portInstId, ont.equipInstId)
+
+      console.log("[v0] PON Connectivity response:", data)
+
+      if (!data || !data.ponConnection) {
+        toast({
+          title: "Error",
+          description: "No connectivity data received",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setPonConnectivityData(data)
+      toast({
+        title: "Success",
+        description: `Found ${data.ponConnection.connections?.length || 0} connection(s)`,
+      })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
+      console.error("[v0] PON connectivity error:", err)
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [toast])
+
+  // Handle opening hierarchy modal for equipment
+  const handleViewHierarchy = (equipInstId: number, portInstId: number, equipmentName: string) => {
+    setSelectedEquipment({ equipInstId, portInstId, name: equipmentName })
+    setHierarchyModalOpen(true)
+  }
   const goToPrev = () => {
     if (activeIndex > 0) setActiveIndex(activeIndex - 1)
   }
@@ -644,6 +705,20 @@ export function SearchByAddress() {
                                 <span className="text-xs font-medium text-foreground">Trace Connection</span>
                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                               </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleFetchPONConnectivity(addressData.ont!)
+                                }}
+                                disabled={isLoading || !addressData.ont.portInstId}
+                                className={cn(
+                                  "flex items-center gap-1 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors w-full justify-center mt-2 border border-primary/20",
+                                  (!addressData.ont.portInstId) && "opacity-50 cursor-not-allowed"
+                                )}
+                              >
+                                <Info className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-medium text-primary">View PON Connectivity</span>
+                              </button>
                             </div>
                           )}
 
@@ -845,6 +920,175 @@ export function SearchByAddress() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Equipment Hierarchy Modal */}
+      <EquipmentHierarchyModal
+        isOpen={hierarchyModalOpen}
+        onClose={() => setHierarchyModalOpen(false)}
+        equipInstId={selectedEquipment?.equipInstId || null}
+        portInstId={selectedEquipment?.portInstId || null}
+        equipmentName={selectedEquipment?.name || ""}
+      />
+
+      {/* PON Connectivity Display */}
+      {ponConnectivityData && ponConnectivityData.ponConnection?.connections && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="mt-8 space-y-4"
+          >
+            <h3 className="text-lg font-semibold text-foreground">PON Connectivity</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ponConnectivityData.ponConnection.connections.map((connection, index) => (
+                <Card key={index} className="border-border/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center justify-between">
+                      <span>Connection {index + 1}</span>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs",
+                          connection.connectionStatus?.toLowerCase() === "active"
+                            ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                            : "border-amber-500/30 text-amber-600 dark:text-amber-400"
+                        )}
+                      >
+                        {connection.connectionStatus || "Unknown"}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {connection.cableStrandName && (
+                      <div className="text-xs space-y-1">
+                        <p className="text-muted-foreground font-medium">Cable Strand</p>
+                        <p className="font-mono text-foreground break-words">{connection.cableStrandName}</p>
+                      </div>
+                    )}
+
+                    {/* Endpoint A (Source) */}
+                    {connection.endpointA && (
+                      <div className="border-t border-border/30 pt-3 space-y-3">
+                        <p className="text-xs font-semibold text-primary">Source Equipment (A)</p>
+                        <div className="space-y-2">
+                          <div className="text-xs space-y-1">
+                            <p className="text-muted-foreground font-medium">Name</p>
+                            <p className="font-mono text-foreground text-[11px]">{connection.endpointA.equipment.name}</p>
+                          </div>
+                          <div className="text-xs space-y-1">
+                            <p className="text-muted-foreground font-medium">Type</p>
+                            <Badge variant="outline" className="text-[10px]">
+                              {connection.endpointA.equipment.type}
+                            </Badge>
+                          </div>
+                          {connection.endpointA.port.portNumber && (
+                            <div className="text-xs space-y-1">
+                              <p className="text-muted-foreground font-medium">Port</p>
+                              <p className="font-mono text-foreground">{connection.endpointA.port.portNumber}</p>
+                            </div>
+                          )}
+                          {connection.endpointA.port.portStatus && (
+                            <div className="text-xs space-y-1">
+                              <p className="text-muted-foreground font-medium">Status</p>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-[10px]",
+                                  connection.endpointA.port.portStatus?.toLowerCase() === "active"
+                                    ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                    : "border-amber-500/30 text-amber-600 dark:text-amber-400"
+                                )}
+                              >
+                                {connection.endpointA.port.portStatus}
+                              </Badge>
+                            </div>
+                          )}
+                          {connection.endpointA.equipment.instanceID && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full mt-2 text-xs h-7"
+                              onClick={() =>
+                                handleViewHierarchy(
+                                  connection.endpointA.equipment.instanceID,
+                                  connection.endpointA.port.instanceID || 0,
+                                  connection.endpointA.equipment.name
+                                )
+                              }
+                              disabled={isLoading}
+                            >
+                              View Hierarchy
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Endpoint B (Destination) */}
+                    {connection.endpointB && (
+                      <div className="border-t border-border/30 pt-3 space-y-3">
+                        <p className="text-xs font-semibold text-secondary">Destination Equipment (B)</p>
+                        <div className="space-y-2">
+                          <div className="text-xs space-y-1">
+                            <p className="text-muted-foreground font-medium">Name</p>
+                            <p className="font-mono text-foreground text-[11px]">{connection.endpointB.equipment.name}</p>
+                          </div>
+                          <div className="text-xs space-y-1">
+                            <p className="text-muted-foreground font-medium">Type</p>
+                            <Badge variant="outline" className="text-[10px]">
+                              {connection.endpointB.equipment.type}
+                            </Badge>
+                          </div>
+                          {connection.endpointB.port.portNumber && (
+                            <div className="text-xs space-y-1">
+                              <p className="text-muted-foreground font-medium">Port</p>
+                              <p className="font-mono text-foreground">{connection.endpointB.port.portNumber}</p>
+                            </div>
+                          )}
+                          {connection.endpointB.port.portStatus && (
+                            <div className="text-xs space-y-1">
+                              <p className="text-muted-foreground font-medium">Status</p>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-[10px]",
+                                  connection.endpointB.port.portStatus?.toLowerCase() === "active"
+                                    ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                    : "border-amber-500/30 text-amber-600 dark:text-amber-400"
+                                )}
+                              >
+                                {connection.endpointB.port.portStatus}
+                              </Badge>
+                            </div>
+                          )}
+                          {connection.endpointB.equipment.instanceID && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full mt-2 text-xs h-7"
+                              onClick={() =>
+                                handleViewHierarchy(
+                                  connection.endpointB.equipment.instanceID,
+                                  connection.endpointB.port.instanceID || 0,
+                                  connection.endpointB.equipment.name
+                                )
+                              }
+                              disabled={isLoading}
+                            >
+                              View Hierarchy
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      )}
     </div>
   )
 }
