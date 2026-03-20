@@ -292,13 +292,12 @@ export async function fetchPONConnectivity(
 
 /**
  * Fetch equipment hierarchy details
- * Returns detailed hierarchy information for a specific equipment and port
+ * Returns detailed hierarchy information for a specific equipment using only equipInstId
  */
 export async function fetchEquipmentHierarchyDetails(
-  equipInstId: number,
-  portInstId: number
+  equipInstId: number
 ): Promise<EquipmentHierarchyDetailsResponse> {
-  const url = `/api/address/equipment-hierarchy?equipInstId=${equipInstId}&portInstId=${portInstId}&_t=${Date.now()}`
+  const url = `/api/address/equipment-hierarchy?equipInstId=${equipInstId}&_t=${Date.now()}`
 
   const response = await fetch(url, {
     method: "GET",

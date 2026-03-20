@@ -137,7 +137,6 @@ export function SearchByAddress() {
   const [hierarchyModalOpen, setHierarchyModalOpen] = useState(false)
   const [selectedEquipment, setSelectedEquipment] = useState<{
     equipInstId: number
-    portInstId: number
     name: string
   } | null>(null)
 
@@ -235,10 +234,10 @@ export function SearchByAddress() {
 
   // Handle ONT port click - fetch Drop Terminal
   const handleOntPortClick = useCallback(async (ont: ONTInfo) => {
-    if (!ont.portInstId) {
+    if (!ont.portInstId || !ont.equipInstId) {
       toast({
         title: "Error",
-        description: "No port information available for this ONT",
+        description: "Missing ONT port or equipment information",
         variant: "destructive",
       })
       return
@@ -246,74 +245,37 @@ export function SearchByAddress() {
 
     setIsLoading(true)
     try {
-      console.log("[v0] Calling fetchNextConnection with portInstId:", ont.portInstId)
-      const data = await fetchNextConnection(ont.portInstId)
+      console.log("[v0] Fetching PON connectivity with ontPortId:", ont.portInstId, "ontInstId:", ont.equipInstId)
+      const data = await fetchPONConnectivity(ont.portInstId, ont.equipInstId)
 
-      console.log("[v0] fetchNextConnection response:", data)
+      console.log("[v0] PON Connectivity response:", data)
 
-      if (!data) {
+      if (!data || !data.ponConnection) {
         toast({
           title: "Error",
-          description: "No response from connection API",
+          description: "No connectivity data received",
           variant: "destructive",
         })
         return
       }
 
-      // Handle error response from API
-      if (data.error) {
-        toast({
-          title: "Connection Error",
-          description: data.error,
-          variant: "destructive",
-        })
-        return
-      }
-
-      setDropTerminalData(data)
-
-      // Update ONT node with cable info and add Drop Terminal
-      setDevices((prev) => {
-        const updated = [...prev]
-        const ontIndex = updated.findIndex((d) => d.type === "ont")
-        if (ontIndex !== -1) {
-          updated[ontIndex] = {
-            ...updated[ontIndex],
-            cableToNext: "Drop Cable",
-          }
-        }
-
-        // Remove any nodes after ONT and add Drop Terminal/connected device
-        const newDevices = updated.slice(0, ontIndex + 1)
-
-        // The API returns link.peer which is the connected equipment
-        if (data.link && data.link.peer) {
-          const peer = data.link.peer
-          const cableName = data.link.cable?.name || "Drop Cable"
-
-          newDevices.push({
-            id: `dt-${peer.equipInstId || "unknown"}`,
-            type: "drop-terminal",
-            name: peer.portName || `Equipment-${peer.equipInstId}`,
-            status: peer.portStatus || "Unknown",
-            cableToNext: "Distribution Cable",
-            data: {
-              ...peer,
-              linkStatus: data.link.status,
-              cableName: cableName,
-            },
-          })
-        }
-
-        return newDevices
-      })
-
-      setActiveIndex((prev) => prev + 1)
-
+      setPonConnectivityData(data)
       toast({
         title: "Success",
-        description: "Connection trace completed",
+        description: `Found ${data.ponConnection.connections?.length || 0} connection(s)`,
       })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
+      console.error("[v0] PON connectivity error:", err)
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [toast])
     } catch (err) {
       console.error("[v0] Error fetching next connection:", err)
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch connection details"
@@ -445,8 +407,8 @@ export function SearchByAddress() {
   }, [toast])
 
   // Handle opening hierarchy modal for equipment
-  const handleViewHierarchy = (equipInstId: number, portInstId: number, equipmentName: string) => {
-    setSelectedEquipment({ equipInstId, portInstId, name: equipmentName })
+  const handleViewHierarchy = (equipInstId: number, equipmentName: string) => {
+    setSelectedEquipment({ equipInstId, name: equipmentName })
     setHierarchyModalOpen(true)
   }
   const goToPrev = () => {
@@ -926,7 +888,6 @@ export function SearchByAddress() {
         isOpen={hierarchyModalOpen}
         onClose={() => setHierarchyModalOpen(false)}
         equipInstId={selectedEquipment?.equipInstId || null}
-        portInstId={selectedEquipment?.portInstId || null}
         equipmentName={selectedEquipment?.name || ""}
       />
 
@@ -1012,7 +973,6 @@ export function SearchByAddress() {
                               onClick={() =>
                                 handleViewHierarchy(
                                   connection.endpointA.equipment.instanceID,
-                                  connection.endpointA.port.instanceID || 0,
                                   connection.endpointA.equipment.name
                                 )
                               }
@@ -1070,7 +1030,6 @@ export function SearchByAddress() {
                               onClick={() =>
                                 handleViewHierarchy(
                                   connection.endpointB.equipment.instanceID,
-                                  connection.endpointB.port.instanceID || 0,
                                   connection.endpointB.equipment.name
                                 )
                               }

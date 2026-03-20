@@ -4,20 +4,17 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const equipInstId = searchParams.get("equipInstId")
-    const portInstId = searchParams.get("portInstId")
 
-    console.log("[v0] Equipment Hierarchy - equipInstId:", equipInstId, "portInstId:", portInstId)
+    console.log("[v0] Equipment Hierarchy - equipInstId:", equipInstId)
 
-    if (!equipInstId || !portInstId) {
+    if (!equipInstId) {
       return NextResponse.json(
-        { error: "Missing required parameters: equipInstId and portInstId" },
+        { error: "Missing required parameter: equipInstId" },
         { status: 400 }
       )
     }
 
-    const externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/equipmentHierarchyDetails?equipInstId=${encodeURIComponent(
-      equipInstId
-    )}&portInstId=${encodeURIComponent(portInstId)}`
+    const externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/equipmentHierarchyDetails?equipInstId=${encodeURIComponent(equipInstId)}`
 
     console.log("[v0] Calling external API:", externalUrl)
 

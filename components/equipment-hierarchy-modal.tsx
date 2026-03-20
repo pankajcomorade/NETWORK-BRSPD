@@ -21,7 +21,6 @@ interface EquipmentHierarchyModalProps {
   isOpen: boolean
   onClose: () => void
   equipInstId: number | null
-  portInstId: number | null
   equipmentName: string
 }
 
@@ -29,7 +28,6 @@ export function EquipmentHierarchyModal({
   isOpen,
   onClose,
   equipInstId,
-  portInstId,
   equipmentName,
 }: EquipmentHierarchyModalProps) {
   const { toast } = useToast()
@@ -39,22 +37,22 @@ export function EquipmentHierarchyModal({
 
   // Fetch hierarchy details when modal opens
   useEffect(() => {
-    if (isOpen && equipInstId && portInstId) {
+    if (isOpen && equipInstId) {
       fetchHierarchy()
     }
-  }, [isOpen, equipInstId, portInstId])
+  }, [isOpen, equipInstId])
 
   const fetchHierarchy = async () => {
-    if (!equipInstId || !portInstId) {
-      setError("Missing equipment or port information")
+    if (!equipInstId) {
+      setError("Missing equipment information")
       return
     }
 
     setLoading(true)
     setError(null)
     try {
-      console.log("[v0] Fetching hierarchy for equipInstId:", equipInstId, "portInstId:", portInstId)
-      const data = await fetchEquipmentHierarchyDetails(equipInstId, portInstId)
+      console.log("[v0] Fetching hierarchy for equipInstId:", equipInstId)
+      const data = await fetchEquipmentHierarchyDetails(equipInstId)
       console.log("[v0] Hierarchy data:", data)
       setHierarchyData(data)
     } catch (err) {
