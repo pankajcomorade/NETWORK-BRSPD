@@ -233,7 +233,7 @@ export function SearchByAddress() {
     }
   }, [addressId, toast])
 
-  // Handle ONT port click - fetch Drop Terminal
+  // Handle ONT port click - fetch PON Connectivity and display all connections
   const handleOntPortClick = useCallback(async (ont: ONTInfo) => {
     if (!ont.portInstId || !ont.equipInstId) {
       toast({
@@ -264,63 +264,58 @@ export function SearchByAddress() {
       setPonConnections(data.ponConnection.connections)
       setCurrentConnectionIndex(0)
 
-      // Get first connection (index 0) and extract Equipment A
-      const firstConnection = data.ponConnection.connections[0]
-      const equipmentA = firstConnection.endpointA
+      const allConnections = data.ponConnection.connections
 
-      if (!equipmentA || !equipmentA.equipment) {
-        toast({
-          title: "Error",
-          description: "No equipment data in connection",
-          variant: "destructive",
-        })
-        return
-      }
-
-      console.log("[v0] Equipment A from first connection:", equipmentA)
-
-      // Update ONT node with cable info
+      // Update ONT node with cable info from first connection
       setDevices((prev) => {
         const updated = [...prev]
         const ontIndex = updated.findIndex((d) => d.type === "ont")
         if (ontIndex !== -1) {
           updated[ontIndex] = {
             ...updated[ontIndex],
-            cableToNext: firstConnection.cableStrandName || "Drop Cable",
+            cableToNext: allConnections[0]?.cableStrandName || "Drop Cable",
           }
         }
 
         // Remove any nodes after ONT
         const newDevices = updated.slice(0, ontIndex + 1)
 
-        // Add Equipment A as next device in chain
-        newDevices.push({
-          id: `device-${equipmentA.equipment.instanceID}`,
-          type: equipmentA.equipment.type?.toLowerCase() || "equipment",
-          name: equipmentA.equipment.name,
-          status: equipmentA.port.portStatus || "Unknown",
-          portName: equipmentA.port.portNumber || "N/A",
-          cableToNext: firstConnection.cableStrandName || "Cable",
-          data: {
-            equipInstId: equipmentA.equipment.instanceID,
-            portInstId: equipmentA.port.instanceID,
-            portName: equipmentA.port.portName,
-            portNumber: equipmentA.port.portNumber,
-            portStatus: equipmentA.port.portStatus,
-            type: equipmentA.equipment.type,
-            equipmentName: equipmentA.equipment.name,
-            connectionIndex: 0,
-          },
+        // Add all three connections sequentially as devices in the chain
+        allConnections.forEach((connection, index) => {
+          const equipmentA = connection.endpointA
+
+          if (equipmentA && equipmentA.equipment) {
+            newDevices.push({
+              id: `device-${equipmentA.equipment.instanceID}-${index}`,
+              type: equipmentA.equipment.type?.toLowerCase() || "equipment",
+              name: equipmentA.equipment.name,
+              status: equipmentA.port.portStatus || "Unknown",
+              portName: equipmentA.port.portNumber || "N/A",
+              cableToNext: connection.cableStrandName || (index < allConnections.length - 1 ? "Cable Link" : ""),
+              data: {
+                equipInstId: equipmentA.equipment.instanceID,
+                portInstId: equipmentA.port.instanceID,
+                portName: equipmentA.port.portName,
+                portNumber: equipmentA.port.portNumber,
+                portStatus: equipmentA.port.portStatus,
+                type: equipmentA.equipment.type,
+                equipmentName: equipmentA.equipment.name,
+                connectionIndex: index,
+                connectionId: connection.connectionId,
+                connectionStatus: connection.connectionStatus,
+              },
+            })
+          }
         })
 
         return newDevices
       })
 
-      setActiveIndex((prev) => prev + 1)
+      setActiveIndex((prev) => prev + allConnections.length)
 
       toast({
         title: "Success",
-        description: `Connected to next device (1 of ${data.ponConnection.connections.length})`,
+        description: `Displaying ${allConnections.length} connected devices in the network path`,
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
@@ -334,69 +329,6 @@ export function SearchByAddress() {
       setIsLoading(false)
     }
   }, [toast])
-
-  // Handle next connection button click
-  const handleNextConnection = useCallback(() => {
-    const nextIndex = currentConnectionIndex + 1
-    if (nextIndex >= ponConnections.length) {
-      toast({
-        title: "Info",
-        description: "No more connections available",
-      })
-      return
-    }
-
-    const nextConnection = ponConnections[nextIndex]
-    const equipmentA = nextConnection.endpointA
-
-    if (!equipmentA || !equipmentA.equipment) {
-      toast({
-        title: "Error",
-        description: "No equipment data in next connection",
-        variant: "destructive",
-      })
-      return
-    }
-
-    console.log("[v0] Moving to connection index:", nextIndex)
-
-    setCurrentConnectionIndex(nextIndex)
-
-    // Update the current device to show the new connection
-    setDevices((prev) => {
-      const updated = [...prev]
-      const lastDeviceIndex = updated.length - 1
-
-      if (lastDeviceIndex >= 0) {
-        updated[lastDeviceIndex] = {
-          ...updated[lastDeviceIndex],
-          id: `device-${equipmentA.equipment.instanceID}`,
-          name: equipmentA.equipment.name,
-          status: equipmentA.port.portStatus || "Unknown",
-          portName: equipmentA.port.portNumber || "N/A",
-          cableToNext: nextConnection.cableStrandName || "Cable",
-          data: {
-            ...updated[lastDeviceIndex].data,
-            equipInstId: equipmentA.equipment.instanceID,
-            portInstId: equipmentA.port.instanceID,
-            portName: equipmentA.port.portName,
-            portNumber: equipmentA.port.portNumber,
-            portStatus: equipmentA.port.portStatus,
-            type: equipmentA.equipment.type,
-            equipmentName: equipmentA.equipment.name,
-            connectionIndex: nextIndex,
-          },
-        }
-      }
-
-      return updated
-    })
-
-    toast({
-      title: "Success",
-      description: `Showing connection ${nextIndex + 1} of ${ponConnections.length}`,
-    })
-  }, [currentConnectionIndex, ponConnections, toast])
 
   // Handle opening hierarchy modal for equipment
   const handleViewHierarchy = (equipInstId: number, equipmentName: string) => {
@@ -806,23 +738,6 @@ export function SearchByAddress() {
 
                               {/* Action Buttons */}
                               <div className="flex flex-col gap-2">
-                                {/* Next button - only show if more connections available */}
-                                {currentConnectionIndex < ponConnections.length - 1 && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="w-full text-xs h-8"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleNextConnection()
-                                    }}
-                                    disabled={isLoading}
-                                  >
-                                    <ChevronRight className="h-3 w-3 mr-1" />
-                                    Next ({currentConnectionIndex + 1}/{ponConnections.length})
-                                  </Button>
-                                )}
-
                                 {/* View Hierarchy button */}
                                 {device.data.equipInstId && (
                                   <Button
