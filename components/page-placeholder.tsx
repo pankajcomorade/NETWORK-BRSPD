@@ -25,6 +25,7 @@ import type { MenuId, SubMenuId } from "@/lib/menu-config"
 import { ResourceOverview } from "@/components/resource-overview"
 import { SearchByAddress } from "@/components/search-by-address"
 import { OrderDetails } from "@/components/order-details"
+import { PhysicalResourceDetail } from "@/components/physical-resource-detail"
 
 // ==========================================
 // Home Dashboard (rich, non-placeholder content)
@@ -360,57 +361,7 @@ function SpecDevicePage() {
 // Resources Physical page
 // ==========================================
 function ResourcesPhysicalPage() {
-  const resources = [
-    { name: "BUFTNCXAH07", type: "OLT", spec: "Calix E7-20", location: "Central Office", status: "active" },
-    { name: "FOLYALXAH42", type: "OLT", spec: "Calix E7-2", location: "Central Office", status: "active" },
-    { name: "FDH-MAIN-001", type: "FDH", spec: "144-Port Cabinet", location: "123 Main St", status: "active" },
-    { name: "FDH-ELM-002", type: "FDH", spec: "72-Port Cabinet", location: "456 Elm Ave", status: "active" },
-    { name: "Dist Cable 001", type: "Cable", spec: "128 Strand", location: "Main St", status: "active" },
-    { name: "Dist Cable 002", type: "Cable", spec: "64 Strand", location: "Oak Rd", status: "active" },
-    { name: "DT-MAIN-001", type: "Drop Terminal", spec: "8-Port MST", location: "100 Main St", status: "active" },
-    { name: "DT-ELM-002", type: "Drop Terminal", spec: "16-Port MST", location: "500 Elm Ave", status: "active" },
-  ]
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Physical Resources</h2>
-        <p className="text-muted-foreground mt-1">Inventory of all physical network devices and components</p>
-      </div>
-      <Card className="rounded-xl border-border/50">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/50">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Specification</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Location</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resources.map((r, i) => (
-                  <tr key={i} className="border-b border-border/20 hover:bg-secondary/20">
-                    <td className="px-4 py-3 font-mono text-foreground">{r.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{r.type}</td>
-                    <td className="px-4 py-3 text-primary">{r.spec}</td>
-                    <td className="px-4 py-3 text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{r.location}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className="rounded-md text-[10px] border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
-                        {r.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
+  return <PhysicalResourceDetail />
 }
 
 // ==========================================
