@@ -138,6 +138,8 @@ export function SearchByAddress() {
     equipInstId: number
     name: string
   } | null>(null)
+  const [ponConnections, setPonConnections] = useState<any[]>([])
+  const [currentConnectionIndex, setCurrentConnectionIndex] = useState(0)
 
   // Search handler
   const handleSearch = useCallback(async () => {
@@ -258,6 +260,10 @@ export function SearchByAddress() {
         return
       }
 
+      // Store all connections
+      setPonConnections(data.ponConnection.connections)
+      setCurrentConnectionIndex(0)
+
       // Get first connection (index 0) and extract Equipment A
       const firstConnection = data.ponConnection.connections[0]
       const equipmentA = firstConnection.endpointA
@@ -303,6 +309,7 @@ export function SearchByAddress() {
             portStatus: equipmentA.port.portStatus,
             type: equipmentA.equipment.type,
             equipmentName: equipmentA.equipment.name,
+            connectionIndex: 0,
           },
         })
 
@@ -313,7 +320,7 @@ export function SearchByAddress() {
 
       toast({
         title: "Success",
-        description: "Connected to next device",
+        description: `Connected to next device (1 of ${data.ponConnection.connections.length})`,
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
@@ -327,6 +334,75 @@ export function SearchByAddress() {
       setIsLoading(false)
     }
   }, [toast])
+
+  // Handle next connection button click
+  const handleNextConnection = useCallback(() => {
+    const nextIndex = currentConnectionIndex + 1
+    if (nextIndex >= ponConnections.length) {
+      toast({
+        title: "Info",
+        description: "No more connections available",
+      })
+      return
+    }
+
+    const nextConnection = ponConnections[nextIndex]
+    const equipmentA = nextConnection.endpointA
+
+    if (!equipmentA || !equipmentA.equipment) {
+      toast({
+        title: "Error",
+        description: "No equipment data in next connection",
+        variant: "destructive",
+      })
+      return
+    }
+
+    console.log("[v0] Moving to connection index:", nextIndex)
+
+    setCurrentConnectionIndex(nextIndex)
+
+    // Update the current device to show the new connection
+    setDevices((prev) => {
+      const updated = [...prev]
+      const lastDeviceIndex = updated.length - 1
+
+      if (lastDeviceIndex >= 0) {
+        updated[lastDeviceIndex] = {
+          ...updated[lastDeviceIndex],
+          id: `device-${equipmentA.equipment.instanceID}`,
+          name: equipmentA.equipment.name,
+          status: equipmentA.port.portStatus || "Unknown",
+          portName: equipmentA.port.portNumber || "N/A",
+          cableToNext: nextConnection.cableStrandName || "Cable",
+          data: {
+            ...updated[lastDeviceIndex].data,
+            equipInstId: equipmentA.equipment.instanceID,
+            portInstId: equipmentA.port.instanceID,
+            portName: equipmentA.port.portName,
+            portNumber: equipmentA.port.portNumber,
+            portStatus: equipmentA.port.portStatus,
+            type: equipmentA.equipment.type,
+            equipmentName: equipmentA.equipment.name,
+            connectionIndex: nextIndex,
+          },
+        }
+      }
+
+      return updated
+    })
+
+    toast({
+      title: "Success",
+      description: `Showing connection ${nextIndex + 1} of ${ponConnections.length}`,
+    })
+  }, [currentConnectionIndex, ponConnections, toast])
+
+  // Handle opening hierarchy modal for equipment
+  const handleViewHierarchy = (equipInstId: number, equipmentName: string) => {
+    setSelectedEquipment({ equipInstId, name: equipmentName })
+    setHierarchyModalOpen(true)
+  }
 
   // Handle Drop Terminal port click - fetch FDH
   const handleDtPortClick = useCallback(async (port: DropTerminalPort) => {
@@ -738,6 +814,82 @@ export function SearchByAddress() {
                             <div className="mt-3">
                               <p className="text-[10px] text-muted-foreground">Connected via Distribution Cable</p>
                               <p className="text-xs text-foreground mt-1">ID: {device.id}</p>
+                            </div>
+                          )}
+
+                          {/* Generic Equipment Device (FDH, AP, AT, OLT, etc.) */}
+                          {!["home", "ont", "drop-terminal", "fdh", "olt"].includes(device.type) && device.data && (
+                            <div className="mt-3 space-y-3">
+                              {/* Port Information */}
+                              {(device.data.portName || device.data.portNumber || device.data.portStatus) && (
+                                <div className="space-y-2 p-2 bg-secondary/30 rounded">
+                                  {device.data.portName && (
+                                    <div className="flex justify-between items-center text-xs">
+                                      <span className="text-muted-foreground">Port Name</span>
+                                      <span className="font-mono text-foreground">{device.data.portName}</span>
+                                    </div>
+                                  )}
+                                  {device.data.portNumber && (
+                                    <div className="flex justify-between items-center text-xs">
+                                      <span className="text-muted-foreground">Port Number</span>
+                                      <span className="font-mono text-foreground">{device.data.portNumber}</span>
+                                    </div>
+                                  )}
+                                  {device.data.portStatus && (
+                                    <div className="flex justify-between items-center text-xs">
+                                      <span className="text-muted-foreground">Port Status</span>
+                                      <Badge
+                                        variant="outline"
+                                        className={cn(
+                                          "text-[10px]",
+                                          device.data.portStatus?.toLowerCase() === "active"
+                                            ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                                            : "border-amber-500/30 text-amber-600 dark:text-amber-400"
+                                        )}
+                                      >
+                                        {device.data.portStatus}
+                                      </Badge>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Action Buttons */}
+                              <div className="flex flex-col gap-2">
+                                {/* Next button - only show if more connections available */}
+                                {currentConnectionIndex < ponConnections.length - 1 && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full text-xs h-8"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleNextConnection()
+                                    }}
+                                    disabled={isLoading}
+                                  >
+                                    <ChevronRight className="h-3 w-3 mr-1" />
+                                    Next ({currentConnectionIndex + 1}/{ponConnections.length})
+                                  </Button>
+                                )}
+
+                                {/* View Hierarchy button */}
+                                {device.data.equipInstId && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full text-xs h-8"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleViewHierarchy(device.data.equipInstId, device.name)
+                                    }}
+                                    disabled={isLoading}
+                                  >
+                                    <Info className="h-3 w-3 mr-1" />
+                                    View Hierarchy
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           )}
 
