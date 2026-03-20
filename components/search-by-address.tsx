@@ -476,51 +476,6 @@ export function SearchByAddress() {
     }
   }, [])
 
-  // Handle PON Connectivity - Fetch connections when ONT port is clicked
-  const handleFetchPONConnectivity = useCallback(async (ont: ONTInfo) => {
-    if (!ont.portInstId || !ont.equipInstId) {
-      toast({
-        title: "Error",
-        description: "Missing ONT port or equipment information",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      console.log("[v0] Fetching PON connectivity with ontPortId:", ont.portInstId, "ontInstId:", ont.equipInstId)
-      const data = await fetchPONConnectivity(ont.portInstId, ont.equipInstId)
-
-      console.log("[v0] PON Connectivity response:", data)
-
-      if (!data || !data.ponConnection) {
-        toast({
-          title: "Error",
-          description: "No connectivity data received",
-          variant: "destructive",
-        })
-        return
-      }
-
-      setPonConnectivityData(data)
-      toast({
-        title: "Success",
-        description: `Found ${data.ponConnection.connections?.length || 0} connection(s)`,
-      })
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
-      console.error("[v0] PON connectivity error:", err)
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [toast])
-
   const goToPrev = () => {
     if (activeIndex > 0) setActiveIndex(activeIndex - 1)
   }
