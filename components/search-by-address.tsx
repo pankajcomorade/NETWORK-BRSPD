@@ -276,18 +276,6 @@ export function SearchByAddress() {
       setIsLoading(false)
     }
   }, [toast])
-    } catch (err) {
-      console.error("[v0] Error fetching next connection:", err)
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch connection details"
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [toast])
 
   // Handle Drop Terminal port click - fetch FDH
   const handleDtPortClick = useCallback(async (port: DropTerminalPort) => {
