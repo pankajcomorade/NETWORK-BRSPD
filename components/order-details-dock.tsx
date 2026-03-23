@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -200,14 +199,18 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                   <p className="text-sm text-muted-foreground">Order ID: {data.order.orderId}</p>
                 </div>
 
-                {/* Accordions */}
-                <Accordion type="multiple" defaultValue={["order-details"]} className="space-y-2">
-                  {/* Order Details Accordion */}
-                  <AccordionItem value="order-details" className="border border-border/30 rounded-lg px-4">
-                    <AccordionTrigger className="hover:no-underline">
-                      <span className="font-semibold text-foreground">Order Details</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-3 pt-2">
+                {/* Tabs */}
+                <Tabs defaultValue="order-details" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4 gap-1">
+                    <TabsTrigger value="order-details" className="text-xs sm:text-sm">Order Details</TabsTrigger>
+                    <TabsTrigger value="address-details" className="text-xs sm:text-sm">Address Details</TabsTrigger>
+                    <TabsTrigger value="customer-details" className="text-xs sm:text-sm">Customer Details</TabsTrigger>
+                    <TabsTrigger value="technical-details" className="text-xs sm:text-sm">Technical Details</TabsTrigger>
+                  </TabsList>
+
+                  {/* Order Details Tab */}
+                  <TabsContent value="order-details" className="space-y-4 mt-6">
+                    <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground font-medium">Order Type</p>
@@ -242,15 +245,12 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                         <p className="text-xs text-muted-foreground font-medium">Service ID</p>
                         <p className="text-sm text-foreground">{lciData.service.serviceId}</p>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
+                    </div>
+                  </TabsContent>
 
-                  {/* Address Details Accordion */}
-                  <AccordionItem value="address-details" className="border border-border/30 rounded-lg px-4">
-                    <AccordionTrigger className="hover:no-underline">
-                      <span className="font-semibold text-foreground">Address Details</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-3 pt-2">
+                  {/* Address Details Tab */}
+                  <TabsContent value="address-details" className="space-y-4 mt-6">
+                    <div className="space-y-3">
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground font-medium">Address</p>
                         <p className="text-sm text-foreground">
@@ -267,15 +267,12 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                         <p className="text-xs text-muted-foreground font-medium">Address ID</p>
                         <p className="text-sm text-foreground">{lciData.address.displayName}</p>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
+                    </div>
+                  </TabsContent>
 
-                  {/* Customer Details Accordion */}
-                  <AccordionItem value="customer-details" className="border border-border/30 rounded-lg px-4">
-                    <AccordionTrigger className="hover:no-underline">
-                      <span className="font-semibold text-foreground">Customer Details</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-3 pt-2">
+                  {/* Customer Details Tab */}
+                  <TabsContent value="customer-details" className="space-y-4 mt-6">
+                    <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground font-medium">First Name</p>
@@ -294,91 +291,86 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                         <p className="text-xs text-muted-foreground font-medium">Customer Type</p>
                         <p className="text-sm text-foreground">{lciData.customer.customerType || "N/A"}</p>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
+                    </div>
+                  </TabsContent>
 
-                  {/* Ethernet/Technical Details Accordion */}
-                  <AccordionItem value="ethernet-details" className="border border-border/30 rounded-lg px-4">
-                    <AccordionTrigger className="hover:no-underline">
-                      <span className="font-semibold text-foreground">Technical Details</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-2">
-                      <Tabs defaultValue="ethernet" className="w-full">
-                        <TabsList className="grid w-full grid-cols-1">
-                          <TabsTrigger value="ethernet">Ethernet</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="ethernet" className="space-y-4 mt-4">
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground font-medium">Speed</p>
-                                <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">1G</p>
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground font-medium">Port Type</p>
-                                <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">Ethernet</p>
-                              </div>
+                  {/* Technical Details Tab */}
+                  <TabsContent value="technical-details" className="space-y-4 mt-6">
+                    <Tabs defaultValue="ethernet" className="w-full">
+                      <TabsList className="grid w-full grid-cols-1">
+                        <TabsTrigger value="ethernet">Ethernet</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="ethernet" className="space-y-4 mt-4">
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium">Speed</p>
+                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">1G</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground font-medium">Technology</p>
-                                <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">GPON</p>
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground font-medium">Broadband Service</p>
-                                <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">04BN94DM</p>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground font-medium">SVLAN</p>
-                                <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">305</p>
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground font-medium">CYLAN</p>
-                                <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">3841</p>
-                              </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium">Port Type</p>
+                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">Ethernet</p>
                             </div>
                           </div>
-
-                          {/* Dummy Table */}
-                          <div className="mt-6 overflow-x-auto">
-                            <table className="w-full text-sm border-collapse">
-                              <thead>
-                                <tr className="bg-secondary/30">
-                                  <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Type</th>
-                                  <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">ESA</th>
-                                  <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Entity Attribute(s)</th>
-                                  <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Path Updated</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr>
-                                  <td className="border border-border/30 px-3 py-2 text-foreground">PhysicalPort</td>
-                                  <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
-                                  <td className="border border-border/30 px-3 py-2 text-center">●</td>
-                                  <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
-                                </tr>
-                                <tr className="bg-secondary/10">
-                                  <td className="border border-border/30 px-3 py-2 text-foreground">PhysicalLink</td>
-                                  <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
-                                  <td className="border border-border/30 px-3 py-2 text-center">●</td>
-                                  <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
-                                </tr>
-                                <tr>
-                                  <td className="border border-border/30 px-3 py-2 text-foreground">SplitterEnclosure</td>
-                                  <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
-                                  <td className="border border-border/30 px-3 py-2 text-center">●</td>
-                                  <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
-                                </tr>
-                              </tbody>
-                            </table>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium">Technology</p>
+                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">GPON</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium">Broadband Service</p>
+                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">04BN94DM</p>
+                            </div>
                           </div>
-                        </TabsContent>
-                      </Tabs>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium">SVLAN</p>
+                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">305</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium">CYLAN</p>
+                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">3841</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dummy Table */}
+                        <div className="mt-6 overflow-x-auto">
+                          <table className="w-full text-sm border-collapse">
+                            <thead>
+                              <tr className="bg-secondary/30">
+                                <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Type</th>
+                                <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">ESA</th>
+                                <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Entity Attribute(s)</th>
+                                <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Path Updated</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td className="border border-border/30 px-3 py-2 text-foreground">PhysicalPort</td>
+                                <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
+                                <td className="border border-border/30 px-3 py-2 text-center">●</td>
+                                <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
+                              </tr>
+                              <tr className="bg-secondary/10">
+                                <td className="border border-border/30 px-3 py-2 text-foreground">PhysicalLink</td>
+                                <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
+                                <td className="border border-border/30 px-3 py-2 text-center">●</td>
+                                <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
+                              </tr>
+                              <tr>
+                                <td className="border border-border/30 px-3 py-2 text-foreground">SplitterEnclosure</td>
+                                <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
+                                <td className="border border-border/30 px-3 py-2 text-center">●</td>
+                                <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </TabsContent>
+                </Tabs>
               </div>
             )}
           </motion.div>
