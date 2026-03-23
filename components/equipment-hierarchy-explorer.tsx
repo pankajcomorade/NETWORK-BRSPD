@@ -107,7 +107,7 @@ export function EquipmentHierarchyExplorer({
               <span className="font-medium text-sm text-foreground truncate">
                 {node.name}
               </span>
-              <span className="text-xs px-2 py-0.5 rounded bg-secondary/50 text-muted-foreground flex-shrink-0">
+              <span className="text-xs px-2 py-0.5 rounded bg-secondary/50 text-muted-foreground flex-shrink-0 uppercase">
                 {node.type}
               </span>
             </div>

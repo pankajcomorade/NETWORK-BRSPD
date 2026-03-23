@@ -37,14 +37,14 @@ interface EquipmentHierarchyResponse {
 interface EquipmentHierarchyModalProps {
   isOpen: boolean
   onClose: () => void
-  equipInstId: number | null
+  portInstId: number | null
   equipmentName: string
 }
 
 export function EquipmentHierarchyModal({
   isOpen,
   onClose,
-  equipInstId,
+  portInstId,
   equipmentName,
 }: EquipmentHierarchyModalProps) {
   const { toast } = useToast()
@@ -54,13 +54,13 @@ export function EquipmentHierarchyModal({
 
   // Fetch hierarchy details when modal opens
   useEffect(() => {
-    if (isOpen && equipInstId) {
+    if (isOpen && portInstId) {
       fetchHierarchy()
     }
-  }, [isOpen, equipInstId])
+  }, [isOpen, portInstId])
 
   const fetchHierarchy = async () => {
-    if (!equipInstId) {
+    if (!portInstId) {
       setError("Missing equipment information")
       return
     }
@@ -68,8 +68,8 @@ export function EquipmentHierarchyModal({
     setLoading(true)
     setError(null)
     try {
-      console.log("[v0] Fetching hierarchy for equipInstId:", equipInstId)
-      const apiUrl = `/api/address/equipment-hierarchy-details?equipInstId=${encodeURIComponent(equipInstId)}`
+      console.log("[v0] Fetching hierarchy for portInstId:", portInstId)
+      const apiUrl = `/api/address/equipment-hierarchy-details?portInstId=${encodeURIComponent(portInstId)}`
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -104,14 +104,7 @@ export function EquipmentHierarchyModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="sticky top-0 bg-background border-b pb-4">
-          <DialogTitle className="flex items-center justify-between">
-            <span>Equipment Hierarchy: {equipmentName}</span>
-            <DialogClose asChild>
-              <Button variant="ghost" size="sm">
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
-          </DialogTitle>
+          <DialogTitle>Equipment Hierarchy: {equipmentName}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 p-4">
