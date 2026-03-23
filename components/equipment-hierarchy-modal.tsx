@@ -1,21 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { X, Loader2, AlertCircle } from "lucide-react"
+import { motion } from "framer-motion"
+import { Loader2, AlertCircle } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { EquipmentHierarchyExplorer } from "@/components/equipment-hierarchy-explorer"
-import { cn } from "@/lib/utils"
+import { DeviceExplorer } from "@/components/device-explorer"
 
 interface EquipmentNode {
   name: string
@@ -27,7 +23,7 @@ interface EquipmentNode {
 }
 
 interface EquipmentHierarchyResponse {
-  equipment: EquipmentNode
+  equipment: EquipmentNode | null
   summary?: {
     countsByType: Record<string, number>
     totalNodes: number
@@ -85,6 +81,13 @@ export function EquipmentHierarchyModal({
 
       const data: EquipmentHierarchyResponse = await response.json()
       console.log("[v0] Hierarchy data:", data)
+
+      // Handle null equipment
+      if (!data.equipment) {
+        setError("No equipment data found for this device")
+        return
+      }
+
       setHierarchyData(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch hierarchy details"
@@ -102,103 +105,59 @@ export function EquipmentHierarchyModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="sticky top-0 bg-background border-b pb-4">
-          <DialogTitle>Equipment Hierarchy: {equipmentName}</DialogTitle>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-6">
+        <DialogHeader className="sticky top-0 bg-background border-b pb-4 -mx-6 px-6">
+          <DialogTitle className="text-xl">Device Explorer: {equipmentName}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 p-4">
+        <div className="space-y-6 pt-4">
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              <p className="text-sm text-muted-foreground">Loading hierarchy details...</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+              <p className="text-sm text-muted-foreground">Loading device hierarchy...</p>
             </div>
           )}
 
           {/* Error State */}
-          {error && (
-            <Card className="border-red-500/30 bg-red-500/5">
-              <CardContent className="flex items-start gap-3 pt-6">
-                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-red-600 dark:text-red-400">Error</p>
-                  <p className="text-sm text-red-500">{error}</p>
-                  <Button onClick={fetchHierarchy} variant="outline" size="sm" className="mt-2">
-                    Retry
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          {error && !loading && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <Card className="border-red-500/30 bg-red-500/5">
+                <CardContent className="flex items-start gap-3 pt-6">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium text-red-600 dark:text-red-400">Unable to Load Hierarchy</p>
+                    <p className="text-sm text-red-500 mt-1">{error}</p>
+                    <button
+                      onClick={fetchHierarchy}
+                      className="mt-3 text-sm text-red-600 dark:text-red-400 hover:underline font-medium"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
 
-          {/* Hierarchy Data */}
-          {hierarchyData && !loading && (
+          {/* Device Explorer */}
+          {hierarchyData && !loading && !error && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="space-y-4"
             >
-              {/* Equipment Header */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-foreground">{hierarchyData.equipment.name}</h3>
-                      <Badge variant="outline" className="border-blue-500/30 text-blue-600 dark:text-blue-400">
-                        {hierarchyData.equipment.type}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground font-medium">Equipment ID</p>
-                        <p className="font-mono text-sm text-foreground">{hierarchyData.equipment.instanceID}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground font-medium">ER ID</p>
-                        <p className="font-mono text-sm text-foreground">{hierarchyData.equipment.erId}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground font-medium">Status</p>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-xs",
-                            hierarchyData.equipment.status?.toLowerCase() === "active"
-                              ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                              : "border-amber-500/30 text-amber-600 dark:text-amber-400"
-                          )}
-                        >
-                          {hierarchyData.equipment.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Equipment Hierarchy Tree */}
-              {hierarchyData.equipment && (
-                <EquipmentHierarchyExplorer equipment={hierarchyData.equipment} />
-              )}
-
-              {/* Summary Statistics */}
-              {hierarchyData.summary && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <h4 className="font-medium text-foreground mb-4">Equipment Summary</h4>
-                    <div className="grid grid-cols-3 gap-3">
-                      {Object.entries(hierarchyData.summary.countsByType).map(([type, count]) => (
-                        <div key={type} className="bg-secondary/50 rounded p-3">
-                          <p className="text-xs text-muted-foreground truncate">{type}</p>
-                          <p className="text-lg font-semibold text-foreground">{count}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 p-3 bg-secondary/30 rounded">
-                      <p className="text-xs text-muted-foreground">Total Nodes</p>
-                      <p className="text-2xl font-bold text-foreground">{hierarchyData.summary.totalNodes}</p>
+              {hierarchyData.equipment ? (
+                <DeviceExplorer equipment={hierarchyData.equipment} />
+              ) : (
+                <Card className="border-amber-500/30 bg-amber-500/5">
+                  <CardContent className="flex items-start gap-3 pt-6">
+                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-amber-600 dark:text-amber-400">No Equipment Data</p>
+                      <p className="text-sm text-amber-500 mt-1">
+                        The equipment data is not available for this device.
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -209,7 +168,7 @@ export function EquipmentHierarchyModal({
           {/* No Data State */}
           {!loading && !error && !hierarchyData && (
             <div className="flex flex-col items-center justify-center py-12">
-              <p className="text-sm text-muted-foreground">No hierarchy data available</p>
+              <p className="text-sm text-muted-foreground">Ready to load device hierarchy</p>
             </div>
           )}
         </div>
