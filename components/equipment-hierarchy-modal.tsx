@@ -14,8 +14,25 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { fetchEquipmentHierarchyDetails, type EquipmentHierarchyDetailsResponse } from "@/lib/api/address-api"
+import { EquipmentHierarchyExplorer } from "@/components/equipment-hierarchy-explorer"
 import { cn } from "@/lib/utils"
+
+interface EquipmentNode {
+  name: string
+  type: string
+  instanceID: number | null
+  erId: string
+  status: string
+  nodes?: EquipmentNode[]
+}
+
+interface EquipmentHierarchyResponse {
+  equipment: EquipmentNode
+  summary?: {
+    countsByType: Record<string, number>
+    totalNodes: number
+  }
+}
 
 interface EquipmentHierarchyModalProps {
   isOpen: boolean
@@ -33,7 +50,7 @@ export function EquipmentHierarchyModal({
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [hierarchyData, setHierarchyData] = useState<EquipmentHierarchyDetailsResponse | null>(null)
+  const [hierarchyData, setHierarchyData] = useState<EquipmentHierarchyResponse | null>(null)
 
   // Fetch hierarchy details when modal opens
   useEffect(() => {
@@ -52,7 +69,21 @@ export function EquipmentHierarchyModal({
     setError(null)
     try {
       console.log("[v0] Fetching hierarchy for equipInstId:", equipInstId)
-      const data = await fetchEquipmentHierarchyDetails(equipInstId)
+      const apiUrl = `/api/address/equipment-hierarchy-details?equipInstId=${encodeURIComponent(equipInstId)}`
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch hierarchy: ${response.status}`)
+      }
+
+      const data: EquipmentHierarchyResponse = await response.json()
       console.log("[v0] Hierarchy data:", data)
       setHierarchyData(data)
     } catch (err) {
@@ -71,7 +102,7 @@ export function EquipmentHierarchyModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="sticky top-0 bg-background border-b pb-4">
           <DialogTitle className="flex items-center justify-between">
             <span>Equipment Hierarchy: {equipmentName}</span>
@@ -121,28 +152,32 @@ export function EquipmentHierarchyModal({
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-foreground">{hierarchyData.equipmentName}</h3>
+                      <h3 className="text-lg font-semibold text-foreground">{hierarchyData.equipment.name}</h3>
                       <Badge variant="outline" className="border-blue-500/30 text-blue-600 dark:text-blue-400">
-                        {hierarchyData.equipmentType}
+                        {hierarchyData.equipment.type}
                       </Badge>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <p className="text-xs text-muted-foreground font-medium">Equipment ID</p>
-                        <p className="font-mono text-sm text-foreground">{hierarchyData.equipmentInstId}</p>
+                        <p className="font-mono text-sm text-foreground">{hierarchyData.equipment.instanceID}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground font-medium">Port Status</p>
+                        <p className="text-xs text-muted-foreground font-medium">ER ID</p>
+                        <p className="font-mono text-sm text-foreground">{hierarchyData.equipment.erId}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground font-medium">Status</p>
                         <Badge
                           variant="outline"
                           className={cn(
                             "text-xs",
-                            hierarchyData.portStatus?.toLowerCase() === "active"
+                            hierarchyData.equipment.status?.toLowerCase() === "active"
                               ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                               : "border-amber-500/30 text-amber-600 dark:text-amber-400"
                           )}
                         >
-                          {hierarchyData.portStatus || "Unknown"}
+                          {hierarchyData.equipment.status}
                         </Badge>
                       </div>
                     </div>
@@ -150,32 +185,27 @@ export function EquipmentHierarchyModal({
                 </CardContent>
               </Card>
 
-              {/* Port Information */}
-              {hierarchyData.portName && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <h4 className="font-medium text-foreground mb-2">Port Information</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Port Name:</span>
-                        <span className="text-sm font-mono text-foreground">{hierarchyData.portName}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Port ID:</span>
-                        <span className="text-sm font-mono text-foreground">{hierarchyData.portInstId}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Equipment Hierarchy Tree */}
+              {hierarchyData.equipment && (
+                <EquipmentHierarchyExplorer equipment={hierarchyData.equipment} />
               )}
 
-              {/* Hierarchy Tree */}
-              {hierarchyData.hierarchy && (
+              {/* Summary Statistics */}
+              {hierarchyData.summary && (
                 <Card>
                   <CardContent className="pt-6">
-                    <h4 className="font-medium text-foreground mb-4">Hierarchy Details</h4>
-                    <div className="bg-muted/50 rounded p-4 font-mono text-xs text-foreground overflow-x-auto">
-                      <pre>{JSON.stringify(hierarchyData.hierarchy, null, 2)}</pre>
+                    <h4 className="font-medium text-foreground mb-4">Equipment Summary</h4>
+                    <div className="grid grid-cols-3 gap-3">
+                      {Object.entries(hierarchyData.summary.countsByType).map(([type, count]) => (
+                        <div key={type} className="bg-secondary/50 rounded p-3">
+                          <p className="text-xs text-muted-foreground truncate">{type}</p>
+                          <p className="text-lg font-semibold text-foreground">{count}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-secondary/30 rounded">
+                      <p className="text-xs text-muted-foreground">Total Nodes</p>
+                      <p className="text-2xl font-bold text-foreground">{hierarchyData.summary.totalNodes}</p>
                     </div>
                   </CardContent>
                 </Card>
