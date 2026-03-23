@@ -280,42 +280,75 @@ export function SearchByAddress() {
         // Remove any nodes after ONT
         const newDevices = updated.slice(0, ontIndex + 1)
 
-        // Add all three connections sequentially as devices in the chain
-        allConnections.forEach((connection, index) => {
-          const equipmentA = connection.endpointA
+        // Filter and chain connections following the hierarchy: ONT > AP/AT[skip] > FDH > OLT
+        // Start from index 1 (skip first connection) and follow endpointB chain
+        const validEquipmentTypes = ["FDH", "OLT"]
+        const processedConnections: any[] = []
+        let currentConnection = allConnections[1] // Start from index 1, skip index 0
 
-          if (equipmentA && equipmentA.equipment) {
-            newDevices.push({
-              id: `device-${equipmentA.equipment.instanceID}-${index}`,
-              type: equipmentA.equipment.type?.toLowerCase() || "equipment",
-              name: equipmentA.equipment.name,
-              status: equipmentA.port.portStatus || "Unknown",
-              portName: equipmentA.port.portNumber || "N/A",
-              cableToNext: connection.cableStrandName || (index < allConnections.length - 1 ? "Cable Link" : ""),
-              data: {
-                equipInstId: equipmentA.equipment.instanceID,
-                portInstId: equipmentA.port.instanceID,
-                portName: equipmentA.port.portName,
-                portNumber: equipmentA.port.portNumber,
-                portStatus: equipmentA.port.portStatus,
-                type: equipmentA.equipment.type,
-                equipmentName: equipmentA.equipment.name,
-                connectionIndex: index,
-                connectionId: connection.connectionId,
-                connectionStatus: connection.connectionStatus,
-              },
+        while (currentConnection) {
+          // Check if endpointB equipment type is valid (FDH or OLT)
+          const endpointBEquipment = currentConnection.endpointB?.equipment
+          const endpointBType = endpointBEquipment?.type
+
+          if (endpointBEquipment && validEquipmentTypes.includes(endpointBType)) {
+            processedConnections.push({
+              equipment: endpointBEquipment,
+              port: currentConnection.endpointB.port,
+              cableStrandName: currentConnection.cableStrandName,
+              connectionIndex: processedConnections.length,
             })
+
+            // Find next connection where endpointA matches current endpointB
+            const nextConnection = allConnections.find((conn, idx) => {
+              return (
+                idx !== allConnections.indexOf(currentConnection) &&
+                conn.endpointA?.equipment?.instanceID === endpointBEquipment.instanceID
+              )
+            })
+
+            currentConnection = nextConnection
+          } else {
+            // Skip to next connection if current endpointB doesn't match valid types
+            const currentConnectionIndex = allConnections.indexOf(currentConnection)
+            const nextConnection = allConnections[currentConnectionIndex + 1]
+            currentConnection = nextConnection
           }
+        }
+
+        // Add processed connections as devices in the chain
+        processedConnections.forEach((conn, index) => {
+          const cableName = conn.cableStrandName || (index < processedConnections.length - 1 ? "Cable Link" : "")
+          
+          newDevices.push({
+            id: `device-${conn.equipment.instanceID}-${index}`,
+            type: conn.equipment.type?.toLowerCase() || "equipment",
+            name: conn.equipment.name,
+            status: conn.port.portStatus || "Unknown",
+            portName: conn.port.portNumber || "N/A",
+            cableToNext: cableName,
+            data: {
+              equipInstId: conn.equipment.instanceID,
+              portInstId: conn.port.instanceID,
+              portName: conn.port.portName,
+              portNumber: conn.port.portNumber,
+              portStatus: conn.port.portStatus,
+              type: conn.equipment.type,
+              equipmentName: conn.equipment.name,
+              connectionIndex: index,
+              connectionStatus: currentConnection?.connectionStatus,
+            },
+          })
         })
 
         return newDevices
       })
 
-      setActiveIndex((prev) => prev + allConnections.length)
+      setActiveIndex((prev) => prev + Math.max(allConnections.length - 1, 0))
 
       toast({
         title: "Success",
-        description: `Displaying ${allConnections.length} connected devices in the network path`,
+        description: `Displaying network hierarchy chain from ONT to OLT`,
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
