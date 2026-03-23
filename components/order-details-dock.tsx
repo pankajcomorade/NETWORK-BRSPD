@@ -48,6 +48,49 @@ interface OrderDetailsResponse {
   }
 }
 
+interface PONConnection {
+  connectionId: number
+  cableStrandName: string | null
+  connectionStatus: string
+  depth: number
+  endpointA: {
+    side: string
+    equipment: {
+      name: string
+      type: string
+      instanceID: number
+    }
+    port: {
+      instanceID: number | null
+      portName: string | null
+      portNumber: string
+      portInOrOut: string | null
+      speed: string | null
+      portVlan: string | null
+      portStatus: string | null
+      portType: string | null
+    }
+  }
+  endpointB: {
+    side: string
+    equipment: {
+      name: string
+      type: string
+      instanceID: number
+    }
+    port: {
+      instanceID: number | null
+      portName: string | null
+      portNumber: string
+      portInOrOut: string | null
+      speed: string | null
+      portVlan: string | null
+      portStatus: string | null
+      portType: string | null
+    }
+  }
+}
+
 interface OrderDetailsDockProps {
   isOpen: boolean
   onClose: () => void
@@ -61,6 +104,9 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<OrderDetailsResponse | null>(null)
+  const [ponConnections, setPonConnections] = useState<PONConnection[]>([])
+  const [ponLoading, setPonLoading] = useState(false)
+  const [ponError, setPonError] = useState<string | null>(null)
 
   // Fetch order details
   const fetchOrderDetails = useCallback(async () => {
@@ -135,6 +181,60 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
 
   const lciData = data?.order.lcis[0]
 
+  // Fetch PON connectivity data when Technical Details tab is clicked
+  const fetchPONConnectivity = useCallback(async () => {
+    if (!data?.order.lcis[0]?.ont) {
+      setPonError("ONT data not available")
+      return
+    }
+
+    const { ontId, equipmentId } = data.order.lcis[0].ont
+
+    setPonLoading(true)
+    setPonError(null)
+    setPonConnections([])
+
+    try {
+      console.log("[v0] Fetching PON connectivity - ontPortId:", ontId, "ontInstId:", equipmentId)
+
+      const apiUrl = `/api/orders/pon-connectivity?ontPortId=${encodeURIComponent(ontId)}&ontInstId=${encodeURIComponent(equipmentId)}`
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      })
+
+      console.log("[v0] PON Connectivity API response status:", response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[v0] PON API Error:", response.status, errorText)
+        setPonError(`Failed to fetch PON connectivity: ${response.status}`)
+        return
+      }
+
+      const ponData = await response.json()
+      console.log("[v0] PON Connectivity data received:", ponData)
+
+      if (ponData.ponConnection?.connections && Array.isArray(ponData.ponConnection.connections)) {
+        setPonConnections(ponData.ponConnection.connections)
+      } else {
+        setPonError("No connection data found in response")
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
+      console.error("[v0] PON fetch error:", err)
+      setPonError(errorMessage)
+    } finally {
+      setPonLoading(false)
+    }
+  }, [data])
+
+  const lciData = data?.order.lcis[0]
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -154,7 +254,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: "spring", damping: 20 }}
-            className="relative w-full sm:max-w-md md:max-w-lg lg:max-w-2xl bg-card border-l border-border/50 h-full overflow-y-auto shadow-2xl"
+            className="relative w-full sm:max-w-md md:max-w-lg lg:max-w-4xl bg-card border-l border-border/50 h-full overflow-y-auto shadow-2xl"
           >
             {/* Dock Header */}
             <div className="sticky top-0 border-b border-border/50 bg-card p-4 flex items-center justify-between">
@@ -298,7 +398,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                   <TabsContent value="technical-details" className="space-y-4 mt-6">
                     <Tabs defaultValue="ethernet" className="w-full">
                       <TabsList className="grid w-full grid-cols-1">
-                        <TabsTrigger value="ethernet">Ethernet</TabsTrigger>
+                        <TabsTrigger value="ethernet" onClick={fetchPONConnectivity}>Ethernet</TabsTrigger>
                       </TabsList>
                       <TabsContent value="ethernet" className="space-y-4 mt-4">
                         <div className="space-y-3">
@@ -334,38 +434,90 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                           </div>
                         </div>
 
-                        {/* Dummy Table */}
-                        <div className="mt-6 overflow-x-auto">
-                          <table className="w-full text-sm border-collapse">
-                            <thead>
-                              <tr className="bg-secondary/30">
-                                <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Type</th>
-                                <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">ESA</th>
-                                <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Entity Attribute(s)</th>
-                                <th className="border border-border/30 px-3 py-2 text-left text-xs font-semibold">Path Updated</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td className="border border-border/30 px-3 py-2 text-foreground">PhysicalPort</td>
-                                <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
-                                <td className="border border-border/30 px-3 py-2 text-center">●</td>
-                                <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
-                              </tr>
-                              <tr className="bg-secondary/10">
-                                <td className="border border-border/30 px-3 py-2 text-foreground">PhysicalLink</td>
-                                <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
-                                <td className="border border-border/30 px-3 py-2 text-center">●</td>
-                                <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
-                              </tr>
-                              <tr>
-                                <td className="border border-border/30 px-3 py-2 text-foreground">SplitterEnclosure</td>
-                                <td className="border border-border/30 px-3 py-2 text-muted-foreground">SPFFMOE1</td>
-                                <td className="border border-border/30 px-3 py-2 text-center">●</td>
-                                <td className="border border-border/30 px-3 py-2 text-foreground">-</td>
-                              </tr>
-                            </tbody>
-                          </table>
+                        {/* PON Connections Table */}
+                        <div className="mt-6 space-y-3">
+                          {ponLoading && (
+                            <div className="flex items-center justify-center py-8">
+                              <Loader2 className="h-5 w-5 text-primary animate-spin mr-2" />
+                              <span className="text-sm text-muted-foreground">Loading connection data...</span>
+                            </div>
+                          )}
+
+                          {ponError && (
+                            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex gap-2">
+                              <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-red-400">{ponError}</p>
+                            </div>
+                          )}
+
+                          {!ponLoading && ponConnections.length > 0 && (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs border-collapse">
+                                <thead>
+                                  <tr className="bg-secondary/30">
+                                    <th colSpan={4} className="border border-border/30 px-2 py-2 text-left text-xs font-semibold text-center">Endpoint A</th>
+                                    <th className="border border-border/30 px-2 py-2 text-left text-xs font-semibold text-center">Cable Strand Name</th>
+                                    <th colSpan={4} className="border border-border/30 px-2 py-2 text-left text-xs font-semibold text-center">Endpoint B</th>
+                                  </tr>
+                                  <tr className="bg-secondary/20">
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold">Name</th>
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold">Type</th>
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold">Port Name</th>
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold">Port Number</th>
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold"></th>
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold">Name</th>
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold">Type</th>
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold">Port Name</th>
+                                    <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold">Port Number</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {ponConnections.map((conn, idx) => (
+                                    <tr key={idx} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                      {/* Endpoint A */}
+                                      <td className="border border-border/30 px-2 py-2 text-foreground truncate" title={conn.endpointA.equipment.name}>
+                                        {conn.endpointA.equipment.name}
+                                      </td>
+                                      <td className="border border-border/30 px-2 py-2 text-muted-foreground">
+                                        {conn.endpointA.equipment.type}
+                                      </td>
+                                      <td className="border border-border/30 px-2 py-2 text-muted-foreground text-xs truncate" title={conn.endpointA.port.portName || "N/A"}>
+                                        {conn.endpointA.port.portName || "-"}
+                                      </td>
+                                      <td className="border border-border/30 px-2 py-2 text-muted-foreground text-center">
+                                        {conn.endpointA.port.portNumber}
+                                      </td>
+
+                                      {/* Cable Strand Name */}
+                                      <td className="border border-border/30 px-2 py-2 text-primary text-center font-medium min-w-[80px]" title={conn.cableStrandName || "N/A"}>
+                                        {conn.cableStrandName || "-"}
+                                      </td>
+
+                                      {/* Endpoint B */}
+                                      <td className="border border-border/30 px-2 py-2 text-foreground truncate" title={conn.endpointB.equipment.name}>
+                                        {conn.endpointB.equipment.name}
+                                      </td>
+                                      <td className="border border-border/30 px-2 py-2 text-muted-foreground">
+                                        {conn.endpointB.equipment.type}
+                                      </td>
+                                      <td className="border border-border/30 px-2 py-2 text-muted-foreground text-xs truncate" title={conn.endpointB.port.portName || "N/A"}>
+                                        {conn.endpointB.port.portName || "-"}
+                                      </td>
+                                      <td className="border border-border/30 px-2 py-2 text-muted-foreground text-center">
+                                        {conn.endpointB.port.portNumber}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+
+                          {!ponLoading && ponConnections.length === 0 && !ponError && (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              Click on the Ethernet tab to load connection data
+                            </p>
+                          )}
                         </div>
                       </TabsContent>
                     </Tabs>
