@@ -282,20 +282,21 @@ export function SearchByAddress() {
 
         // Filter and chain connections following the hierarchy: ONT > AP/AT[skip] > FDH > OLT
         // Start from index 1 (skip first connection) and follow endpointB chain
-        const validEquipmentTypes = ["FDH", "OLT"]
+        const validEquipmentTypes = ["FDH", "OLT", "ONT"]
         const processedConnections: any[] = []
         let currentConnection = allConnections[1] // Start from index 1, skip index 0
 
         while (currentConnection) {
-          // Check if endpointB equipment type is valid (FDH or OLT)
+          // Check if endpointB equipment type is valid (FDH, OLT, or ONT) - case insensitive
           const endpointBEquipment = currentConnection.endpointB?.equipment
-          const endpointBType = endpointBEquipment?.type
+          const endpointBType = endpointBEquipment?.type?.toUpperCase?.()
 
           if (endpointBEquipment && validEquipmentTypes.includes(endpointBType)) {
             processedConnections.push({
               equipment: endpointBEquipment,
               port: currentConnection.endpointB.port,
               cableStrandName: currentConnection.cableStrandName,
+              connectionStatus: currentConnection.connectionStatus,
               connectionIndex: processedConnections.length,
             })
 
@@ -322,9 +323,9 @@ export function SearchByAddress() {
           
           newDevices.push({
             id: `device-${conn.equipment.instanceID}-${index}`,
-            type: conn.equipment.type?.toLowerCase() || "equipment",
+            type: conn.equipment.type?.toLowerCase?.() || "equipment",
             name: conn.equipment.name,
-            status: conn.port.portStatus || "Unknown",
+            status: conn.connectionStatus || "Unknown",
             portName: conn.port.portNumber || "N/A",
             cableToNext: cableName,
             data: {
@@ -332,11 +333,10 @@ export function SearchByAddress() {
               portInstId: conn.port.instanceID,
               portName: conn.port.portName,
               portNumber: conn.port.portNumber,
-              portStatus: conn.port.portStatus,
-              type: conn.equipment.type,
+              connectionStatus: conn.connectionStatus,
+              type: conn.equipment.type?.toUpperCase?.(),
               equipmentName: conn.equipment.name,
               connectionIndex: index,
-              connectionStatus: currentConnection?.connectionStatus,
             },
           })
         })
@@ -364,8 +364,9 @@ export function SearchByAddress() {
   }, [toast])
 
   // Handle opening hierarchy modal for equipment
-  const handleViewHierarchy = (equipInstId: number, equipmentName: string) => {
-    setSelectedEquipment({ equipInstId, name: equipmentName })
+  const handleViewHierarchy = (portInstId: number, equipmentName: string) => {
+    console.log("[v0] Opening hierarchy modal for equipment:", equipmentName, "portInstId:", portInstId)
+    setSelectedEquipment({ equipInstId: portInstId, name: equipmentName })
     setHierarchyModalOpen(true)
   }
 
@@ -726,9 +727,26 @@ export function SearchByAddress() {
                           )}
 
                           {device.type === "fdh" && (
-                            <div className="mt-3">
-                              <p className="text-[10px] text-muted-foreground">Connected via Distribution Cable</p>
-                              <p className="text-xs text-foreground mt-1">ID: {device.id}</p>
+                            <div className="mt-3 space-y-3">
+                              <div>
+                                <p className="text-[10px] text-muted-foreground">Distribution Cable: {device.cableToNext}</p>
+                                <p className="text-xs text-foreground mt-1">ID: {device.id}</p>
+                              </div>
+                              {device.data?.portInstId && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full text-xs h-8"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleViewHierarchy(device.data?.portInstId, device.name)
+                                  }}
+                                  disabled={isLoading}
+                                >
+                                  <Info className="h-3 w-3 mr-1" />
+                                  View Hierarchy
+                                </Button>
+                              )}
                             </div>
                           )}
 
@@ -792,35 +810,28 @@ export function SearchByAddress() {
                           )}
 
                           {device.type === "olt" && (
-                            <div className="mt-3">
-                              <p className="text-[10px] text-muted-foreground">Connected via Feeder Cable</p>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSelectedOlt(device)
-                                  setDialogType("olt")
-                                  setDialogOpen(true)
-                                }}
-                                className="text-xs text-foreground hover:text-primary transition-colors mt-1"
-                              >
-                                ID: <span className="cursor-pointer underline underline-offset-2 hover:no-underline">{device.id}</span>
-                              </button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="mt-2 h-7 text-xs w-full"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSelectedOlt(device)
-                                  setDialogType("olt")
-                                  setDialogOpen(true)
-                                }}
-                              >
-                                <Info className="h-3 w-3 mr-1" />
-                                View Details
-                              </Button>
+                            <div className="mt-3 space-y-3">
+                              <div>
+                                <p className="text-[10px] text-muted-foreground">Feeder Cable: {device.cableToNext}</p>
+                              </div>
+                              {device.data?.portInstId && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full text-xs h-8"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleViewHierarchy(device.data?.portInstId, device.name)
+                                  }}
+                                  disabled={isLoading}
+                                >
+                                  <Info className="h-3 w-3 mr-1" />
+                                  View Hierarchy
+                                </Button>
+                              )}
                             </div>
                           )}
+
                         </motion.div>
 
                         {/* Cable Connector */}
