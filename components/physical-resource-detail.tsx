@@ -124,7 +124,10 @@ export function PhysicalResourceDetail() {
 
     try {
       console.log("[v0] Fetching equipment with type:", type, "WC:", wcName)
-      const url = `/api/physical-resources/fetch-equipments?WC=${encodeURIComponent(wcName)}${type}?&type=${encodeURIComponent(type)}:''`
+      let url = `/api/physical-resources/fetch-equipments?WC=${encodeURIComponent(wcName)}`
+      if (type) {
+        url = url + `&type=${encodeURIComponent(type)}`
+      }
       const response = await fetch(url, {
         method: "GET",
         headers: {
