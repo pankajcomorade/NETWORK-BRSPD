@@ -35,6 +35,55 @@ export const DEFAULT_SEARCH_PARAMS: EquipmentSearchParams = {
 }
 
 /**
+ * Search equipment by name - Dedicated endpoint for equipment name searches
+ * This function uses a dedicated API route to avoid conflicts with hierarchy lookups
+ * @param equipmentName - Name of the equipment to search for
+ * @param equipCategory - Category filter (OLT, FDH, AP, or all)
+ * @returns Equipment search results
+ */
+export async function searchEquipmentByName(
+  equipmentName: string,
+  equipCategory: string = "all"
+): Promise<any> {
+  const queryParams = new URLSearchParams()
+  queryParams.set("equipmentName", equipmentName)
+  
+  if (equipCategory && equipCategory !== "all") {
+    queryParams.set("equipCategory", equipCategory)
+  }
+
+  const url = `/api/equipment/search-by-name?${queryParams}`
+
+  console.log("[v0] Searching equipment by name at", new Date().toISOString())
+  console.log("[v0] Request URL:", url)
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+    },
+    cache: "no-store",
+    next: { revalidate: 0 },
+  })
+
+  console.log("[v0] Search Response status:", response.status)
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    console.error("[v0] Search Error:", errorData)
+    throw new Error(errorData.error || `API Error: ${response.status} ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  console.log("[v0] Search Success - Results received")
+
+  return data
+}
+
+/**
  * Fetch equipment hierarchy details from the API via internal proxy route
  * This avoids CORS issues by routing through Next.js API route
  * @param params - Search parameters

@@ -85,6 +85,13 @@ export interface NextConnectionResponse {
   dropTerminal: DropTerminalInfo | null
   cableName?: string
   cableType?: "Drop" | "Distribution" | "Feeder"
+  // New PON Connectivity fields
+  link?: {
+    peer?: any
+    cable?: { name: string }
+    status?: string
+  }
+  error?: string
 }
 
 export interface FDHInfo {
@@ -109,6 +116,54 @@ export interface EquipmentConnectionResponse {
   cableName?: string
   cableType?: "Distribution" | "Feeder"
   equipmentType: "FDH" | "OLT"
+}
+
+// PON Connectivity response types
+export interface PONEndpoint {
+  side: "A" | "B"
+  equipment: {
+    name: string
+    type: string
+    instanceID: number
+  }
+  port: {
+    instanceID: number | null
+    portName: string | null
+    portNumber: string
+    portInOrOut: string | null
+    speed: string | null
+    portVlan: string | null
+    portStatus: string | null
+    portType: string | null
+  }
+}
+
+export interface PONConnection {
+  connectionId: number
+  cableStrandName: string | null
+  connectionStatus: string
+  endpointA: PONEndpoint
+  endpointB: PONEndpoint
+}
+
+export interface PONConnectivityResponse {
+  ponConnection: {
+    inputId: number
+    linkId: number | null
+    type: string
+    status: string
+    connections: PONConnection[]
+  }
+}
+
+export interface EquipmentHierarchyDetailsResponse {
+  equipmentInstId: number
+  equipmentName: string
+  equipmentType: string
+  portInstId: number
+  portName: string
+  portStatus: string
+  hierarchy: any
 }
 
 /**
@@ -190,6 +245,59 @@ export async function fetchEquipmentConnection(
   portInstId: number
 ): Promise<EquipmentConnectionResponse> {
   const url = `/api/address/equipment-connection?equipInstId=${equipInstId}&portInstId=${portInstId}&_t=${Date.now()}`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || `API Error: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Fetch PON connectivity details
+ * Returns connections with source and destination equipment details
+ */
+export async function fetchPONConnectivity(
+  ontPortId: number,
+  ontInstId: number
+): Promise<PONConnectivityResponse> {
+  const url = `/api/address/pon-connectivity?ontPortId=${ontPortId}&ontInstId=${ontInstId}&_t=${Date.now()}`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || `API Error: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Fetch equipment hierarchy details
+ * Returns detailed hierarchy information for a specific equipment using only equipInstId
+ */
+export async function fetchEquipmentHierarchyDetails(
+  equipInstId: number
+): Promise<EquipmentHierarchyDetailsResponse> {
+  const url = `/api/address/equipment-hierarchy?equipInstId=${equipInstId}&_t=${Date.now()}`
 
   const response = await fetch(url, {
     method: "GET",
