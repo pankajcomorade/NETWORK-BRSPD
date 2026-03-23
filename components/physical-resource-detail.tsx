@@ -113,10 +113,10 @@ export function PhysicalResourceDetail() {
       return
     }
 
-    if (!type.trim()) {
-      setError("Please select Equipment Type")
-      return
-    }
+    // if (!type.trim()) {
+    //   setError("Please select Equipment Type")
+    //   return
+    // }
 
     setIsLoading(true)
     setError(null)
