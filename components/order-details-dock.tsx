@@ -166,6 +166,15 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
     }
   }, [onFetch, fetchOrderDetails])
 
+  // Reset PON data when dock closes
+  useEffect(() => {
+    if (!isOpen) {
+      setPonConnections([])
+      setPonLoading(false)
+      setPonError(null)
+    }
+  }, [isOpen])
+
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return "N/A"
     try {
