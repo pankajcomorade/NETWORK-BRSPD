@@ -233,8 +233,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
     }
   }, [data])
 
-  const lciData = data?.order.lcis[0]
-
   return (
     <AnimatePresence>
       {isOpen && (
