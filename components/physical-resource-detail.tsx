@@ -65,9 +65,9 @@ export function PhysicalResourceDetail() {
         if (wcData.wireCenters && Array.isArray(wcData.wireCenters)) {
           setWireCenters(wcData.wireCenters)
           // Set first wire center as default
-          if (wcData.wireCenters.length > 0) {
-            setWcName(wcData.wireCenters[0])
-          }
+          // if (wcData.wireCenters.length > 0) {
+          //   setWcName(wcData.wireCenters[0])
+          // }
         }
 
         // Fetch equipment types
@@ -91,9 +91,9 @@ export function PhysicalResourceDetail() {
         if (etData.equipTypes && Array.isArray(etData.equipTypes)) {
           setEquipmentTypes(etData.equipTypes)
           // Set first type as default
-          if (etData.equipTypes.length > 0) {
-            setType(etData.equipTypes[0])
-          }
+          // if (etData.equipTypes.length > 0) {
+          //   setType(etData.equipTypes[0])
+          // }
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load dropdown data"
