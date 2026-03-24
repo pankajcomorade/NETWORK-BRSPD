@@ -320,7 +320,7 @@ export function SearchByAddress() {
         // Add processed connections as devices in the chain
         processedConnections.forEach((conn, index) => {
           const cableName = conn.cableStrandName || (index < processedConnections.length - 1 ? "Cable Link" : "")
-          
+
           newDevices.push({
             id: `device-${conn.equipment.instanceID}-${index}`,
             type: conn.equipment.type?.toLowerCase?.() || "equipment",
@@ -732,14 +732,14 @@ export function SearchByAddress() {
                                 <p className="text-[10px] text-muted-foreground">Distribution Cable: {device.cableToNext}</p>
                                 <p className="text-xs text-foreground mt-1">ID: {device.id}</p>
                               </div>
-                              {device.data?.portInstId && (
+                              {device.data?.equipInstId && (
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="w-full text-xs h-8"
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleViewHierarchy(device.data?.portInstId, device.name)
+                                    handleViewHierarchy(device.data?.equipInstId, device.name)
                                   }}
                                   disabled={isLoading}
                                 >
