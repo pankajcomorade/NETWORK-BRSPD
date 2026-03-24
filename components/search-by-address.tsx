@@ -195,7 +195,7 @@ export function SearchByAddress() {
         type: "home",
         name: addressStr || "Home",
         status: "active",
-        cableToNext: allConnections[0]?.cableStrandName || "Connection Link",
+        cableToNext: "Service Connection",
         data: {
           address: data.address,
           customer: data.primaryCustomer,
