@@ -40,31 +40,6 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
     }
   }
 
-  // Get the icon for equipment type
-  const getEquipmentIcon = (type: string) => {
-    const typeUpper = type?.toUpperCase()
-    switch (typeUpper) {
-      case "RACK":
-        return "🗄️"
-      case "SHELF":
-        return "📦"
-      case "SLOT":
-        return "📌"
-      case "SPLITTER":
-        return "🔀"
-      case "PORT":
-        return "🔌"
-      case "NETWORK CARD":
-        return "🖥️"
-      case "FDH":
-      case "OLT":
-      case "ONT":
-        return "⚙️"
-      default:
-        return "📦"
-    }
-  }
-
   if (!currentLevel) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">

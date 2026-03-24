@@ -1,9 +1,10 @@
 "use client"
 
+import React from "react"
 import { Building2, Network, Wifi, MapPin, Home, Zap, Boxes, Package } from "lucide-react"
 
 // Get icon for equipment type
-export const getEquipmentIcon = (type?: string) => {
+export const getEquipmentIcon = (type?: string): React.ReactNode => {
   if (!type) return <Package className="h-6 w-6 text-primary" />
 
   const typeUpper = type.toUpperCase()
