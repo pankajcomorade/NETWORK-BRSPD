@@ -21,7 +21,7 @@ export const getEquipmentIcon = (type?: string): React.ReactNode => {
       return <Zap className="h-6 w-6 text-amber-500" />
     case "PORT":
     case "NC":
-      return <Network className="h-6 w-6 text-green-500" />
+      return <Network className="h-6 w-6 text-blue-500" />
     case "NETWORK CARD":
       return <Network className="h-6 w-6 text-green-600" />
     case "OLT":

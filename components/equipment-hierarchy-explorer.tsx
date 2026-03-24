@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getEquipmentIcon, getPortStatusColor } from "@/lib/equipment-icons"
 
 interface EquipmentNode {
   name: string
@@ -31,32 +32,11 @@ export function EquipmentHierarchyExplorer({
   }
 
   const getNodeIcon = (type: string) => {
-    const typeUpper = type.toUpperCase()
-    switch (typeUpper) {
-      case "OLT":
-        return "🏢"
-      case "FDH":
-        return "📦"
-      case "RACK":
-        return "🗂️"
-      case "SHELF":
-        return "📚"
-      case "SLOT":
-        return "◻️"
-      case "NETWORK CARD":
-        return "🔌"
-      case "PORT":
-        return "⚡"
-      default:
-        return "📄"
-    }
+    return getEquipmentIcon(type)
   }
 
   const getStatusColor = (status: string) => {
-    const statusUpper = status.toUpperCase()
-    if (statusUpper === "ACTIVE") return "text-emerald-400"
-    if (statusUpper === "INACTIVE") return "text-red-400"
-    return "text-yellow-400"
+    return getPortStatusColor(status)
   }
 
   const renderNode = (node: EquipmentNode, depth: number = 0) => {
