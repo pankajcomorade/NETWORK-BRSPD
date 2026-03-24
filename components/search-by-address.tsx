@@ -361,27 +361,7 @@ export function SearchByAddress() {
           })
         })
 
-            previousConnection = currentConnection
-
-            // Find next connection where endpointA matches current endpointB
-            const nextConnection = allConnections.find((conn, idx) => {
-              return (
-                idx !== allConnections.indexOf(currentConnection) &&
-                conn.endpointA?.equipment?.instanceID === endpointBEquipment.instanceID
-              )
-            })
-
-            currentConnection = nextConnection
-          } else {
-            // Skip to next connection if current endpointB doesn't match valid types
-            const currentConnectionIndex = allConnections.indexOf(currentConnection)
-            const nextConnection = allConnections[currentConnectionIndex + 1]
-            previousConnection = currentConnection
-            currentConnection = nextConnection
-          }
-        }
-
-        // Add processed connections as devices in the chain
+        // Build breadcrumb path with addresses and cable names
         processedConnections.forEach((conn, index) => {
           // For the cable TO NEXT device, we need to look ahead:
           // If there's a next device, the cable to next is stored in the next device's cableToThisEquipment
