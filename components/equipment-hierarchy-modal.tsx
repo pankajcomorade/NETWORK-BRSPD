@@ -33,14 +33,14 @@ interface EquipmentHierarchyResponse {
 interface EquipmentHierarchyModalProps {
   isOpen: boolean
   onClose: () => void
-  portInstId: number | null
+  equipInstId: number | null
   equipmentName: string
 }
 
 export function EquipmentHierarchyModal({
   isOpen,
   onClose,
-  portInstId,
+  equipInstId,
   equipmentName,
 }: EquipmentHierarchyModalProps) {
   const { toast } = useToast()
@@ -50,13 +50,13 @@ export function EquipmentHierarchyModal({
 
   // Fetch hierarchy details when modal opens
   useEffect(() => {
-    if (isOpen && portInstId) {
+    if (isOpen && equipInstId) {
       fetchHierarchy()
     }
-  }, [isOpen, portInstId])
+  }, [isOpen, equipInstId])
 
   const fetchHierarchy = async () => {
-    if (!portInstId) {
+    if (!equipInstId) {
       setError("Missing equipment information")
       return
     }
@@ -64,8 +64,8 @@ export function EquipmentHierarchyModal({
     setLoading(true)
     setError(null)
     try {
-      console.log("[v0] Fetching hierarchy for portInstId:", portInstId)
-      const apiUrl = `/api/address/equipment-hierarchy-details?portInstId=${encodeURIComponent(portInstId)}`
+      console.log("[v0] Fetching hierarchy for equipInstId:", equipInstId)
+      const apiUrl = `/api/address/equipment-hierarchy-details?equipInstId=${encodeURIComponent(equipInstId)}`
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {

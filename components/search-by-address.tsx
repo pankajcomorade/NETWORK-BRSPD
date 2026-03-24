@@ -135,7 +135,7 @@ export function SearchByAddress() {
   // PON Connectivity states
   const [hierarchyModalOpen, setHierarchyModalOpen] = useState(false)
   const [selectedEquipment, setSelectedEquipment] = useState<{
-    portInstId: number
+    equipInstId: number
     name: string
   } | null>(null)
   const [ponConnections, setPonConnections] = useState<any[]>([])
@@ -364,9 +364,9 @@ export function SearchByAddress() {
   }, [toast])
 
   // Handle opening hierarchy modal for equipment
-  const handleViewHierarchy = (portInstId: number, equipmentName: string) => {
-    console.log("[v0] Opening hierarchy modal for equipment:", equipmentName, "portInstId:", portInstId)
-    setSelectedEquipment({ portInstId, name: equipmentName })
+  const handleViewHierarchy = (equipInstId: number, equipmentName: string) => {
+    console.log("[v0] Opening hierarchy modal for equipment:", equipmentName, "equipInstId:", equipInstId)
+    setSelectedEquipment({ equipInstId, name: equipmentName })
     setHierarchyModalOpen(true)
   }
 
@@ -973,7 +973,7 @@ export function SearchByAddress() {
       <EquipmentHierarchyModal
         isOpen={hierarchyModalOpen}
         onClose={() => setHierarchyModalOpen(false)}
-        portInstId={selectedEquipment?.portInstId || null}
+        equipInstId={selectedEquipment?.equipInstId || null}
         equipmentName={selectedEquipment?.name || ""}
       />
     </div>
