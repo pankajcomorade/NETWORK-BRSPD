@@ -22,7 +22,7 @@ interface EquipmentNode {
   nodes?: EquipmentNode[]
 }
 
-interface EquipmentHierarchyResponse {
+interface EquipmentResponse {
   equipment: EquipmentNode | null
   summary?: {
     countsByType: Record<string, number>
@@ -30,42 +30,40 @@ interface EquipmentHierarchyResponse {
   }
 }
 
-interface EquipmentHierarchyModalProps {
+interface PhysicalNodeDetailsModalProps {
   isOpen: boolean
   onClose: () => void
-  equipInstId: number | null
-  equipmentName: string
+  equipmentName: string | null
 }
 
-export function EquipmentHierarchyModal({
+export function PhysicalNodeDetailsModal({
   isOpen,
   onClose,
-  equipInstId,
   equipmentName,
-}: EquipmentHierarchyModalProps) {
+}: PhysicalNodeDetailsModalProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [hierarchyData, setHierarchyData] = useState<EquipmentHierarchyResponse | null>(null)
+  const [equipmentData, setEquipmentData] = useState<EquipmentResponse | null>(null)
 
-  // Fetch hierarchy details when modal opens
+  // Fetch equipment details when modal opens
   useEffect(() => {
-    if (isOpen && equipInstId) {
-      fetchHierarchy()
+    if (isOpen && equipmentName) {
+      fetchEquipmentByName()
     }
-  }, [isOpen, equipInstId])
+  }, [isOpen, equipmentName])
 
-  const fetchHierarchy = async () => {
-    if (!equipInstId) {
-      setError("Missing equipment information")
+  const fetchEquipmentByName = async () => {
+    if (!equipmentName) {
+      setError("Missing equipment name")
       return
     }
 
     setLoading(true)
     setError(null)
     try {
-      console.log("[v0] Fetching hierarchy for equipInstId:", equipInstId)
-      const apiUrl = `/api/address/equipment-hierarchy-details?equipInstId=${encodeURIComponent(equipInstId)}`
+      console.log("[v0] Fetching equipment by name:", equipmentName)
+      const apiUrl = `/api/address/equipment-by-name?equipmentName=${encodeURIComponent(equipmentName)}`
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -76,11 +74,11 @@ export function EquipmentHierarchyModal({
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch hierarchy: ${response.status}`)
+        throw new Error(`Failed to fetch equipment: ${response.status}`)
       }
 
-      const data: EquipmentHierarchyResponse = await response.json()
-      console.log("[v0] Hierarchy data:", data)
+      const data: EquipmentResponse = await response.json()
+      console.log("[v0] Equipment data:", data)
 
       // Handle null equipment
       if (!data.equipment) {
@@ -88,10 +86,10 @@ export function EquipmentHierarchyModal({
         return
       }
 
-      setHierarchyData(data)
+      setEquipmentData(data)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch hierarchy details"
-      console.error("[v0] Hierarchy fetch error:", err)
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch equipment details"
+      console.error("[v0] Equipment fetch error:", err)
       setError(errorMessage)
       toast({
         title: "Error",
@@ -107,7 +105,7 @@ export function EquipmentHierarchyModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader className="sticky top-0 bg-background border-b pb-4 -mx-6 px-6">
-          <DialogTitle className="text-xl">Device Explorer: {equipmentName}</DialogTitle>
+          <DialogTitle className="text-xl">Equipment Details: {equipmentName}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
@@ -115,7 +113,7 @@ export function EquipmentHierarchyModal({
           {loading && (
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-              <p className="text-sm text-muted-foreground">Loading device hierarchy...</p>
+              <p className="text-sm text-muted-foreground">Loading equipment details...</p>
             </div>
           )}
 
@@ -126,10 +124,10 @@ export function EquipmentHierarchyModal({
                 <CardContent className="flex items-start gap-3 pt-6">
                   <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="font-medium text-red-600 dark:text-red-400">Unable to Load Hierarchy</p>
+                    <p className="font-medium text-red-600 dark:text-red-400">Unable to Load Equipment</p>
                     <p className="text-sm text-red-500 mt-1">{error}</p>
                     <button
-                      onClick={fetchHierarchy}
+                      onClick={fetchEquipmentByName}
                       className="mt-3 text-sm text-red-600 dark:text-red-400 hover:underline font-medium"
                     >
                       Try Again
@@ -140,15 +138,15 @@ export function EquipmentHierarchyModal({
             </motion.div>
           )}
 
-          {/* Device Explorer */}
-          {hierarchyData && !loading && !error && (
+          {/* Equipment Details Explorer */}
+          {equipmentData && !loading && !error && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              {hierarchyData.equipment ? (
-                <DeviceExplorer equipment={hierarchyData.equipment} />
+              {equipmentData.equipment ? (
+                <DeviceExplorer equipment={equipmentData.equipment} />
               ) : (
                 <Card className="border-amber-500/30 bg-amber-500/5">
                   <CardContent className="flex items-start gap-3 pt-6">
@@ -156,7 +154,7 @@ export function EquipmentHierarchyModal({
                     <div>
                       <p className="font-medium text-amber-600 dark:text-amber-400">No Equipment Data</p>
                       <p className="text-sm text-amber-500 mt-1">
-                        The equipment data is not available for this device.
+                        The equipment data is not available for this item.
                       </p>
                     </div>
                   </CardContent>
@@ -166,9 +164,9 @@ export function EquipmentHierarchyModal({
           )}
 
           {/* No Data State */}
-          {!loading && !error && !hierarchyData && (
+          {!loading && !error && !equipmentData && (
             <div className="flex flex-col items-center justify-center py-12">
-              <p className="text-sm text-muted-foreground">Ready to load device hierarchy</p>
+              <p className="text-sm text-muted-foreground">Ready to load equipment details</p>
             </div>
           )}
         </div>

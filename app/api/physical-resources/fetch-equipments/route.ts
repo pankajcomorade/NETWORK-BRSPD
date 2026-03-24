@@ -8,15 +8,20 @@ export async function GET(request: NextRequest) {
 
     console.log("[v0] Fetch Equipments - type:", type, "WC:", wc)
 
-    if (!type || !wc) {
+    if (!(wc || type)) {
       return NextResponse.json(
-        { error: "Missing required parameters: type and WC" },
+        { error: "Missing required parameters: WC" },
         { status: 400 }
       )
     }
 
-    const externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchEquipments?type=${encodeURIComponent(type)}&WC=${encodeURIComponent(wc)}`
-
+    let externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchEquipments`
+    if (wc) {
+      externalUrl = externalUrl + `?WC=${encodeURIComponent(wc)}`
+    }
+    if (type) {
+      externalUrl = externalUrl + `${wc ? '&' : '?'}type=${encodeURIComponent(type)}`
+    }
     console.log("[v0] Calling external API:", externalUrl)
 
     const response = await fetch(externalUrl, {

@@ -480,7 +480,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                                 </thead>
                                 <tbody>
                                   {ponConnections.map((conn, idx) => (
-                                    <tr key={idx} className={idx % 2 === 0 ? "" : "bg-secondary/10"}>
+                                    <tr key={idx} className={idx % 2 === 0 ? "" : "bg-secondary/40"}>
                                       {/* Endpoint A */}
                                       <td className="border border-border/30 px-2 py-2 text-foreground truncate" title={conn.endpointA.equipment.name}>
                                         {conn.endpointA.equipment.name}

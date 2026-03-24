@@ -135,7 +135,7 @@ export function SearchByAddress() {
   // PON Connectivity states
   const [hierarchyModalOpen, setHierarchyModalOpen] = useState(false)
   const [selectedEquipment, setSelectedEquipment] = useState<{
-    portInstId: number
+    equipInstId: number
     name: string
   } | null>(null)
   const [ponConnections, setPonConnections] = useState<any[]>([])
@@ -195,7 +195,7 @@ export function SearchByAddress() {
         type: "home",
         name: addressStr || "Home",
         status: "active",
-        cableToNext: "Drop Cable",
+        cableToNext: "Service Connection",
         data: {
           address: data.address,
           customer: data.primaryCustomer,
@@ -273,7 +273,7 @@ export function SearchByAddress() {
         if (ontIndex !== -1) {
           updated[ontIndex] = {
             ...updated[ontIndex],
-            cableToNext: allConnections[0]?.cableStrandName || "Drop Cable",
+            cableToNext: allConnections[1]?.cableStrandName || "Cable Link",
           }
         }
 
@@ -285,6 +285,7 @@ export function SearchByAddress() {
         const validEquipmentTypes = ["FDH", "OLT", "ONT"]
         const processedConnections: any[] = []
         let currentConnection = allConnections[1] // Start from index 1, skip index 0
+        let currentConnectionIndex = 1
 
         while (currentConnection) {
           // Check if endpointB equipment type is valid (FDH, OLT, or ONT) - case insensitive
@@ -292,42 +293,59 @@ export function SearchByAddress() {
           const endpointBType = endpointBEquipment?.type?.toUpperCase?.()
 
           if (endpointBEquipment && validEquipmentTypes.includes(endpointBType)) {
+            // Store the connection along with the index it came from
             processedConnections.push({
               equipment: endpointBEquipment,
               port: currentConnection.endpointB.port,
-              cableStrandName: currentConnection.cableStrandName,
               connectionStatus: currentConnection.connectionStatus,
+              connectionArrayIndex: currentConnectionIndex, // Track which connection this came from
               connectionIndex: processedConnections.length,
             })
 
             // Find next connection where endpointA matches current endpointB
-            const nextConnection = allConnections.find((conn, idx) => {
-              return (
-                idx !== allConnections.indexOf(currentConnection) &&
+            let foundNext = false
+            for (let i = 0; i < allConnections.length; i++) {
+              const conn = allConnections[i]
+              if (
                 conn.endpointA?.equipment?.instanceID === endpointBEquipment.instanceID
-              )
-            })
-
-            currentConnection = nextConnection
+              ) {
+                currentConnection = conn
+                currentConnectionIndex = i
+                foundNext = true
+                break
+              }
+            }
+            if (!foundNext) {
+              currentConnection = null
+            }
           } else {
             // Skip to next connection if current endpointB doesn't match valid types
-            const currentConnectionIndex = allConnections.indexOf(currentConnection)
-            const nextConnection = allConnections[currentConnectionIndex + 1]
-            currentConnection = nextConnection
+            currentConnectionIndex++
+            if (currentConnectionIndex < allConnections.length) {
+              currentConnection = allConnections[currentConnectionIndex]
+            } else {
+              currentConnection = null
+            }
           }
         }
 
         // Add processed connections as devices in the chain
+        // Each device's cableToNext should use the cableStrandName from the next connection
         processedConnections.forEach((conn, index) => {
-          const cableName = conn.cableStrandName || (index < processedConnections.length - 1 ? "Cable Link" : "")
-          
+          // The cable to next device comes from the NEXT connection in the array
+          let cableToNext = ""
+          if (index < processedConnections.length - 1) {
+            const nextConnectionIndex = processedConnections[index + 1].connectionArrayIndex
+            cableToNext = allConnections[nextConnectionIndex]?.cableStrandName || "Cable Link"
+          }
+
           newDevices.push({
             id: `device-${conn.equipment.instanceID}-${index}`,
             type: conn.equipment.type?.toLowerCase?.() || "equipment",
             name: conn.equipment.name,
             status: conn.connectionStatus || "Unknown",
             portName: conn.port.portNumber || "N/A",
-            cableToNext: cableName,
+            cableToNext: cableToNext,
             data: {
               equipInstId: conn.equipment.instanceID,
               portInstId: conn.port.instanceID,
@@ -364,9 +382,9 @@ export function SearchByAddress() {
   }, [toast])
 
   // Handle opening hierarchy modal for equipment
-  const handleViewHierarchy = (portInstId: number, equipmentName: string) => {
-    console.log("[v0] Opening hierarchy modal for equipment:", equipmentName, "portInstId:", portInstId)
-    setSelectedEquipment({ portInstId, name: equipmentName })
+  const handleViewHierarchy = (equipInstId: number, equipmentName: string) => {
+    console.log("[v0] Opening hierarchy modal for equipment:", equipmentName, "equipInstId:", equipInstId)
+    setSelectedEquipment({ equipInstId, name: equipmentName })
     setHierarchyModalOpen(true)
   }
 
@@ -729,17 +747,17 @@ export function SearchByAddress() {
                           {device.type === "fdh" && (
                             <div className="mt-3 space-y-3">
                               <div>
-                                <p className="text-[10px] text-muted-foreground">Distribution Cable: {device.cableToNext}</p>
+                                <p className="text-[10px] text-muted-foreground">{device.cableToNext}</p>
                                 <p className="text-xs text-foreground mt-1">ID: {device.id}</p>
                               </div>
-                              {device.data?.portInstId && (
+                              {device.data?.equipInstId && (
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="w-full text-xs h-8"
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleViewHierarchy(device.data?.portInstId, device.name)
+                                    handleViewHierarchy(device.data?.equipInstId, device.name)
                                   }}
                                   disabled={isLoading}
                                 >
@@ -812,7 +830,7 @@ export function SearchByAddress() {
                           {device.type === "olt" && (
                             <div className="mt-3 space-y-3">
                               <div>
-                                <p className="text-[10px] text-muted-foreground">Feeder Cable: {device.cableToNext}</p>
+                                <p className="text-[10px] text-muted-foreground">{device.cableToNext}</p>
                               </div>
                               {device.data?.portInstId && (
                                 <Button
@@ -956,7 +974,7 @@ export function SearchByAddress() {
           {dialogType === "olt" && selectedOlt && (
             <div className="space-y-3">
               <DetailRow label="Name" value={selectedOlt.name} />
-              <DetailRow label="Type" value={selectedOlt.type} />
+              <DetailRow label="Type" value={selectedOlt.type.toUpperCase()} />
               <DetailRow label="Status" value={selectedOlt.status} />
               <DetailRow label="Equipment ID" value={selectedOlt.id} />
               {selectedOlt.data && Object.entries(selectedOlt.data).length > 0 && (
@@ -973,7 +991,7 @@ export function SearchByAddress() {
       <EquipmentHierarchyModal
         isOpen={hierarchyModalOpen}
         onClose={() => setHierarchyModalOpen(false)}
-        portInstId={selectedEquipment?.portInstId || null}
+        equipInstId={selectedEquipment?.equipInstId || null}
         equipmentName={selectedEquipment?.name || ""}
       />
     </div>

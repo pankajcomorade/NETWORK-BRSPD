@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { getEquipmentIcon, getPortStatusColor } from "@/lib/equipment-icons"
 
 interface EquipmentNode {
   name: string
@@ -39,31 +40,6 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
     }
   }
 
-  // Get the icon for equipment type
-  const getEquipmentIcon = (type: string) => {
-    const typeUpper = type?.toUpperCase()
-    switch (typeUpper) {
-      case "RACK":
-        return "🗄️"
-      case "SHELF":
-        return "📦"
-      case "SLOT":
-        return "📌"
-      case "SPLITTER":
-        return "🔀"
-      case "PORT":
-        return "🔌"
-      case "NETWORK CARD":
-        return "🖥️"
-      case "FDH":
-      case "OLT":
-      case "ONT":
-        return "⚙️"
-      default:
-        return "📦"
-    }
-  }
-
   if (!currentLevel) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -74,7 +50,7 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
   }
 
   const children = currentLevel.nodes && currentLevel.nodes.length > 0 ? currentLevel.nodes : []
-  const canDrillDown = children.length > 0
+  const canDrillDown = children.length > 0 && currentLevel.type?.toUpperCase() !== "PORT"
 
   return (
     <div className="space-y-4">
@@ -117,7 +93,7 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
                 className={cn(
                   "mt-1 uppercase",
                   currentLevel.status?.toUpperCase() === "ACTIVE"
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30"
+                    ? "bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30"
                     : "bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30"
                 )}
               >
@@ -156,7 +132,9 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
                 )}
               >
                 <div className="text-2xl mb-2">{getEquipmentIcon(child.type)}</div>
-                <p className="font-medium text-sm text-foreground truncate">{child.name}</p>
+                <p className="font-medium text-sm text-foreground truncate">
+                  {child.name}
+                </p>
                 <div className="flex gap-1 mt-2 flex-wrap">
                   <Badge variant="outline" className="text-[10px] py-0">
                     {child.type}
@@ -166,9 +144,7 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
                       variant="outline"
                       className={cn(
                         "text-[10px] py-0",
-                        child.status?.toUpperCase() === "ACTIVE"
-                          ? "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
-                          : "border-amber-500/50 text-amber-600 dark:text-amber-400"
+                        getPortStatusColor(child.status)
                       )}
                     >
                       {child.status}
