@@ -35,18 +35,18 @@ export const getEquipmentIcon = (type?: string): React.ReactNode => {
   }
 }
 
-// Get status color for ports and equipment
+// Get status color for ports and equipment (background + text for badges)
 export const getPortStatusColor = (status: string): string => {
   const statusUpper = status?.toUpperCase?.() || ""
 
   if (statusUpper === "ACTIVE" || statusUpper === "BUSY") {
-    return "border-red-500/50 text-red-600 dark:text-red-400"
+    return "bg-red-500/20 text-red-600 dark:text-red-400"
   } else if (statusUpper === "FREE") {
-    return "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
+    return "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
   } else if (statusUpper === "PENDING") {
-    return "border-yellow-500/50 text-yellow-600 dark:text-yellow-400"
+    return "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400"
   } else if (statusUpper === "RETIRED") {
-    return "border-blue-500/50 text-blue-600 dark:text-blue-400"
+    return "bg-blue-500/20 text-blue-600 dark:text-blue-400"
   }
-  return "border-amber-500/50 text-amber-600 dark:text-amber-400"
+  return "bg-amber-500/20 text-amber-600 dark:text-amber-400"
 }

@@ -119,7 +119,7 @@ const getPortColor = (status: string) => {
       return "bg-blue-500"
     // legacy fallbacks
     case "ACTIVE":
-      return "bg-green-500"
+      return "bg-red-500"
     case "INACTIVE":
       return "bg-zinc-400"
     default:
@@ -128,7 +128,7 @@ const getPortColor = (status: string) => {
 }
 
 const isPortClickable = (status: string) => {
-  return status?.toUpperCase() === "BUSY" || status?.toUpperCase() === "ACTIVE"
+  return false
 }
 
 const getStatusBorder = (status: string) => {
@@ -648,7 +648,7 @@ function DeviceGUIPanel({
                     "text-[7px] capitalize px-1 py-0 h-3",
                     port.status?.toUpperCase() === "FREE"
                       ? "border-green-500/40 text-green-600 dark:text-green-400 bg-green-500/10"
-                      : port.status?.toUpperCase() === "BUSY"
+                      : (port.status?.toUpperCase() === "BUSY" || port.status?.toUpperCase() === "ACTIVE")
                         ? "border-red-500/40 text-red-600 dark:text-red-400 bg-red-500/10"
                         : port.status?.toUpperCase() === "PENDING"
                           ? "border-yellow-400/40 text-yellow-600 dark:text-yellow-400 bg-yellow-400/10"
@@ -728,6 +728,8 @@ function DeviceGUIPanel({
         case "FREE":
           return "bg-green-500"
         case "BUSY":
+          return "bg-red-500"
+        case "ACTIVE":
           return "bg-red-500"
         case "PENDING":
           return "bg-yellow-400"
