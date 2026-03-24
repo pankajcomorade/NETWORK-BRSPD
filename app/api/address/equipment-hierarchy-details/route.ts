@@ -3,18 +3,18 @@ import { NextRequest, NextResponse } from "next/server"
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const portInstId = searchParams.get("portInstId")
+    const equipInstId = searchParams.get("equipInstId")
 
-    console.log("[v0] Equipment Hierarchy Details - portInstId:", portInstId)
+    console.log("[v0] Equipment Hierarchy Details - portInstId:", equipInstId)
 
-    if (!portInstId) {
+    if (!equipInstId) {
       return NextResponse.json(
         { error: "Missing portInstId parameter" },
         { status: 400 }
       )
     }
 
-    const externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/equipmentHierarchyDetails?portInstId=${encodeURIComponent(portInstId)}`
+    const externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/equipmentHierarchyDetails?equipInstId=${encodeURIComponent(equipInstId)}`
     console.log("[v0] Calling external API:", externalUrl)
 
     const response = await fetch(externalUrl, {
