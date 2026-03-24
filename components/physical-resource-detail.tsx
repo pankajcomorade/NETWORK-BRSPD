@@ -108,8 +108,8 @@ export function PhysicalResourceDetail() {
   }, [])
 
   const handleFind = useCallback(async () => {
-    if (!wcName.trim()) {
-      setError("Please select WC Name")
+    if (!(wcName.trim() || type.trim())) {
+      setError("Please select WC Name or Type")
       return
     }
 
@@ -124,9 +124,12 @@ export function PhysicalResourceDetail() {
 
     try {
       console.log("[v0] Fetching equipment with type:", type, "WC:", wcName)
-      let url = `/api/physical-resources/fetch-equipments?WC=${encodeURIComponent(wcName)}`
+      let url = `/api/physical-resources/fetch-equipments`
+      if (wcName) {
+        url = url + `?WC=${encodeURIComponent(wcName)}`
+      }
       if (type) {
-        url = url + `&type=${encodeURIComponent(type)}`
+        url = url + `${wcName ? '&' : '?'}type=${encodeURIComponent(type)}`
       }
       const response = await fetch(url, {
         method: "GET",

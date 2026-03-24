@@ -8,16 +8,19 @@ export async function GET(request: NextRequest) {
 
     console.log("[v0] Fetch Equipments - type:", type, "WC:", wc)
 
-    if (!wc) {
+    if (!(wc || type)) {
       return NextResponse.json(
         { error: "Missing required parameters: WC" },
         { status: 400 }
       )
     }
 
-    let externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchEquipments?WC=${encodeURIComponent(wc)}`
+    let externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchEquipments`
+    if (wc) {
+      externalUrl = externalUrl + `?WC=${encodeURIComponent(wc)}`
+    }
     if (type) {
-      externalUrl = externalUrl + `&type=${encodeURIComponent(type)}`
+      externalUrl = externalUrl + `${wc ? '?' : ''}type=${encodeURIComponent(type)}`
     }
     console.log("[v0] Calling external API:", externalUrl)
 
