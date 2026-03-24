@@ -285,6 +285,7 @@ export function SearchByAddress() {
         const validEquipmentTypes = ["FDH", "OLT", "ONT"]
         const processedConnections: any[] = []
         let currentConnection = allConnections[1] // Start from index 1, skip index 0
+        let previousConnection = null
 
         while (currentConnection) {
           // Check if endpointB equipment type is valid (FDH, OLT, or ONT) - case insensitive
@@ -292,13 +293,19 @@ export function SearchByAddress() {
           const endpointBType = endpointBEquipment?.type?.toUpperCase?.()
 
           if (endpointBEquipment && validEquipmentTypes.includes(endpointBType)) {
+            // Use cable from CURRENT connection (the one leading to this equipment)
+            const cableToThisEquipment = currentConnection.cableStrandName
+
+            // Store the processed connection with the cable that led to it
             processedConnections.push({
               equipment: endpointBEquipment,
               port: currentConnection.endpointB.port,
-              cableStrandName: currentConnection.cableStrandName,
+              cableToThisEquipment: cableToThisEquipment, // Cable that led TO this equipment
               connectionStatus: currentConnection.connectionStatus,
               connectionIndex: processedConnections.length,
             })
+
+            previousConnection = currentConnection
 
             // Find next connection where endpointA matches current endpointB
             const nextConnection = allConnections.find((conn, idx) => {
@@ -313,13 +320,20 @@ export function SearchByAddress() {
             // Skip to next connection if current endpointB doesn't match valid types
             const currentConnectionIndex = allConnections.indexOf(currentConnection)
             const nextConnection = allConnections[currentConnectionIndex + 1]
+            previousConnection = currentConnection
             currentConnection = nextConnection
           }
         }
 
         // Add processed connections as devices in the chain
         processedConnections.forEach((conn, index) => {
-          const cableName = conn.cableStrandName || (index < processedConnections.length - 1 ? "Cable Link" : "")
+          // For the cable TO NEXT device, we need to look ahead:
+          // If there's a next device, the cable to next is stored in the next device's cableToThisEquipment
+          // Otherwise, no cable after this device
+          let cableToNext = ""
+          if (index < processedConnections.length - 1) {
+            cableToNext = processedConnections[index + 1].cableToThisEquipment || "Cable Link"
+          }
 
           newDevices.push({
             id: `device-${conn.equipment.instanceID}-${index}`,
@@ -327,7 +341,7 @@ export function SearchByAddress() {
             name: conn.equipment.name,
             status: conn.connectionStatus || "Unknown",
             portName: conn.port.portNumber || "N/A",
-            cableToNext: cableName,
+            cableToNext: cableToNext,
             data: {
               equipInstId: conn.equipment.instanceID,
               portInstId: conn.port.instanceID,
