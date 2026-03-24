@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       externalUrl = externalUrl + `?WC=${encodeURIComponent(wc)}`
     }
     if (type) {
-      externalUrl = externalUrl + `${wc ? '?' : ''}type=${encodeURIComponent(type)}`
+      externalUrl = externalUrl + `${wc ? '&' : '?'}type=${encodeURIComponent(type)}`
     }
     console.log("[v0] Calling external API:", externalUrl)
 
