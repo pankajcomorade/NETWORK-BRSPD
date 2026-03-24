@@ -50,7 +50,7 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
   }
 
   const children = currentLevel.nodes && currentLevel.nodes.length > 0 ? currentLevel.nodes : []
-  const canDrillDown = children.length > 0
+  const canDrillDown = children.length > 0 && currentLevel.type?.toUpperCase() !== "PORT"
 
   return (
     <div className="space-y-4">
@@ -93,7 +93,7 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
                 className={cn(
                   "mt-1 uppercase",
                   currentLevel.status?.toUpperCase() === "ACTIVE"
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30"
+                    ? "bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30"
                     : "bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30"
                 )}
               >
