@@ -8,9 +8,9 @@ export async function GET(request: NextRequest) {
 
     console.log("[v0] Fetch Equipments - type:", type, "WC:", wc)
 
-    if (!type || !wc) {
+    if (!wc) {
       return NextResponse.json(
-        { error: "Missing required parameters: type and WC" },
+        { error: "Missing required parameters: WC" },
         { status: 400 }
       )
     }
