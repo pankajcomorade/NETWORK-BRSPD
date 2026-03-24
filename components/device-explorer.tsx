@@ -124,11 +124,13 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
             {children.map((child, idx) => (
               <button
                 key={idx}
-                onClick={() => handleDrillIn(child)}
+                onClick={() => canDrillDown && handleDrillIn(child)}
+                disabled={!canDrillDown || child.type?.toUpperCase() === "PORT"}
                 className={cn(
                   "p-4 rounded-lg border-2 transition-all hover:shadow-md text-left",
                   "border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50",
-                  canDrillDown && "cursor-pointer"
+                  (canDrillDown && child.type?.toUpperCase() !== "PORT") && "cursor-pointer",
+                  (child.type?.toUpperCase() === "PORT") && "cursor-not-allowed opacity-75"
                 )}
               >
                 <div className="text-2xl mb-2">{getEquipmentIcon(child.type)}</div>
@@ -141,7 +143,6 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
                   </Badge>
                   {child.status && (
                     <Badge
-                      variant="outline"
                       className={cn(
                         "text-[10px] py-0",
                         getPortStatusColor(child.status)
