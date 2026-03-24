@@ -195,7 +195,7 @@ export function SearchByAddress() {
         type: "home",
         name: addressStr || "Home",
         status: "active",
-        cableToNext: "Drop Cable",
+        cableToNext: allConnections[0]?.cableStrandName || "Connection Link",
         data: {
           address: data.address,
           customer: data.primaryCustomer,
@@ -273,7 +273,7 @@ export function SearchByAddress() {
         if (ontIndex !== -1) {
           updated[ontIndex] = {
             ...updated[ontIndex],
-            cableToNext: allConnections[0]?.cableStrandName || "Drop Cable",
+            cableToNext: allConnections[1]?.cableStrandName || "Cable Link",
           }
         }
 
