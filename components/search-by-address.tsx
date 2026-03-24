@@ -333,42 +333,10 @@ export function SearchByAddress() {
         // Each device's cableToNext should use the cableStrandName from the next connection
         processedConnections.forEach((conn, index) => {
           // The cable to next device comes from the NEXT connection in the array
-          // conn is at processedConnections[index], came from allConnections[conn.connectionArrayIndex]
-          // Next connection is at allConnections[conn.connectionArrayIndex + 1]
           let cableToNext = ""
           if (index < processedConnections.length - 1) {
             const nextConnectionIndex = processedConnections[index + 1].connectionArrayIndex
             cableToNext = allConnections[nextConnectionIndex]?.cableStrandName || "Cable Link"
-          }
-
-          newDevices.push({
-            id: `device-${conn.equipment.instanceID}-${index}`,
-            type: conn.equipment.type?.toLowerCase?.() || "equipment",
-            name: conn.equipment.name,
-            status: conn.connectionStatus || "Unknown",
-            portName: conn.port.portNumber || "N/A",
-            cableToNext: cableToNext,
-            data: {
-              equipInstId: conn.equipment.instanceID,
-              portInstId: conn.port.instanceID,
-              portName: conn.port.portName,
-              portNumber: conn.port.portNumber,
-              connectionStatus: conn.connectionStatus,
-              type: conn.equipment.type?.toUpperCase?.(),
-              equipmentName: conn.equipment.name,
-              connectionIndex: index,
-            },
-          })
-        })
-
-        // Build breadcrumb path with addresses and cable names
-        processedConnections.forEach((conn, index) => {
-          // For the cable TO NEXT device, we need to look ahead:
-          // If there's a next device, the cable to next is stored in the next device's cableToThisEquipment
-          // Otherwise, no cable after this device
-          let cableToNext = ""
-          if (index < processedConnections.length - 1) {
-            cableToNext = processedConnections[index + 1].cableToThisEquipment || "Cable Link"
           }
 
           newDevices.push({
@@ -779,7 +747,7 @@ export function SearchByAddress() {
                           {device.type === "fdh" && (
                             <div className="mt-3 space-y-3">
                               <div>
-                                <p className="text-[10px] text-muted-foreground">Distribution Cable: {device.cableToNext}</p>
+                                <p className="text-[10px] text-muted-foreground">{device.cableToNext}</p>
                                 <p className="text-xs text-foreground mt-1">ID: {device.id}</p>
                               </div>
                               {device.data?.equipInstId && (
@@ -862,7 +830,7 @@ export function SearchByAddress() {
                           {device.type === "olt" && (
                             <div className="mt-3 space-y-3">
                               <div>
-                                <p className="text-[10px] text-muted-foreground">Feeder Cable: {device.cableToNext}</p>
+                                <p className="text-[10px] text-muted-foreground">{device.cableToNext}</p>
                               </div>
                               {device.data?.portInstId && (
                                 <Button
