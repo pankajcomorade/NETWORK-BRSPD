@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { PhysicalNodeDetailsModal } from "@/components/physical-node-details-modal"
+import { getEquipmentIcon, getPortStatusColor } from "@/lib/equipment-icons"
 
 interface EquipmentNode {
   name: string
@@ -24,8 +24,6 @@ interface DeviceExplorerProps {
 export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
   const [currentLevel, setCurrentLevel] = useState<EquipmentNode | null>(equipment)
   const [breadcrumb, setBreadcrumb] = useState<EquipmentNode[]>(equipment ? [equipment] : [])
-  const [nodeDetailsModalOpen, setNodeDetailsModalOpen] = useState(false)
-  const [selectedNodeName, setSelectedNodeName] = useState<string | null>(null)
 
   // Handle drilling into a child node
   const handleDrillIn = (node: EquipmentNode) => {
@@ -40,13 +38,6 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
       setBreadcrumb(newBreadcrumb)
       setCurrentLevel(newBreadcrumb[newBreadcrumb.length - 1])
     }
-  }
-
-  // Handle clicking on a node name to view its details
-  const handleNodeNameClick = (nodeName: string) => {
-    console.log("[v0] Opening node details for:", nodeName)
-    setSelectedNodeName(nodeName)
-    setNodeDetailsModalOpen(true)
   }
 
   // Get the icon for equipment type
@@ -166,14 +157,7 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
                 )}
               >
                 <div className="text-2xl mb-2">{getEquipmentIcon(child.type)}</div>
-                <p 
-                  className="font-medium text-sm text-primary underline cursor-pointer hover:text-primary/80 truncate"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleNodeNameClick(child.name)
-                  }}
-                  title="Click to view details"
-                >
+                <p className="font-medium text-sm text-foreground truncate">
                   {child.name}
                 </p>
                 <div className="flex gap-1 mt-2 flex-wrap">
@@ -185,9 +169,7 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
                       variant="outline"
                       className={cn(
                         "text-[10px] py-0",
-                        child.status?.toUpperCase() === "ACTIVE"
-                          ? "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
-                          : "border-amber-500/50 text-amber-600 dark:text-amber-400"
+                        getPortStatusColor(child.status)
                       )}
                     >
                       {child.status}
@@ -206,16 +188,6 @@ export function DeviceExplorer({ equipment }: DeviceExplorerProps) {
           </CardContent>
         </Card>
       )}
-
-      {/* Physical Node Details Modal */}
-      <PhysicalNodeDetailsModal
-        isOpen={nodeDetailsModalOpen}
-        onClose={() => {
-          setNodeDetailsModalOpen(false)
-          setSelectedNodeName(null)
-        }}
-        equipmentName={selectedNodeName}
-      />
     </div>
   )
 }
