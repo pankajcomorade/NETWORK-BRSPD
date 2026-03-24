@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { PhysicalEquipmentModal } from "@/components/physical-equipment-modal"
 
 interface Equipment {
   nodeName: string
@@ -36,6 +37,8 @@ export function PhysicalResourceDetail() {
   const [equipment, setEquipment] = useState<Equipment[]>([])
   const [error, setError] = useState<string | null>(null)
   const [dropdownError, setDropdownError] = useState<string | null>(null)
+  const [equipmentModalOpen, setEquipmentModalOpen] = useState(false)
+  const [selectedEquipmentName, setSelectedEquipmentName] = useState<string | null>(null)
 
   // Fetch wire centers and equipment types on component mount
   useEffect(() => {
@@ -171,6 +174,12 @@ export function PhysicalResourceDetail() {
     if (e.key === "Enter") {
       handleFind()
     }
+  }
+
+  const handleNodeNameClick = (nodeName: string) => {
+    console.log("[v0] Opening equipment details for:", nodeName)
+    setSelectedEquipmentName(nodeName)
+    setEquipmentModalOpen(true)
   }
 
   return (
@@ -310,7 +319,13 @@ export function PhysicalResourceDetail() {
                       className="border-b border-border/20 hover:bg-secondary/20 transition-colors"
                     >
                       <td className="px-4 py-3 font-mono text-foreground font-medium">
-                        {item.nodeName}
+                        <button
+                          onClick={() => handleNodeNameClick(item.nodeName)}
+                          className="text-primary underline hover:text-primary/80 hover:no-underline transition-colors cursor-pointer"
+                          title="Click to view equipment details"
+                        >
+                          {item.nodeName}
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         <Badge variant="outline" className="text-[10px]">
@@ -367,6 +382,16 @@ export function PhysicalResourceDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* Equipment Details Modal */}
+      <PhysicalEquipmentModal
+        isOpen={equipmentModalOpen}
+        onClose={() => {
+          setEquipmentModalOpen(false)
+          setSelectedEquipmentName(null)
+        }}
+        equipmentName={selectedEquipmentName}
+      />
     </div>
   )
 }
