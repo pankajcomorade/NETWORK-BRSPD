@@ -15,8 +15,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchEquipments?type=${encodeURIComponent(type)}&WC=${encodeURIComponent(wc)}`
-
+    let externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchEquipments?WC=${encodeURIComponent(wc)}`
+    if (type) {
+      externalUrl = externalUrl + `&type=${encodeURIComponent(type)}`
+    }
     console.log("[v0] Calling external API:", externalUrl)
 
     const response = await fetch(externalUrl, {
