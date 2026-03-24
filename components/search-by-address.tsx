@@ -285,7 +285,7 @@ export function SearchByAddress() {
         const validEquipmentTypes = ["FDH", "OLT", "ONT"]
         const processedConnections: any[] = []
         let currentConnection = allConnections[1] // Start from index 1, skip index 0
-        let previousConnection = null
+        let currentConnectionIndex = 1
 
         while (currentConnection) {
           // Check if endpointB equipment type is valid (FDH, OLT, or ONT) - case insensitive
@@ -293,17 +293,73 @@ export function SearchByAddress() {
           const endpointBType = endpointBEquipment?.type?.toUpperCase?.()
 
           if (endpointBEquipment && validEquipmentTypes.includes(endpointBType)) {
-            // Use cable from CURRENT connection (the one leading to this equipment)
-            const cableToThisEquipment = currentConnection.cableStrandName
-
-            // Store the processed connection with the cable that led to it
+            // Store the connection along with the index it came from
             processedConnections.push({
               equipment: endpointBEquipment,
               port: currentConnection.endpointB.port,
-              cableToThisEquipment: cableToThisEquipment, // Cable that led TO this equipment
               connectionStatus: currentConnection.connectionStatus,
+              connectionArrayIndex: currentConnectionIndex, // Track which connection this came from
               connectionIndex: processedConnections.length,
             })
+
+            // Find next connection where endpointA matches current endpointB
+            let foundNext = false
+            for (let i = 0; i < allConnections.length; i++) {
+              const conn = allConnections[i]
+              if (
+                conn.endpointA?.equipment?.instanceID === endpointBEquipment.instanceID
+              ) {
+                currentConnection = conn
+                currentConnectionIndex = i
+                foundNext = true
+                break
+              }
+            }
+            if (!foundNext) {
+              currentConnection = null
+            }
+          } else {
+            // Skip to next connection if current endpointB doesn't match valid types
+            currentConnectionIndex++
+            if (currentConnectionIndex < allConnections.length) {
+              currentConnection = allConnections[currentConnectionIndex]
+            } else {
+              currentConnection = null
+            }
+          }
+        }
+
+        // Add processed connections as devices in the chain
+        // Each device's cableToNext should use the cableStrandName from the next connection
+        processedConnections.forEach((conn, index) => {
+          // The cable to next device comes from the NEXT connection in the array
+          // conn is at processedConnections[index], came from allConnections[conn.connectionArrayIndex]
+          // Next connection is at allConnections[conn.connectionArrayIndex + 1]
+          let cableToNext = ""
+          if (index < processedConnections.length - 1) {
+            const nextConnectionIndex = processedConnections[index + 1].connectionArrayIndex
+            cableToNext = allConnections[nextConnectionIndex]?.cableStrandName || "Cable Link"
+          }
+
+          newDevices.push({
+            id: `device-${conn.equipment.instanceID}-${index}`,
+            type: conn.equipment.type?.toLowerCase?.() || "equipment",
+            name: conn.equipment.name,
+            status: conn.connectionStatus || "Unknown",
+            portName: conn.port.portNumber || "N/A",
+            cableToNext: cableToNext,
+            data: {
+              equipInstId: conn.equipment.instanceID,
+              portInstId: conn.port.instanceID,
+              portName: conn.port.portName,
+              portNumber: conn.port.portNumber,
+              connectionStatus: conn.connectionStatus,
+              type: conn.equipment.type?.toUpperCase?.(),
+              equipmentName: conn.equipment.name,
+              connectionIndex: index,
+            },
+          })
+        })
 
             previousConnection = currentConnection
 
