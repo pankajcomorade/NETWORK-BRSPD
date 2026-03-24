@@ -974,7 +974,7 @@ export function SearchByAddress() {
           {dialogType === "olt" && selectedOlt && (
             <div className="space-y-3">
               <DetailRow label="Name" value={selectedOlt.name} />
-              <DetailRow label="Type" value={selectedOlt.type} />
+              <DetailRow label="Type" value={selectedOlt.type.toUpperCase()} />
               <DetailRow label="Status" value={selectedOlt.status} />
               <DetailRow label="Equipment ID" value={selectedOlt.id} />
               {selectedOlt.data && Object.entries(selectedOlt.data).length > 0 && (
