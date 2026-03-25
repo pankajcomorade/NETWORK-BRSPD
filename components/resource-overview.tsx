@@ -3,23 +3,22 @@
 import { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Search,
+  Filter,
   Server,
+  ChevronLeft,
+  ChevronRight,
+  GitBranch,
+  ChevronUp,
+  ChevronDown,
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  Search,
   HardDrive,
   Layers,
   Box,
   Cpu,
   Zap,
-  ChevronRight,
-  ChevronDown,
-  ChevronLeft,
-  ArrowLeft,
-  Filter,
-  Loader2,
-  AlertCircle,
-  ChevronUp,
-  X,
-  GitBranch,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -48,6 +47,8 @@ import {
   type EquipmentSearchParams,
 } from "@/lib/api/equipment-api"
 import { getCurrentEnvironment } from "@/lib/env-config"
+import { EquipmentTypeaheadSearch } from "@/components/equipment-typeahead-search"
+import { getEquipmentIcon } from "@/lib/equipment-icons"
 
 // Extended response type for UI
 interface EquipmentResponse {
@@ -554,8 +555,8 @@ function DeviceGUIPanel({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => 
-                card 
+              onClick={() =>
+                card
                   ? navigateToCard(card, viewState.slot!, viewState.shelf!, viewState.rack!)
                   : splitter && navigateToSplitter(splitter, viewState.slot!, viewState.shelf!, viewState.rack!)
               }
@@ -567,7 +568,7 @@ function DeviceGUIPanel({
             >
               <div className="flex items-center gap-4">
                 {card && <Cpu className="h-12 w-12 text-primary" />}
-                {splitter && <Box className="h-12 w-12 text-orange-500" />}
+                {splitter && <div className="text-orange-500">{getEquipmentIcon("SPLITTER")}</div>}
                 <div className="text-left">
                   <p className="font-mono text-lg text-foreground">{component.name}</p>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -695,7 +696,7 @@ function DeviceGUIPanel({
                   "bg-card border-border"
                 )}
               >
-                <div className={cn("h-9 w-9 rounded-full shadow-lg flex items-center justify-center", "bg-purple-500")}>
+                <div className={cn("h-9 w-9 rounded-full shadow-lg flex items-center justify-center", getPortColor(leg.status))}>
                   <GitBranch className="h-4 w-4 text-white" />
                 </div>
                 <span className="text-[10px] font-mono font-semibold text-foreground">{leg.name}</span>
@@ -704,7 +705,7 @@ function DeviceGUIPanel({
                   className={cn(
                     "text-[7px] capitalize px-1 py-0 h-3",
                     leg.status?.toUpperCase() === "ACTIVE"
-                      ? "border-purple-500/40 text-purple-600 dark:text-purple-400 bg-purple-500/10"
+                      ? "border-red-500/40 text-red-600 dark:text-red-400 bg-red-500/10"
                       : "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
                   )}
                 >
@@ -908,9 +909,12 @@ export function ResourceOverview() {
 
   // Removed auto-load - user must click Search button to fetch data
 
-  const handleSearch = useCallback(async () => {
-    const equipmentName = searchQuery.trim() || DEFAULT_SEARCH_PARAMS.equipmentName
-
+  const handleSearch = useCallback(async (overrideQuery?: string) => {
+    const equipmentName = (overrideQuery || searchQuery).trim() || DEFAULT_SEARCH_PARAMS.equipmentName
+    if (!equipmentName) {
+      setError("Please provide equipment name. It should not be empty.")
+      return;
+    }
     setIsSearching(true)
     setError(null)
 
@@ -967,39 +971,57 @@ export function ResourceOverview() {
           </div>
         </CardHeader>
         <CardContent className="pt-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex-1 min-w-[200px]">
-              <Input
-                placeholder="Search by Equipment Name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="h-8 text-sm"
-              />
+          <div className="flex flex-col gap-3">
+            {/* Single Row: Search Input + Category Filter + Search Button */}
+            <div className="flex items-end gap-2">
+              {/* Equipment Name Typeahead - Flexible Width */}
+              <div className="flex-1 min-w-0">
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Equipment Name</label>
+                <EquipmentTypeaheadSearch
+                  onSelect={(equipment) => {
+                    setSearchQuery(equipment.nodeName)
+                  }}
+                  isLoading={isSearching}
+                />
+              </div>
+
+              {/* Category Filter */}
+              <div className="w-32">
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Category</label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="h-10 text-sm">
+                    <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="olt">OLT</SelectItem>
+                    <SelectItem value="ont">ONT</SelectItem>
+                    <SelectItem value="fdh">FDH</SelectItem>
+                    <SelectItem value="ap">AP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Search Button */}
+              <Button
+                onClick={() => handleSearch(searchQuery)}
+                disabled={isSearching}
+                className="h-10 px-4 whitespace-nowrap"
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Searching
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-3 w-3 mr-1" />
+                    Search
+                  </>
+                )}
+              </Button>
             </div>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-[150px] h-8 text-sm">
-                <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="olt">OLT</SelectItem>
-                <SelectItem value="ont">ONT</SelectItem>
-                <SelectItem value="fdh">FDH</SelectItem>
-                <SelectItem value="ap">Access Point</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSearch} disabled={isSearching} className="h-8 text-sm px-3">
-              {isSearching ? (
-                <>
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  Searching...
-                </>
-              ) : (
-                "Search"
-              )}
-            </Button>
           </div>
           {error && (
             <div className="mt-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
@@ -1039,13 +1061,13 @@ export function ResourceOverview() {
           {/* Hierarchy Tree Panel - Left Side with Slide Animation */}
           <AnimatePresence>
             {showHierarchy && (
-            <motion.div
-              initial={{ x: -300, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -300, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="lg:col-span-4"
-            >
+              <motion.div
+                initial={{ x: -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -300, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="lg:col-span-4"
+              >
                 <Card className="rounded-lg border-border/50 h-fit">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">

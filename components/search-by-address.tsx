@@ -84,13 +84,13 @@ const getDeviceIcon = (type: string) => {
 const getPortColor = (status: string) => {
   switch (status?.toLowerCase()) {
     case "active":
-      return "bg-emerald-500"
+      return "bg-rose-500"
     case "pending":
       return "bg-amber-400"
     case "retired":
-      return "bg-rose-500"
-    case "free":
       return "bg-sky-400"
+    case "free":
+      return "bg-emerald-500"
     default:
       return "bg-zinc-400"
   }
@@ -99,13 +99,13 @@ const getPortColor = (status: string) => {
 const getStatusBadgeClass = (status: string) => {
   switch (status?.toLowerCase()) {
     case "active":
-      return "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+      return "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/10"
     case "pending":
       return "border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-400/10"
     case "retired":
-      return "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/10"
-    case "free":
       return "border-sky-400/40 text-sky-600 dark:text-sky-400 bg-sky-400/10"
+    case "free":
+      return "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
     default:
       return "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
   }
@@ -883,7 +883,7 @@ export function SearchByAddress() {
               {/* Port Status Legend */}
               <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border/50">
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                  <div className="h-3 w-3 rounded-full bg-rose-500" />
                   <span className="text-xs text-muted-foreground">Active</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -891,11 +891,11 @@ export function SearchByAddress() {
                   <span className="text-xs text-muted-foreground">Pending</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-rose-500" />
+                  <div className="h-3 w-3 rounded-full bg-sky-400" />
                   <span className="text-xs text-muted-foreground">Retired</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-sky-400" />
+                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
                   <span className="text-xs text-muted-foreground">Free</span>
                 </div>
               </div>
