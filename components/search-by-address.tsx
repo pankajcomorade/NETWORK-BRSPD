@@ -99,13 +99,13 @@ const getPortColor = (status: string) => {
 const getStatusBadgeClass = (status: string) => {
   switch (status?.toLowerCase()) {
     case "active":
-      return "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+      return "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/10"
     case "pending":
       return "border-amber-400/40 text-amber-600 dark:text-amber-400 bg-amber-400/10"
     case "retired":
-      return "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/10"
-    case "free":
       return "border-sky-400/40 text-sky-600 dark:text-sky-400 bg-sky-400/10"
+    case "free":
+      return "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
     default:
       return "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
   }
