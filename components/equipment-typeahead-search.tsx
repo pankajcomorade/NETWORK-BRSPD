@@ -214,8 +214,8 @@ export function EquipmentTypeaheadSearch({ onSelect, isLoading: externalLoading 
         />
       </div>
 
-      {/* Validation/Error Message Below Input */}
-      {(validationMessage || error) && (
+      {/* Validation/Error Message Below Input - Only show if no dropdown */}
+      {(validationMessage || error) && !showDropdown && (
         <div className={cn(
           "absolute left-0 right-0 top-full mt-1 text-xs p-2 rounded-md z-40",
           error 
@@ -227,11 +227,11 @@ export function EquipmentTypeaheadSearch({ onSelect, isLoading: externalLoading 
         </div>
       )}
 
-      {/* Typeahead Dropdown - Positioned Below Input */}
+      {/* Typeahead Dropdown - Positioned Directly Below Input */}
       {showDropdown && suggestions.length > 0 && (
         <div
           id="typeahead-suggestions"
-          className="absolute top-full left-0 right-0 mt-10 bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
         >
           {suggestions.map((suggestion, index) => (
             <button

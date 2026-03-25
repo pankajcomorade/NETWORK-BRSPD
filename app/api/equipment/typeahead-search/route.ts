@@ -55,17 +55,21 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json()
     console.log("[v0] Typeahead API response received, results count:", data?.length || 0)
+    console.log("[v0] First result sample:", data?.[0])
 
     // Transform response for typeahead - assuming data is an array
     const results = Array.isArray(data)
       ? data.map((item: any) => ({
-          nodeName: item.nodeName || "",
-          nodeType: item.nodeType || "",
-          nodeStatus: item.nodeStatus || "UNKNOWN",
+          nodeName: item.nodeName || item.name || "",
+          nodeType: item.nodeType || item.type || "",
+          nodeStatus: item.nodeStatus || item.status || "UNKNOWN",
           addressId: item.addressId || null,
-          addressLine: item.addressLine || "",
+          addressLine: item.addressLine || item.address || "",
         }))
       : []
+
+    console.log("[v0] Transformed results count:", results.length)
+    console.log("[v0] First transformed result:", results?.[0])
 
     return NextResponse.json(
       {
