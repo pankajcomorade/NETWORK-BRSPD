@@ -29,7 +29,7 @@ const SplitterIcon = ({ className = "h-10 w-15" }: { className?: string }) => (
 
 // Get icon for equipment type
 export const getEquipmentIcon = (type?: string): React.ReactNode => {
-  if (!type) return <Package className="h-6 w-6 text-primary" />
+  if (!type) return <Package className="h-10 w-15 text-primary" />
 
   const typeUpper = type.toUpperCase()
 
