@@ -84,13 +84,13 @@ const getDeviceIcon = (type: string) => {
 const getPortColor = (status: string) => {
   switch (status?.toLowerCase()) {
     case "active":
-      return "bg-emerald-500"
+      return "bg-rose-500"
     case "pending":
       return "bg-amber-400"
     case "retired":
-      return "bg-rose-500"
-    case "free":
       return "bg-sky-400"
+    case "free":
+      return "bg-emerald-500"
     default:
       return "bg-zinc-400"
   }
