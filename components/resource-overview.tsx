@@ -48,6 +48,7 @@ import {
   type EquipmentSearchParams,
 } from "@/lib/api/equipment-api"
 import { getCurrentEnvironment } from "@/lib/env-config"
+import { EquipmentTypeaheadSearch } from "@/components/equipment-typeahead-search"
 
 // Extended response type for UI
 interface EquipmentResponse {
@@ -908,8 +909,8 @@ export function ResourceOverview() {
 
   // Removed auto-load - user must click Search button to fetch data
 
-  const handleSearch = useCallback(async () => {
-    const equipmentName = searchQuery.trim() || DEFAULT_SEARCH_PARAMS.equipmentName
+  const handleSearch = useCallback(async (overrideQuery?: string) => {
+    const equipmentName = (overrideQuery || searchQuery).trim() || DEFAULT_SEARCH_PARAMS.equipmentName
 
     setIsSearching(true)
     setError(null)
@@ -967,39 +968,43 @@ export function ResourceOverview() {
           </div>
         </CardHeader>
         <CardContent className="pt-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex-1 min-w-[200px]">
-              <Input
-                placeholder="Search by Equipment Name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="h-8 text-sm"
-              />
+          <div className="space-y-3">
+            {/* Typeahead Search Component */}
+            <EquipmentTypeaheadSearch
+              onSelect={(equipment) => {
+                console.log("[v0] Equipment selected from typeahead:", equipment.nodeName)
+                setSearchQuery(equipment.nodeName)
+                handleSearch(equipment.nodeName)
+              }}
+              isLoading={isSearching}
+            />
+
+            {/* Category Filter */}
+            <div className="flex items-center gap-2">
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="flex-1 h-8 text-sm">
+                  <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="olt">OLT</SelectItem>
+                  <SelectItem value="ont">ONT</SelectItem>
+                  <SelectItem value="fdh">FDH</SelectItem>
+                  <SelectItem value="ap">Access Point</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={() => handleSearch(searchQuery)} disabled={isSearching} className="h-8 text-sm px-3">
+                {isSearching ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  "Search"
+                )}
+              </Button>
             </div>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-[150px] h-8 text-sm">
-                <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="olt">OLT</SelectItem>
-                <SelectItem value="ont">ONT</SelectItem>
-                <SelectItem value="fdh">FDH</SelectItem>
-                <SelectItem value="ap">Access Point</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSearch} disabled={isSearching} className="h-8 text-sm px-3">
-              {isSearching ? (
-                <>
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  Searching...
-                </>
-              ) : (
-                "Search"
-              )}
-            </Button>
           </div>
           {error && (
             <div className="mt-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
