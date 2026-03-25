@@ -45,7 +45,7 @@ export const getEquipmentIcon = (type?: string): React.ReactNode => {
       return <Zap className="h-6 w-6 text-amber-500" />
     case "SPLITTER":
     case "SP":
-      return <SplitterIcon className="h-6 w-6 text-orange-600" />
+      return <SplitterIcon className="h-10 w-15 text-orange-600" />
     case "PORT":
     case "NC":
       return <Network className="h-6 w-6 text-blue-500" />
