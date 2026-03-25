@@ -883,7 +883,7 @@ export function SearchByAddress() {
               {/* Port Status Legend */}
               <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border/50">
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                  <div className="h-3 w-3 rounded-full bg-rose-500" />
                   <span className="text-xs text-muted-foreground">Active</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -891,11 +891,11 @@ export function SearchByAddress() {
                   <span className="text-xs text-muted-foreground">Pending</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-rose-500" />
+                  <div className="h-3 w-3 rounded-full bg-sky-400" />
                   <span className="text-xs text-muted-foreground">Retired</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-sky-400" />
+                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
                   <span className="text-xs text-muted-foreground">Free</span>
                 </div>
               </div>
