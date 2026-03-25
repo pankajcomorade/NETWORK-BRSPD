@@ -3,6 +3,30 @@
 import React from "react"
 import { Building2, Network, Wifi, MapPin, Home, Zap, Boxes, Package } from "lucide-react"
 
+// Custom Splitter Icon Component
+const SplitterIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 400 200"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Input line from left */}
+    <line x1="20" y1="100" x2="100" y2="100" />
+    
+    {/* Splitter cone shape */}
+    <path d="M 100 100 Q 150 80 180 60 L 180 140 Q 150 120 100 100" />
+    
+    {/* Output lines to right */}
+    <line x1="180" y1="60" x2="380" y2="40" />
+    <line x1="180" y1="100" x2="380" y2="100" />
+    <line x1="180" y1="140" x2="380" y2="160" />
+  </svg>
+)
+
 // Get icon for equipment type
 export const getEquipmentIcon = (type?: string): React.ReactNode => {
   if (!type) return <Package className="h-6 w-6 text-primary" />
@@ -19,6 +43,9 @@ export const getEquipmentIcon = (type?: string): React.ReactNode => {
     case "SLOT":
     case "SL":
       return <Zap className="h-6 w-6 text-amber-500" />
+    case "SPLITTER":
+    case "SP":
+      return <SplitterIcon className="h-6 w-6 text-orange-600" />
     case "PORT":
     case "NC":
       return <Network className="h-6 w-6 text-blue-500" />
