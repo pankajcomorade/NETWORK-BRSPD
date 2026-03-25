@@ -7,6 +7,7 @@ import {
   Server,
   ChevronLeft,
   ChevronRight,
+  GitBranch,
   ChevronUp,
   ChevronDown,
   ArrowLeft,
@@ -694,7 +695,7 @@ function DeviceGUIPanel({
                   "bg-card border-border"
                 )}
               >
-                <div className={cn("h-9 w-9 rounded-full shadow-lg flex items-center justify-center", "bg-purple-500")}>
+                <div className={cn("h-9 w-9 rounded-full shadow-lg flex items-center justify-center", getPortColor(leg.status))}>
                   <GitBranch className="h-4 w-4 text-white" />
                 </div>
                 <span className="text-[10px] font-mono font-semibold text-foreground">{leg.name}</span>
@@ -703,7 +704,7 @@ function DeviceGUIPanel({
                   className={cn(
                     "text-[7px] capitalize px-1 py-0 h-3",
                     leg.status?.toUpperCase() === "ACTIVE"
-                      ? "border-purple-500/40 text-purple-600 dark:text-purple-400 bg-purple-500/10"
+                      ? "border-red-500/40 text-red-600 dark:text-red-400 bg-red-500/10"
                       : "border-zinc-400/40 text-zinc-600 dark:text-zinc-400"
                   )}
                 >
