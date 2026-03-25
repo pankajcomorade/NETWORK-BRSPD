@@ -6,6 +6,7 @@ import {
   Filter,
   Server,
   ChevronLeft,
+  ChevronUp,
   Loader2,
   AlertCircle,
   Search,
@@ -544,8 +545,8 @@ function DeviceGUIPanel({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => 
-                card 
+              onClick={() =>
+                card
                   ? navigateToCard(card, viewState.slot!, viewState.shelf!, viewState.rack!)
                   : splitter && navigateToSplitter(splitter, viewState.slot!, viewState.shelf!, viewState.rack!)
               }
@@ -991,8 +992,8 @@ export function ResourceOverview() {
               </div>
 
               {/* Search Button */}
-              <Button 
-                onClick={() => handleSearch(searchQuery)} 
+              <Button
+                onClick={() => handleSearch(searchQuery)}
                 disabled={isSearching}
                 className="h-10 px-4 whitespace-nowrap"
               >
@@ -1048,13 +1049,13 @@ export function ResourceOverview() {
           {/* Hierarchy Tree Panel - Left Side with Slide Animation */}
           <AnimatePresence>
             {showHierarchy && (
-            <motion.div
-              initial={{ x: -300, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -300, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="lg:col-span-4"
-            >
+              <motion.div
+                initial={{ x: -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -300, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="lg:col-span-4"
+              >
                 <Card className="rounded-lg border-border/50 h-fit">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
