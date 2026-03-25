@@ -4,26 +4,26 @@ import React from "react"
 import { Building2, Network, Wifi, MapPin, Home, Zap, Boxes, Package } from "lucide-react"
 
 // Custom Splitter Icon Component
-const SplitterIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
+const SplitterIcon = ({ className = "h-10 w-15" }: { className?: string }) => (
   <svg
-    viewBox="0 0 400 200"
+    viewBox="0 0 560 280"
     className={className}
     fill="none"
     stroke="currentColor"
-    strokeWidth="8"
+    strokeWidth="12"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    {/* Input line from left */}
-    <line x1="20" y1="100" x2="100" y2="100" />
-    
-    {/* Splitter cone shape */}
-    <path d="M 100 100 Q 150 80 180 60 L 180 140 Q 150 120 100 100" />
-    
-    {/* Output lines to right */}
-    <line x1="180" y1="60" x2="380" y2="40" />
-    <line x1="180" y1="100" x2="380" y2="100" />
-    <line x1="180" y1="140" x2="380" y2="160" />
+    {/* Front input line: 50% shorter (now 40 units long) */}
+    <line x1="100" y1="140" x2="140" y2="140" />
+
+    {/* Splitter cone: Scaled 40% bigger */}
+    <path d="M 140 140 Q 210 112 252 84 L 252 196 Q 210 168 140 140" />
+
+    {/* Output lines: Scaled 40% bigger */}
+    <line x1="252" y1="84" x2="350" y2="80" />
+    <line x1="252" y1="140" x2="350" y2="140" />
+    <line x1="252" y1="196" x2="350" y2="200" />
   </svg>
 )
 
