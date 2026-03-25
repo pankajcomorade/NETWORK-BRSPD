@@ -48,6 +48,7 @@ import {
 } from "@/lib/api/equipment-api"
 import { getCurrentEnvironment } from "@/lib/env-config"
 import { EquipmentTypeaheadSearch } from "@/components/equipment-typeahead-search"
+import { getEquipmentIcon } from "@/lib/equipment-icons"
 
 // Extended response type for UI
 interface EquipmentResponse {
@@ -567,7 +568,7 @@ function DeviceGUIPanel({
             >
               <div className="flex items-center gap-4">
                 {card && <Cpu className="h-12 w-12 text-primary" />}
-                {splitter && <Box className="h-12 w-12 text-orange-500" />}
+                {splitter && <div className="text-orange-500">{getEquipmentIcon("SPLITTER")}</div>}
                 <div className="text-left">
                   <p className="font-mono text-lg text-foreground">{component.name}</p>
                   <p className="text-sm text-muted-foreground mt-1">
