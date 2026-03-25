@@ -28,7 +28,7 @@ export interface EquipmentSearchParams {
 
 // Default hardcoded params for initial implementation
 export const DEFAULT_SEARCH_PARAMS: EquipmentSearchParams = {
-  equipmentName: "BUFTNCXAH07",
+  equipmentName: "",
   equipCategory: "all",
   portInstId: 197873,
   equipInstId: 12345678,
@@ -47,7 +47,7 @@ export async function searchEquipmentByName(
 ): Promise<any> {
   const queryParams = new URLSearchParams()
   queryParams.set("equipmentName", equipmentName)
-  
+
   if (equipCategory && equipCategory !== "all") {
     queryParams.set("equipCategory", equipCategory)
   }
@@ -95,7 +95,7 @@ export async function fetchEquipmentHierarchy(
   useMockOnError: boolean = false
 ): Promise<EquipmentHierarchyResponse> {
   const queryParams = new URLSearchParams()
-  
+
   // Only add equipmentName if searching by name
   if (params.equipmentName) {
     queryParams.set("equipmentName", params.equipmentName)
@@ -109,7 +109,7 @@ export async function fetchEquipmentHierarchy(
       queryParams.set("equipInstId", params.equipInstId.toString())
     }
   }
-  
+
   // Always add category if not 'all'
   if (params.equipCategory && params.equipCategory !== 'all') {
     queryParams.set("equipCategory", params.equipCategory)
