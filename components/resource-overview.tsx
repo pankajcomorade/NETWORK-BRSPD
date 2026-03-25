@@ -969,7 +969,6 @@ export function ResourceOverview() {
                 <EquipmentTypeaheadSearch
                   onSelect={(equipment) => {
                     setSearchQuery(equipment.nodeName)
-                    handleSearch(equipment.nodeName)
                   }}
                   isLoading={isSearching}
                 />
