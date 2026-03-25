@@ -910,7 +910,10 @@ export function ResourceOverview() {
 
   const handleSearch = useCallback(async (overrideQuery?: string) => {
     const equipmentName = (overrideQuery || searchQuery).trim() || DEFAULT_SEARCH_PARAMS.equipmentName
-
+    if (!equipmentName) {
+      setError("Please provide equipment name. It not be empty.")
+      return;
+    }
     setIsSearching(true)
     setError(null)
 
