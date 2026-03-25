@@ -3,23 +3,12 @@
 import { useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Search,
-  Server,
-  HardDrive,
-  Layers,
-  Box,
-  Cpu,
-  Zap,
-  ChevronRight,
-  ChevronDown,
-  ChevronLeft,
-  ArrowLeft,
   Filter,
+  Server,
+  ChevronLeft,
   Loader2,
   AlertCircle,
-  ChevronUp,
-  X,
-  GitBranch,
+  Search,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -968,40 +957,55 @@ export function ResourceOverview() {
           </div>
         </CardHeader>
         <CardContent className="pt-2">
-          <div className="space-y-3">
-            {/* Typeahead Search Component */}
-            <EquipmentTypeaheadSearch
-              onSelect={(equipment) => {
-                console.log("[v0] Equipment selected from typeahead:", equipment.nodeName)
-                setSearchQuery(equipment.nodeName)
-                handleSearch(equipment.nodeName)
-              }}
-              isLoading={isSearching}
-            />
+          <div className="flex flex-col gap-3">
+            {/* Single Row: Search Input + Category Filter + Search Button */}
+            <div className="flex items-end gap-2">
+              {/* Equipment Name Typeahead - Flexible Width */}
+              <div className="flex-1 min-w-0">
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Equipment Name</label>
+                <EquipmentTypeaheadSearch
+                  onSelect={(equipment) => {
+                    setSearchQuery(equipment.nodeName)
+                    handleSearch(equipment.nodeName)
+                  }}
+                  isLoading={isSearching}
+                />
+              </div>
 
-            {/* Category Filter */}
-            <div className="flex items-center gap-2">
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="flex-1 h-8 text-sm">
-                  <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="olt">OLT</SelectItem>
-                  <SelectItem value="ont">ONT</SelectItem>
-                  <SelectItem value="fdh">FDH</SelectItem>
-                  <SelectItem value="ap">Access Point</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={() => handleSearch(searchQuery)} disabled={isSearching} className="h-8 text-sm px-3">
+              {/* Category Filter */}
+              <div className="w-32">
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Category</label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="h-10 text-sm">
+                    <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="olt">OLT</SelectItem>
+                    <SelectItem value="ont">ONT</SelectItem>
+                    <SelectItem value="fdh">FDH</SelectItem>
+                    <SelectItem value="ap">AP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Search Button */}
+              <Button 
+                onClick={() => handleSearch(searchQuery)} 
+                disabled={isSearching}
+                className="h-10 px-4 whitespace-nowrap"
+              >
                 {isSearching ? (
                   <>
                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Searching...
+                    Searching
                   </>
                 ) : (
-                  "Search"
+                  <>
+                    <Search className="h-3 w-3 mr-1" />
+                    Search
+                  </>
                 )}
               </Button>
             </div>
