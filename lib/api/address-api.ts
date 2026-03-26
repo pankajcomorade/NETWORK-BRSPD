@@ -28,6 +28,7 @@ export interface ONTInfo {
   status: string
   portInstId: number
   equipInstId: number
+  vendor: string
 }
 
 export interface ServiceInfo {
@@ -200,7 +201,7 @@ export async function fetchAddressDetails(
     },
     cache: "no-store",
   })
-  
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
     throw new Error(errorData.error || `API Error: ${response.status}`)

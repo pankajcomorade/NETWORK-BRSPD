@@ -964,6 +964,7 @@ export function SearchByAddress() {
             <div className="space-y-3">
               <DetailRow label="ONT ID" value={String(addressData.ont.ontId)} />
               <DetailRow label="Model" value={addressData.ont.model || "N/A"} />
+              <DetailRow label="Vendor" value={addressData.ont.vendor || "N/A"} />
               <DetailRow label="Serial Number" value={addressData.ont.ontSerial || "N/A"} />
               <DetailRow label="Status" value={addressData.ont.status} />
               <DetailRow label="Port Instance ID" value={String(addressData.ont.portInstId)} />
