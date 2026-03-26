@@ -435,7 +435,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                               <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">305</p>
                             </div>
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">CYLAN</p>
+                              <p className="text-xs text-muted-foreground font-medium">CVLAN</p>
                               <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">3841</p>
                             </div>
                           </div>
