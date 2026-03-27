@@ -623,7 +623,7 @@ export function SearchByAddress() {
                             </div>
                             <div>
                               <p className="font-semibold text-foreground text-sm">{device.name}</p>
-                              <p className="text-xs text-muted-foreground capitalize">{device.type.replace("-", " ")}</p>
+                              <p className="text-xs text-muted-foreground uppercase">{device.type.replace("-", " ")}</p>
                             </div>
                           </div>
 
