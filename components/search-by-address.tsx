@@ -630,7 +630,7 @@ export function SearchByAddress() {
                           {/* Status Badge */}
                           <Badge
                             variant="outline"
-                            className={cn("text-[10px] capitalize", getStatusBadgeClass(device.status))}
+                            className={cn("text-[10px] uppercase", getStatusBadgeClass(device.status))}
                           >
                             {device.status}
                           </Badge>
