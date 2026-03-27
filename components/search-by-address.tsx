@@ -623,14 +623,14 @@ export function SearchByAddress() {
                             </div>
                             <div>
                               <p className="font-semibold text-foreground text-sm">{device.name}</p>
-                              <p className="text-xs text-muted-foreground capitalize">{device.type.replace("-", " ")}</p>
+                              <p className="text-xs text-muted-foreground uppercase">{device.type.replace("-", " ")}</p>
                             </div>
                           </div>
 
                           {/* Status Badge */}
                           <Badge
                             variant="outline"
-                            className={cn("text-[10px] capitalize", getStatusBadgeClass(device.status))}
+                            className={cn("text-[10px] uppercase", getStatusBadgeClass(device.status))}
                           >
                             {device.status}
                           </Badge>
@@ -964,6 +964,7 @@ export function SearchByAddress() {
             <div className="space-y-3">
               <DetailRow label="ONT ID" value={String(addressData.ont.ontId)} />
               <DetailRow label="Model" value={addressData.ont.model || "N/A"} />
+              <DetailRow label="Vendor" value={addressData.ont.vendor || "N/A"} />
               <DetailRow label="Serial Number" value={addressData.ont.ontSerial || "N/A"} />
               <DetailRow label="Status" value={addressData.ont.status} />
               <DetailRow label="Port Instance ID" value={String(addressData.ont.portInstId)} />

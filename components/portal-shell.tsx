@@ -48,7 +48,7 @@ export function PortalShell() {
 
   // Auto-hide sidebar state
   const [sidebarVisible, setSidebarVisible] = useState(false)
-  const [sidebarPinned, setSidebarPinned] = useState(false)
+  const [sidebarPinned, setSidebarPinned] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLDivElement>(null)

@@ -435,7 +435,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                               <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">305</p>
                             </div>
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">CYLAN</p>
+                              <p className="text-xs text-muted-foreground font-medium">CVLAN</p>
                               <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">3841</p>
                             </div>
                           </div>
@@ -489,7 +489,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                                         {conn.endpointA.equipment.type}
                                       </td>
                                       <td className="border border-border/30 px-2 py-2 text-muted-foreground text-xs truncate" title={conn.endpointA.port.portName || "N/A"}>
-                                        {conn.endpointA.port.portName || "-"}
+                                        {conn.endpointA.port.portName ? conn.endpointA.port.portName.split('/').pop() : "-"}
                                       </td>
                                       <td className="border border-border/30 px-2 py-2 text-muted-foreground text-center">
                                         {conn.endpointA.port.portNumber}
@@ -508,7 +508,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                                         {conn.endpointB.equipment.type}
                                       </td>
                                       <td className="border border-border/30 px-2 py-2 text-muted-foreground text-xs truncate" title={conn.endpointB.port.portName || "N/A"}>
-                                        {conn.endpointB.port.portName || "-"}
+                                        {conn.endpointB.port.portName ? conn.endpointB.port.portName.split('/').pop() : "-"}
                                       </td>
                                       <td className="border border-border/30 px-2 py-2 text-muted-foreground text-center">
                                         {conn.endpointB.port.portNumber}
