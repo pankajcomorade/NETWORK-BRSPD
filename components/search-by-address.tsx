@@ -282,7 +282,7 @@ export function SearchByAddress() {
 
         // Filter and chain connections following the hierarchy: ONT > AP/AT > FDH (optional) > OLT
         // Start from index 0 and follow endpointB chain
-        const validEquipmentTypes = ["FDH", "OLT", "ONT", "AP", "AT"]
+        const validEquipmentTypes = ["FDH", "OLT", "ONT", "AP/AT"]
         const processedConnections: any[] = []
         let currentConnection = allConnections[0] // Start from index 0, include all connections
         let currentConnectionIndex = 0
