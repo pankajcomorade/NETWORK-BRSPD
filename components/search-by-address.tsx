@@ -273,19 +273,19 @@ export function SearchByAddress() {
         if (ontIndex !== -1) {
           updated[ontIndex] = {
             ...updated[ontIndex],
-            cableToNext: allConnections[1]?.cableStrandName || "Cable Link",
+            cableToNext: allConnections[0]?.cableStrandName || "Cable Link",
           }
         }
 
         // Remove any nodes after ONT
         const newDevices = updated.slice(0, ontIndex + 1)
 
-        // Filter and chain connections following the hierarchy: ONT > AP/AT[skip] > FDH > OLT
-        // Start from index 1 (skip first connection) and follow endpointB chain
-        const validEquipmentTypes = ["FDH", "OLT", "ONT"]
+        // Filter and chain connections following the hierarchy: ONT > AP/AT > FDH (optional) > OLT
+        // Start from index 0 and follow endpointB chain
+        const validEquipmentTypes = ["FDH", "OLT", "ONT", "AP/AT"]
         const processedConnections: any[] = []
-        let currentConnection = allConnections[1] // Start from index 1, skip index 0
-        let currentConnectionIndex = 1
+        let currentConnection = allConnections[0] // Start from index 0, include all connections
+        let currentConnectionIndex = 0
 
         while (currentConnection) {
           // Check if endpointB equipment type is valid (FDH, OLT, or ONT) - case insensitive
