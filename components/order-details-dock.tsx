@@ -248,7 +248,14 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-end">
+        <motion.div
+          key="order-details-dock"
+          initial={{ x: 400, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 400, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          className="fixed inset-0 z-50 flex items-start justify-end"
+        >
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -653,7 +660,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
               </div>
             )}
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   )
