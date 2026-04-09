@@ -119,29 +119,29 @@ export function NetworkTopology({ connections }: NetworkTopologyProps) {
   }
 
   return (
-    <div className="w-full overflow-x-auto py-8 px-4">
-      <div className="flex items-center justify-center gap-3 min-w-max">
+    <div className="w-full overflow-x-auto py-2 px-1">
+      <div className="flex items-center justify-center gap-1 min-w-max">
         {nodes.map((node, idx) => (
           <React.Fragment key={idx}>
             {/* Node */}
             <div
               className={cn(
-                "flex flex-col items-center gap-2 px-4 py-3 rounded-lg border-2 min-w-max",
+                "flex flex-col items-center gap-1 px-2 py-1 rounded-md border-2 min-w-max",
                 getNodeColor(node.type)
               )}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {getNodeIcon(node.type)}
                 <div className="text-center">
-                  <p className="font-semibold text-sm">{node.type}</p>
-                  <p className="text-xs opacity-80 max-w-[80px] truncate">{node.name}</p>
+                  <p className="font-semibold text-xs">{node.type}</p>
+                  <p className="text-[10px] opacity-80 max-w-[60px] truncate">{node.name}</p>
                 </div>
               </div>
             </div>
 
             {/* Arrow connector (not after last node) */}
             {idx < nodes.length - 1 && (
-              <div className="text-lg font-bold text-muted-foreground">→</div>
+              <div className="text-sm font-bold text-muted-foreground px-0.5">→</div>
             )}
           </React.Fragment>
         ))}
