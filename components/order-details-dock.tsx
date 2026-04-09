@@ -246,7 +246,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
   }, [data])
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
         <motion.div
           key="order-details-dock"
@@ -437,49 +437,43 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                            <div className="p-4 space-y-3 bg-background/50 border-t border-border/30">
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <p className="text-xs text-muted-foreground font-medium">Speed</p>
-                                  <p className="text-sm text-foreground bg-background p-2 rounded">1G</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <p className="text-xs text-muted-foreground font-medium">Port Type</p>
-                                  <p className="text-sm text-foreground bg-background p-2 rounded">Ethernet</p>
-                                </div>
+                          <div className="p-4 space-y-3 bg-background/50 border-t border-border/30">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground font-medium">Speed</p>
+                                <p className="text-sm text-foreground bg-background p-2 rounded">1G</p>
                               </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <p className="text-xs text-muted-foreground font-medium">Technology</p>
-                                  <p className="text-sm text-foreground bg-background p-2 rounded">GPON</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <p className="text-xs text-muted-foreground font-medium">Broadband Service</p>
-                                  <p className="text-sm text-foreground bg-background p-2 rounded">04BN94DM</p>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <p className="text-xs text-muted-foreground font-medium">SVLAN</p>
-                                  <p className="text-sm text-foreground bg-background p-2 rounded">305</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <p className="text-xs text-muted-foreground font-medium">CVLAN</p>
-                                  <p className="text-sm text-foreground bg-background p-2 rounded">3841</p>
-                                </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground font-medium">Port Type</p>
+                                <p className="text-sm text-foreground bg-background p-2 rounded">Ethernet</p>
                               </div>
                             </div>
-                          </motion.div>
-                        )}
-                      </div>
-
-                      {/* Connection Specification Content */}
-                    <div className="border border-border/30 rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => {
-                          if (!connectionSpecOpen && ponConnections.length === 0) {
-                            fetchPONConnectivity()
-                          }
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground font-medium">Technology</p>
+                                <p className="text-sm text-foreground bg-background p-2 rounded">GPON</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground font-medium">Broadband Service</p>
+                                <p className="text-sm text-foreground bg-background p-2 rounded">04BN94DM</p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground font-medium">SVLAN</p>
+                                <p className="text-sm text-foreground bg-background p-2 rounded">305</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground font-medium">CVLAN</p>
+                                <p className="text-sm text-foreground bg-background p-2 rounded">3841</p>
+                              </div>
+                            </div>
+                          </div>
+        </motion.div>
+      )}
+    </>
+  )
+}
                           setConnectionSpecOpen(!connectionSpecOpen)
                         }}
                         className="w-full flex items-center justify-between p-4 bg-secondary/30 hover:bg-secondary/40 transition-colors"
@@ -502,140 +496,135 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                            <div className="p-3 bg-background/50 border-t border-border/30">
-                              {/* Connections and Topology Tabs */}
-                              <Tabs defaultValue="connections" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
-                                  <TabsTrigger value="connections">Connections</TabsTrigger>
-                                  <TabsTrigger value="topology">Topology</TabsTrigger>
-                                </TabsList>
+                          <div className="p-3 bg-background/50 border-t border-border/30">
+                            {/* Connections and Topology Tabs */}
+                            <Tabs defaultValue="connections" className="w-full">
+                              <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="connections">Connections</TabsTrigger>
+                                <TabsTrigger value="topology">Topology</TabsTrigger>
+                              </TabsList>
 
-                                {/* Connections Tab */}
-                                <TabsContent value="connections" className="space-y-3 mt-3">
-                                  {ponLoading && (
-                                    <div className="flex items-center justify-center py-8">
-                                      <Loader2 className="h-5 w-5 text-primary animate-spin mr-2" />
-                                      <span className="text-sm text-muted-foreground">Loading connection data...</span>
-                                    </div>
-                                  )}
-
-                                  {ponError && (
-                                    <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex gap-2">
-                                      <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
-                                      <p className="text-xs text-red-400">{ponError}</p>
-                                    </div>
-                                  )}
-
-                                  {!ponLoading && ponConnections.length > 0 && (
-                                    <div className="overflow-x-auto">
-                                      <table className="w-full text-xs border-collapse">
-                                        <thead>
-                                          <tr className="bg-secondary/30">
-                                            <th colSpan={4} className="border border-border/30 px-2 py-1 text-left text-xs font-semibold text-center">Endpoint A</th>
-                                            <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold text-center">Cable</th>
-                                            <th colSpan={4} className="border border-border/30 px-2 py-1 text-left text-xs font-semibold text-center">Endpoint B</th>
-                                          </tr>
-                                          <tr className="bg-secondary/20">
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Name</th>
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Type</th>
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Port</th>
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Port #</th>
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold"></th>
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Name</th>
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Type</th>
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Port</th>
-                                            <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Port #</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {ponConnections.map((conn, idx) => (
-                                            <tr key={idx} className={idx % 2 === 0 ? "" : "bg-secondary/40"}>
-                                              {/* Endpoint A */}
-                                              <td className="border border-border/30 px-1 py-1 text-foreground truncate text-xs" title={conn.endpointA.equipment.name}>
-                                                {conn.endpointA.equipment.name}
-                                              </td>
-                                              <td className="border border-border/30 px-1 py-1 text-muted-foreground text-xs">
-                                                {conn.endpointA.equipment.type}
-                                              </td>
-                                              <td className="border border-border/30 px-1 py-1 text-muted-foreground text-xs truncate" title={conn.endpointA.port.portName || "N/A"}>
-                                                {conn.endpointA.port.portName ? conn.endpointA.port.portName.split('/').pop() : "-"}
-                                              </td>
-                                              <td className="border border-border/30 px-1 py-1 text-muted-foreground text-center text-xs">
-                                                {conn.endpointA.port.portNumber}
-                                              </td>
-
-                                              {/* Cable Strand Name */}
-                                              <td className="border border-border/30 px-1 py-1 text-primary text-center font-medium min-w-[60px] text-xs" title={conn.cableStrandName || "N/A"}>
-                                                {conn.cableStrandName || "-"}
-                                              </td>
-
-                                              {/* Endpoint B */}
-                                              <td className="border border-border/30 px-1 py-1 text-foreground truncate text-xs" title={conn.endpointB.equipment.name}>
-                                                {conn.endpointB.equipment.name}
-                                              </td>
-                                              <td className="border border-border/30 px-1 py-1 text-muted-foreground text-xs">
-                                                {conn.endpointB.equipment.type}
-                                              </td>
-                                              <td className="border border-border/30 px-1 py-1 text-muted-foreground text-xs truncate" title={conn.endpointB.port.portName || "N/A"}>
-                                                {conn.endpointB.port.portName ? conn.endpointB.port.portName.split('/').pop() : "-"}
-                                              </td>
-                                              <td className="border border-border/30 px-1 py-1 text-muted-foreground text-center text-xs">
-                                                {conn.endpointB.port.portNumber}
-                                              </td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  )}
-
-                                  {!ponLoading && ponConnections.length === 0 && !ponError && (
-                                    <p className="text-sm text-muted-foreground text-center py-4">
-                                      No connection data available
-                                    </p>
-                                  )}
-                                </TabsContent>
-
-                                {/* Topology Tab */}
-                                <TabsContent value="topology" className="space-y-2 mt-3">
-                                  <div className="space-y-1">
-                                    <h4 className="font-semibold text-xs">Network Topology</h4>
-                                    <p className="text-xs text-muted-foreground">Visual representation of the FTTH network path</p>
+                              {/* Connections Tab */}
+                              <TabsContent value="connections" className="space-y-3 mt-3">
+                                {ponLoading && (
+                                  <div className="flex items-center justify-center py-8">
+                                    <Loader2 className="h-5 w-5 text-primary animate-spin mr-2" />
+                                    <span className="text-sm text-muted-foreground">Loading connection data...</span>
                                   </div>
-                                  {ponLoading ? (
-                                    <div className="flex items-center justify-center py-8">
-                                      <Loader2 className="h-5 w-5 text-primary animate-spin mr-2" />
-                                      <span className="text-sm text-muted-foreground">Loading connection data...</span>
-                                    </div>
-                                  ) : ponConnections.length > 0 ? (
-                                    <div className="bg-secondary/20 rounded-lg p-2 overflow-x-auto">
-                                      <NetworkTopology connections={ponConnections} />
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-muted-foreground text-center py-8">
-                                      No connection data available for topology
-                                    </p>
-                                  )}
-                                </TabsContent>
-                              </Tabs>
-                            </div>
-                          </motion.div>
-                        )}
-                      </div>
+                                )}
+
+                                {ponError && (
+                                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex gap-2">
+                                    <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs text-red-400">{ponError}</p>
+                                  </div>
+                                )}
+
+                                {!ponLoading && ponConnections.length > 0 && (
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-xs border-collapse">
+                                      <thead>
+                                        <tr className="bg-secondary/30">
+                                          <th colSpan={4} className="border border-border/30 px-2 py-1 text-left text-xs font-semibold text-center">Endpoint A</th>
+                                          <th className="border border-border/30 px-2 py-1 text-left text-xs font-semibold text-center">Cable</th>
+                                          <th colSpan={4} className="border border-border/30 px-2 py-1 text-left text-xs font-semibold text-center">Endpoint B</th>
+                                        </tr>
+                                        <tr className="bg-secondary/20">
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Name</th>
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Type</th>
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Port</th>
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Port #</th>
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold"></th>
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Name</th>
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Type</th>
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Port</th>
+                                          <th className="border border-border/30 px-1 py-0.5 text-left text-xs font-semibold">Port #</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {ponConnections.map((conn, idx) => (
+                                          <tr key={idx} className={idx % 2 === 0 ? "" : "bg-secondary/40"}>
+                                            {/* Endpoint A */}
+                                            <td className="border border-border/30 px-1 py-1 text-foreground truncate text-xs" title={conn.endpointA.equipment.name}>
+                                              {conn.endpointA.equipment.name}
+                                            </td>
+                                            <td className="border border-border/30 px-1 py-1 text-muted-foreground text-xs">
+                                              {conn.endpointA.equipment.type}
+                                            </td>
+                                            <td className="border border-border/30 px-1 py-1 text-muted-foreground text-xs truncate" title={conn.endpointA.port.portName || "N/A"}>
+                                              {conn.endpointA.port.portName ? conn.endpointA.port.portName.split('/').pop() : "-"}
+                                            </td>
+                                            <td className="border border-border/30 px-1 py-1 text-muted-foreground text-center text-xs">
+                                              {conn.endpointA.port.portNumber}
+                                            </td>
+
+                                            {/* Cable Strand Name */}
+                                            <td className="border border-border/30 px-1 py-1 text-primary text-center font-medium min-w-[60px] text-xs" title={conn.cableStrandName || "N/A"}>
+                                              {conn.cableStrandName || "-"}
+                                            </td>
+
+                                            {/* Endpoint B */}
+                                            <td className="border border-border/30 px-1 py-1 text-foreground truncate text-xs" title={conn.endpointB.equipment.name}>
+                                              {conn.endpointB.equipment.name}
+                                            </td>
+                                            <td className="border border-border/30 px-1 py-1 text-muted-foreground text-xs">
+                                              {conn.endpointB.equipment.type}
+                                            </td>
+                                            <td className="border border-border/30 px-1 py-1 text-muted-foreground text-xs truncate" title={conn.endpointB.port.portName || "N/A"}>
+                                              {conn.endpointB.port.portName ? conn.endpointB.port.portName.split('/').pop() : "-"}
+                                            </td>
+                                            <td className="border border-border/30 px-1 py-1 text-muted-foreground text-center text-xs">
+                                              {conn.endpointB.port.portNumber}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+
+                                {!ponLoading && ponConnections.length === 0 && !ponError && (
+                                  <p className="text-sm text-muted-foreground text-center py-4">
+                                    No connection data available
+                                  </p>
+                                )}
+                              </TabsContent>
+
+                              {/* Topology Tab */}
+                              <TabsContent value="topology" className="space-y-2 mt-3">
+                                <div className="space-y-1">
+                                  <h4 className="font-semibold text-xs">Network Topology</h4>
+                                  <p className="text-xs text-muted-foreground">Visual representation of the FTTH network path</p>
+                                </div>
+                                {ponLoading ? (
+                                  <div className="flex items-center justify-center py-8">
+                                    <Loader2 className="h-5 w-5 text-primary animate-spin mr-2" />
+                                    <span className="text-sm text-muted-foreground">Loading connection data...</span>
+                                  </div>
+                                ) : ponConnections.length > 0 ? (
+                                  <div className="bg-secondary/20 rounded-lg p-2 overflow-x-auto">
+                                    <NetworkTopology connections={ponConnections} />
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground text-center py-8">
+                                    No connection data available for topology
+                                  </p>
+                                )}
+                              </TabsContent>
+                            </Tabs>
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
                   </TabsContent
                 </Tabs>
-                            </div>
+              </div>
                           </motion.div>
                         )}
-                      </AnimatePresence>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            )}
-          </motion.div>
-        </motion.div>
+
+
+        </motion.div >
       )}
-    </AnimatePresence>
+    </AnimatePresence >
   )
 }
