@@ -429,15 +429,14 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                       </button>
 
                       {/* Technical Specification Content */}
-                      <AnimatePresence initial={false}>
-                        {technicalSpecOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
+                      {technicalSpecOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
                             <div className="p-4 space-y-3 bg-background/50 border-t border-border/30">
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
@@ -472,10 +471,9 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                             </div>
                           </motion.div>
                         )}
-                      </AnimatePresence>
-                    </div>
+                      </div>
 
-                    {/* Accordion 2: Connection Specification */}
+                      {/* Connection Specification Content */}
                     <div className="border border-border/30 rounded-lg overflow-hidden">
                       <button
                         onClick={() => {
@@ -496,15 +494,14 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                       </button>
 
                       {/* Connection Specification Content */}
-                      <AnimatePresence initial={false}>
-                        {connectionSpecOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
+                      {connectionSpecOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
                             <div className="p-3 bg-background/50 border-t border-border/30">
                               {/* Connections and Topology Tabs */}
                               <Tabs defaultValue="connections" className="w-full">
@@ -624,32 +621,9 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                             </div>
                           </motion.div>
                         )}
-                      </AnimatePresence>
-                    </div>
-                  </TabsContent>
-
-                                {/* Topology Tab */}
-                                <TabsContent value="topology" className="space-y-4 mt-4">
-                                  <div className="space-y-2">
-                                    <h4 className="font-semibold text-sm">Network Topology</h4>
-                                    <p className="text-xs text-muted-foreground">Visual representation of the FTTH network path</p>
-                                  </div>
-                                  {ponLoading ? (
-                                    <div className="flex items-center justify-center py-8">
-                                      <Loader2 className="h-5 w-5 text-primary animate-spin mr-2" />
-                                      <span className="text-sm text-muted-foreground">Loading connection data...</span>
-                                    </div>
-                                  ) : ponConnections.length > 0 ? (
-                                    <div className="bg-secondary/20 rounded-lg p-4">
-                                      <NetworkTopology connections={ponConnections} />
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-muted-foreground text-center py-8">
-                                      No connection data available for topology
-                                    </p>
-                                  )}
-                                </TabsContent>
-                              </Tabs>
+                      </div>
+                  </TabsContent
+                </Tabs>
                             </div>
                           </motion.div>
                         )}
