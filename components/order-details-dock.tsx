@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { ChevronRight, Loader2, AlertCircle, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -111,7 +111,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
   const [technicalSpecOpen, setTechnicalSpecOpen] = useState(false)
   const [connectionSpecOpen, setConnectionSpecOpen] = useState(false)
 
-  // Fetch order details
   const fetchOrderDetails = useCallback(async () => {
     if (!orderNumber || !lci) {
       setError("Order number and LCI are required")
@@ -121,12 +120,7 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
     setLoading(true)
     setError(null)
     try {
-      console.log("[v0] Fetching order details for:", orderNumber, lci)
-
-      // Use internal API route as proxy to avoid CORS
       const apiUrl = `/api/orders/details?orderNum=${encodeURIComponent(orderNumber)}&lci=${encodeURIComponent(lci)}`
-      console.log("[v0] API URL:", apiUrl)
-
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -136,24 +130,18 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
         cache: "no-store",
       })
 
-      console.log("[v0] API Response status:", response.status)
-
       if (!response.ok) {
         const errorText = await response.text()
-        console.error("[v0] API Error:", response.status, errorText)
-        setError(`Failed to fetch order details: ${response.status} - ${errorText}`)
+        setError(`Failed to fetch order details: ${response.status}`)
         toast({ title: "Error", description: `Failed to fetch order details: ${response.status}`, variant: "destructive" })
         return
       }
 
       const responseData = await response.json()
-      console.log("[v0] Order details response:", responseData)
-
       setData(responseData)
       setError(null)
       toast({ title: "Success", description: "Order details loaded successfully" })
     } catch (err) {
-      console.error("[v0] Fetch error:", err)
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch order details"
       setError(errorMessage)
       toast({ title: "Error", description: errorMessage, variant: "destructive" })
@@ -162,14 +150,12 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
     }
   }, [orderNumber, lci, toast])
 
-  // Expose the fetch method to parent
   useEffect(() => {
     if (onFetch) {
       onFetch(fetchOrderDetails)
     }
   }, [onFetch, fetchOrderDetails])
 
-  // Reset PON data when dock closes
   useEffect(() => {
     if (!isOpen) {
       setPonConnections([])
@@ -193,7 +179,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
 
   const lciData = data?.order.lcis[0]
 
-  // Fetch PON connectivity data when Technical Details tab is clicked
   const fetchPONConnectivity = useCallback(async () => {
     if (!data?.order.lcis[0]?.ont) {
       setPonError("ONT data not available")
@@ -207,8 +192,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
     setPonConnections([])
 
     try {
-      console.log("[v0] Fetching PON connectivity - ontPortId:", ontId, "ontInstId:", equipmentId)
-
       const apiUrl = `/api/orders/pon-connectivity?ontPortId=${encodeURIComponent(ontId)}&ontInstId=${encodeURIComponent(equipmentId)}`
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -219,18 +202,13 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
         cache: "no-store",
       })
 
-      console.log("[v0] PON Connectivity API response status:", response.status)
-
       if (!response.ok) {
         const errorText = await response.text()
-        console.error("[v0] PON API Error:", response.status, errorText)
         setPonError(`Failed to fetch PON connectivity: ${response.status}`)
         return
       }
 
       const ponData = await response.json()
-      console.log("[v0] PON Connectivity data received:", ponData)
-
       if (ponData.ponConnection?.connections && Array.isArray(ponData.ponConnection.connections)) {
         setPonConnections(ponData.ponConnection.connections)
       } else {
@@ -238,7 +216,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
-      console.error("[v0] PON fetch error:", err)
       setPonError(errorMessage)
     } finally {
       setPonLoading(false)
@@ -256,7 +233,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
           className="fixed inset-0 z-50 flex items-start justify-end"
         >
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -265,7 +241,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
             className="absolute inset-0 bg-black/50"
           />
 
-          {/* Dock Panel */}
           <motion.div
             initial={{ x: 400, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -273,7 +248,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
             transition={{ type: "spring", damping: 20 }}
             className="relative w-full sm:max-w-2xl md:max-w-3xl lg:max-w-6xl bg-card border-l border-border/50 h-full overflow-y-auto shadow-2xl"
           >
-            {/* Dock Header */}
             <div className="sticky top-0 border-b border-border/50 bg-card p-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">Order Details</h3>
               <motion.button
@@ -286,7 +260,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
               </motion.button>
             </div>
 
-            {/* Loading State */}
             {loading && (
               <div className="flex items-center justify-center py-12">
                 <div className="flex flex-col items-center gap-2">
@@ -296,7 +269,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
               </div>
             )}
 
-            {/* Error State */}
             {error && (
               <div className="m-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex gap-3">
                 <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -307,16 +279,13 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
               </div>
             )}
 
-            {/* Content */}
             {data && lciData && !loading && (
               <div className="p-6 space-y-6">
-                {/* Order Header */}
                 <div className="space-y-2">
                   <h4 className="text-2xl font-bold text-foreground font-mono">{data.order.orderNumber}</h4>
                   <p className="text-sm text-muted-foreground">Order ID: {data.order.orderId}</p>
                 </div>
 
-                {/* Tabs */}
                 <Tabs defaultValue="order-details" className="w-full">
                   <TabsList className="grid w-full grid-cols-4 gap-1">
                     <TabsTrigger value="order-details" className="text-xs sm:text-sm">Order Details</TabsTrigger>
@@ -325,7 +294,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                     <TabsTrigger value="technical-details" className="text-xs sm:text-sm">Technical Details</TabsTrigger>
                   </TabsList>
 
-                  {/* Order Details Tab */}
                   <TabsContent value="order-details" className="space-y-4 mt-6">
                     <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-4">
@@ -365,7 +333,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                     </div>
                   </TabsContent>
 
-                  {/* Address Details Tab */}
                   <TabsContent value="address-details" className="space-y-4 mt-6">
                     <div className="space-y-3">
                       <div className="space-y-1">
@@ -387,7 +354,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                     </div>
                   </TabsContent>
 
-                  {/* Customer Details Tab */}
                   <TabsContent value="customer-details" className="space-y-4 mt-6">
                     <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-4">
@@ -411,7 +377,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                     </div>
                   </TabsContent>
 
-                  {/* Technical Details Tab - Two Separate Accordions */}
                   <TabsContent value="technical-details" className="space-y-3 mt-6">
                     {/* Accordion 1: Technical Specification */}
                     <div className="border border-border/30 rounded-lg overflow-hidden">
@@ -428,7 +393,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                         />
                       </button>
 
-                      {/* Technical Specification Content */}
                       {technicalSpecOpen && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
@@ -469,11 +433,17 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                               </div>
                             </div>
                           </div>
-        </motion.div>
-      )}
-    </>
-  )
-}
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Accordion 2: Connection Specification */}
+                    <div className="border border-border/30 rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => {
+                          if (!connectionSpecOpen && ponConnections.length === 0) {
+                            fetchPONConnectivity()
+                          }
                           setConnectionSpecOpen(!connectionSpecOpen)
                         }}
                         className="w-full flex items-center justify-between p-4 bg-secondary/30 hover:bg-secondary/40 transition-colors"
@@ -487,7 +457,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                         />
                       </button>
 
-                      {/* Connection Specification Content */}
                       {connectionSpecOpen && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
@@ -497,14 +466,12 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                           className="overflow-hidden"
                         >
                           <div className="p-3 bg-background/50 border-t border-border/30">
-                            {/* Connections and Topology Tabs */}
                             <Tabs defaultValue="connections" className="w-full">
                               <TabsList className="grid w-full grid-cols-2">
                                 <TabsTrigger value="connections">Connections</TabsTrigger>
                                 <TabsTrigger value="topology">Topology</TabsTrigger>
                               </TabsList>
 
-                              {/* Connections Tab */}
                               <TabsContent value="connections" className="space-y-3 mt-3">
                                 {ponLoading && (
                                   <div className="flex items-center justify-center py-8">
@@ -544,7 +511,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                                       <tbody>
                                         {ponConnections.map((conn, idx) => (
                                           <tr key={idx} className={idx % 2 === 0 ? "" : "bg-secondary/40"}>
-                                            {/* Endpoint A */}
                                             <td className="border border-border/30 px-1 py-1 text-foreground truncate text-xs" title={conn.endpointA.equipment.name}>
                                               {conn.endpointA.equipment.name}
                                             </td>
@@ -557,13 +523,9 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                                             <td className="border border-border/30 px-1 py-1 text-muted-foreground text-center text-xs">
                                               {conn.endpointA.port.portNumber}
                                             </td>
-
-                                            {/* Cable Strand Name */}
                                             <td className="border border-border/30 px-1 py-1 text-primary text-center font-medium min-w-[60px] text-xs" title={conn.cableStrandName || "N/A"}>
                                               {conn.cableStrandName || "-"}
                                             </td>
-
-                                            {/* Endpoint B */}
                                             <td className="border border-border/30 px-1 py-1 text-foreground truncate text-xs" title={conn.endpointB.equipment.name}>
                                               {conn.endpointB.equipment.name}
                                             </td>
@@ -590,7 +552,6 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                                 )}
                               </TabsContent>
 
-                              {/* Topology Tab */}
                               <TabsContent value="topology" className="space-y-2 mt-3">
                                 <div className="space-y-1">
                                   <h4 className="font-semibold text-xs">Network Topology</h4>
@@ -616,15 +577,13 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
                         </motion.div>
                       )}
                     </div>
-                  </TabsContent
+                  </TabsContent>
                 </Tabs>
               </div>
-                          </motion.div>
-                        )}
-
-
-        </motion.div >
+            )}
+          </motion.div>
+        </motion.div>
       )}
-    </AnimatePresence >
+    </>
   )
 }
