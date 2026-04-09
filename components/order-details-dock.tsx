@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { NetworkTopology } from "@/components/network-topology"
 
 interface OrderDetailsResponse {
   order: {
@@ -403,45 +404,54 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
 
                   {/* Technical Details Tab */}
                   <TabsContent value="technical-details" className="space-y-4 mt-6">
-                    <Tabs defaultValue="ethernet" className="w-full">
-                      <TabsList className="grid w-full grid-cols-1">
-                        <TabsTrigger value="ethernet" onClick={fetchPONConnectivity}>Ethernet</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="ethernet" className="space-y-4 mt-4">
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">Speed</p>
-                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">1G</p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">Port Type</p>
-                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">Ethernet</p>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">Technology</p>
-                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">GPON</p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">Broadband Service</p>
-                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">04BN94DM</p>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">SVLAN</p>
-                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">305</p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground font-medium">CVLAN</p>
-                              <p className="text-sm text-foreground bg-secondary/50 p-2 rounded">3841</p>
-                            </div>
-                          </div>
+                    {/* Technical Details Section */}
+                    <div className="space-y-3 bg-secondary/30 p-4 rounded-lg">
+                      <h3 className="font-semibold text-sm">Technical Specifications</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Speed</p>
+                          <p className="text-sm text-foreground bg-background p-2 rounded">1G</p>
                         </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Port Type</p>
+                          <p className="text-sm text-foreground bg-background p-2 rounded">Ethernet</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Technology</p>
+                          <p className="text-sm text-foreground bg-background p-2 rounded">GPON</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Broadband Service</p>
+                          <p className="text-sm text-foreground bg-background p-2 rounded">04BN94DM</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">SVLAN</p>
+                          <p className="text-sm text-foreground bg-background p-2 rounded">305</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">CVLAN</p>
+                          <p className="text-sm text-foreground bg-background p-2 rounded">3841</p>
+                        </div>
+                      </div>
+                    </div>
 
-                        {/* PON Connections Table */}
+                    {/* Connections and Topology Tabs */}
+                    <Tabs defaultValue="connections" className="w-full" onValueChange={(value) => {
+                      if (value === "connections" && ponConnections.length === 0) {
+                        fetchPONConnectivity()
+                      }
+                    }}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="connections" onClick={fetchPONConnectivity}>Connections</TabsTrigger>
+                        <TabsTrigger value="topology">Topology</TabsTrigger>
+                      </TabsList>
+
+                      {/* Connections Tab */}
+                      <TabsContent value="connections" className="space-y-4 mt-4">
                         <div className="mt-6 space-y-3">
                           {ponLoading && (
                             <div className="flex items-center justify-center py-8">
@@ -522,10 +532,32 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
 
                           {!ponLoading && ponConnections.length === 0 && !ponError && (
                             <p className="text-sm text-muted-foreground text-center py-4">
-                              Click on the Ethernet tab to load connection data
+                              No connection data available
                             </p>
                           )}
                         </div>
+                      </TabsContent>
+
+                      {/* Topology Tab */}
+                      <TabsContent value="topology" className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm">Network Topology</h3>
+                          <p className="text-xs text-muted-foreground">Visual representation of the FTTH network path</p>
+                        </div>
+                        {ponLoading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-5 w-5 text-primary animate-spin mr-2" />
+                            <span className="text-sm text-muted-foreground">Loading connection data...</span>
+                          </div>
+                        ) : ponConnections.length > 0 ? (
+                          <div className="bg-secondary/20 rounded-lg p-4">
+                            <NetworkTopology connections={ponConnections} />
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-8">
+                            No connection data available for topology
+                          </p>
+                        )}
                       </TabsContent>
                     </Tabs>
                   </TabsContent>
