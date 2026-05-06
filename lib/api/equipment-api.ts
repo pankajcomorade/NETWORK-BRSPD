@@ -54,8 +54,8 @@ export async function searchEquipmentByName(
 
   const url = `/api/equipment/search-by-name?${queryParams}`
 
-  console.log("[v0] Searching equipment by name at", new Date().toISOString())
-  console.log("[v0] Request URL:", url)
+  console.log("Searching equipment by name at", new Date().toISOString())
+  console.log("Request URL:", url)
 
   const response = await fetch(url, {
     method: "GET",
@@ -69,16 +69,16 @@ export async function searchEquipmentByName(
     next: { revalidate: 0 },
   })
 
-  console.log("[v0] Search Response status:", response.status)
+  console.log("Search Response status:", response.status)
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    console.error("[v0] Search Error:", errorData)
+    console.error("Search Error:", errorData)
     throw new Error(errorData.error || `API Error: ${response.status} ${response.statusText}`)
   }
 
   const data = await response.json()
-  console.log("[v0] Search Success - Results received")
+  console.log("Search Success - Results received")
 
   return data
 }
@@ -118,8 +118,8 @@ export async function fetchEquipmentHierarchy(
   // Use internal API route to avoid CORS issues
   const url = `/api/equipment/hierarchy?${queryParams}`
 
-  console.log("[v0] Fetching equipment hierarchy at", new Date().toISOString())
-  console.log("[v0] Request URL:", url)
+  console.log("Fetching equipment hierarchy at", new Date().toISOString())
+  console.log("Request URL:", url)
 
   const response = await fetch(url, {
     method: "GET",
@@ -134,14 +134,14 @@ export async function fetchEquipmentHierarchy(
     next: { revalidate: 0 },
   })
 
-  console.log("[v0] API Response status:", response.status)
+  console.log("API Response status:", response.status)
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    console.error("[v0] API Error:", errorData)
+    console.error("API Error:", errorData)
 
     if (useMockOnError) {
-      console.log("[v0] Falling back to mock data")
+      console.log("Falling back to mock data")
       return getMockEquipmentHierarchy(params)
     }
 
@@ -149,7 +149,7 @@ export async function fetchEquipmentHierarchy(
   }
 
   const data = await response.json()
-  console.log("[v0] API Success - Equipment data received:", data.equipment?.name)
+  console.log("API Success - Equipment data received:", data.equipment?.name)
 
   return data
 }

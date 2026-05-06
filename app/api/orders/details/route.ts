@@ -39,11 +39,11 @@ export async function GET(request: NextRequest) {
       cache: "no-store",
     })
 
-    console.log("[v0] Order Details API Response Status:", response.status)
+    console.log("Order Details API Response Status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] Order Details API Error:", response.status, errorText)
+      console.error("Order Details API Error:", response.status, errorText)
 
       return NextResponse.json(
         {
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[v0] Order Details API Fetch Error:", error)
+    console.error("Order Details API Fetch Error:", error)
 
     return NextResponse.json(
       {

@@ -246,10 +246,10 @@ export function SearchByAddress() {
 
     setIsLoading(true)
     try {
-      console.log("[v0] Fetching PON connectivity with ontPortId:", ont.portInstId, "ontInstId:", ont.equipInstId)
+      console.log("Fetching PON connectivity with ontPortId:", ont.portInstId, "ontInstId:", ont.equipInstId)
       const data = await fetchPONConnectivity(ont.portInstId, ont.equipInstId)
 
-      console.log("[v0] PON Connectivity response:", data)
+      console.log("PON Connectivity response:", data)
 
       if (!data || !data.ponConnection || !data.ponConnection.connections || data.ponConnection.connections.length === 0) {
         toast({
@@ -370,7 +370,7 @@ export function SearchByAddress() {
       })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch PON connectivity"
-      console.error("[v0] PON connectivity error:", err)
+      console.error("PON connectivity error:", err)
       toast({
         title: "Error",
         description: errorMessage,
@@ -383,7 +383,7 @@ export function SearchByAddress() {
 
   // Handle opening hierarchy modal for equipment
   const handleViewHierarchy = (equipInstId: number, equipmentName: string) => {
-    console.log("[v0] Opening hierarchy modal for equipment:", equipmentName, "equipInstId:", equipInstId)
+    console.log("Opening hierarchy modal for equipment:", equipmentName, "equipInstId:", equipInstId)
     setSelectedEquipment({ equipInstId, name: equipmentName })
     setHierarchyModalOpen(true)
   }

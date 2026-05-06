@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const ontPortId = searchParams.get("ontPortId")
     const ontInstId = searchParams.get("ontInstId")
 
-    console.log("[v0] PON Connectivity - ontPortId:", ontPortId, "ontInstId:", ontInstId)
+    console.log("PON Connectivity - ontPortId:", ontPortId, "ontInstId:", ontInstId)
 
     if (!ontPortId || !ontInstId) {
       return NextResponse.json(
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       ontPortId
     )}&ontInstId=${encodeURIComponent(ontInstId)}`
 
-    console.log("[v0] Calling external API:", externalUrl)
+    console.log("Calling external API:", externalUrl)
 
     const response = await fetch(externalUrl, {
       method: "GET",
@@ -29,11 +29,11 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    console.log("[v0] External API response status:", response.status)
+    console.log("External API response status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] External API error:", response.status, errorText)
+      console.error("External API error:", response.status, errorText)
       return NextResponse.json(
         { error: `External API error: ${response.status}`, details: errorText },
         { status: response.status }
@@ -41,11 +41,11 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    console.log("[v0] PON Connectivity response:", data)
+    console.log("PON Connectivity response:", data)
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error("[v0] PON Connectivity error:", error)
+    console.error("PON Connectivity error:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch PON connectivity" },
       { status: 500 }

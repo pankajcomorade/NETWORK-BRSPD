@@ -64,7 +64,7 @@ export function EquipmentHierarchyModal({
     setLoading(true)
     setError(null)
     try {
-      console.log("[v0] Fetching hierarchy for equipInstId:", equipInstId)
+      console.log("Fetching hierarchy for equipInstId:", equipInstId)
       const apiUrl = `/api/address/equipment-hierarchy-details?equipInstId=${encodeURIComponent(equipInstId)}`
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -80,7 +80,7 @@ export function EquipmentHierarchyModal({
       }
 
       const data: EquipmentHierarchyResponse = await response.json()
-      console.log("[v0] Hierarchy data:", data)
+      console.log("Hierarchy data:", data)
 
       // Handle null equipment
       if (!data.equipment) {
@@ -91,7 +91,7 @@ export function EquipmentHierarchyModal({
       setHierarchyData(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch hierarchy details"
-      console.error("[v0] Hierarchy fetch error:", err)
+      console.error("Hierarchy fetch error:", err)
       setError(errorMessage)
       toast({
         title: "Error",

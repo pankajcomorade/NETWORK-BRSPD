@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log("[v0] Equipment By Name (Physical) - equipmentName:", equipmentName)
+    console.log("Equipment By Name (Physical) - equipmentName:", equipmentName)
 
     const externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/equipmentHierarchyDetails?equipmentName=${encodeURIComponent(equipmentName)}`
-    console.log("[v0] Calling external API:", externalUrl)
+    console.log("Calling external API:", externalUrl)
 
     const response = await fetch(externalUrl, {
       method: "GET",
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    console.log("[v0] Equipment by name (physical) response received")
+    console.log("Equipment by name (physical) response received")
 
     return NextResponse.json(data, {
       headers: {
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[v0] Equipment by name (physical) error:", error)
+    console.error("Equipment by name (physical) error:", error)
     return NextResponse.json(
       { error: "Failed to fetch equipment details" },
       { status: 500 }

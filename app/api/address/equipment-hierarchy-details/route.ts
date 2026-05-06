@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const equipInstId = searchParams.get("equipInstId")
 
-    console.log("[v0] Equipment Hierarchy Details - portInstId:", equipInstId)
+    console.log("Equipment Hierarchy Details - portInstId:", equipInstId)
 
     if (!equipInstId) {
       return NextResponse.json(
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const externalUrl = `https://api-dv.brightspeed.com/brspd/nextgenfiber/equipmentHierarchyDetails?equipInstId=${encodeURIComponent(equipInstId)}`
-    console.log("[v0] Calling external API:", externalUrl)
+    console.log("Calling external API:", externalUrl)
 
     const response = await fetch(externalUrl, {
       method: "GET",
@@ -25,11 +25,11 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    console.log("[v0] Equipment Hierarchy API response status:", response.status)
+    console.log("Equipment Hierarchy API response status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] Equipment Hierarchy API error:", response.status, errorText)
+      console.error("Equipment Hierarchy API error:", response.status, errorText)
       return NextResponse.json(
         { error: `External API error: ${response.status}` },
         { status: response.status }
@@ -37,11 +37,11 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    console.log("[v0] Equipment hierarchy response received")
+    console.log("Equipment hierarchy response received")
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error("[v0] Equipment hierarchy fetch error:", error)
+    console.error("Equipment hierarchy fetch error:", error)
     return NextResponse.json(
       { error: "Failed to fetch equipment hierarchy" },
       { status: 500 }

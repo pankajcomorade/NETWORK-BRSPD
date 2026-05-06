@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const equipmentName = searchParams.get("equipmentName")
 
-    console.log("[v0] Typeahead Search API - equipmentName:", equipmentName)
+    console.log("Typeahead Search API - equipmentName:", equipmentName)
 
     if (!equipmentName || equipmentName.length < 4) {
       return NextResponse.json(
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       equipmentName
     )}`
 
-    console.log("[v0] Calling external typeahead API:", externalUrl)
+    console.log("Calling external typeahead API:", externalUrl)
 
     const response = await fetch(externalUrl, {
       method: "GET",
@@ -38,11 +38,11 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    console.log("[v0] External API response status:", response.status)
+    console.log("External API response status:", response.status)
 
     if (!response.ok) {
       const errorData = await response.text()
-      console.error("[v0] External API error:", response.status, errorData)
+      console.error("External API error:", response.status, errorData)
 
       return NextResponse.json(
         {
@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    console.log("[v0] Typeahead API response received, results count:", data?.length || 0)
-    console.log("[v0] First result sample:", data?.[0])
+    console.log("Typeahead API response received, results count:", data?.length || 0)
+    console.log("First result sample:", data?.[0])
 
     // Transform response for typeahead - assuming data is an array
     const results = Array.isArray(data)
@@ -68,8 +68,8 @@ export async function GET(request: NextRequest) {
         }))
       : []
 
-    console.log("[v0] Transformed results count:", results.length)
-    console.log("[v0] First transformed result:", results?.[0])
+    console.log("Transformed results count:", results.length)
+    console.log("First transformed result:", results?.[0])
 
     return NextResponse.json(
       {
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     )
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
-    console.error("[v0] Typeahead search error:", errorMessage)
+    console.error("Typeahead search error:", errorMessage)
 
     return NextResponse.json(
       {

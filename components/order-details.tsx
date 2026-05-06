@@ -117,11 +117,11 @@ export function OrderDetails() {
 
     setIsLoading(true)
     try {
-      console.log("[v0] Fetching orders for:", searchQuery)
+      console.log("Fetching orders for:", searchQuery)
 
       // Use internal API route to avoid CORS issues
       const apiUrl = `/api/orders/search?orderNum=${encodeURIComponent(searchQuery)}`
-      console.log("[v0] API URL:", apiUrl)
+      console.log("API URL:", apiUrl)
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -132,11 +132,11 @@ export function OrderDetails() {
         cache: "no-store",
       })
 
-      console.log("[v0] API Response status:", response.status)
+      console.log("API Response status:", response.status)
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error("[v0] API Error:", response.status, errorText)
+        console.error("API Error:", response.status, errorText)
         toast({ title: "Error", description: `Failed to fetch orders: ${response.status}`, variant: "destructive" })
         setOrders([])
         setFilteredOrders([])
@@ -144,7 +144,7 @@ export function OrderDetails() {
       }
 
       const data = await response.json()
-      console.log("[v0] API Response data:", data)
+      console.log("API Response data:", data)
 
       // Handle different response structures and map to OrderRecord
       let fetchedOrders: OrderRecord[] = []
@@ -185,7 +185,7 @@ export function OrderDetails() {
       setCurrentPage(1)
       setSelectedRows(new Set())
     } catch (error) {
-      console.error("[v0] Fetch error:", error)
+      console.error("Fetch error:", error)
       toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to fetch orders", variant: "destructive" })
       setOrders([])
       setFilteredOrders([])
