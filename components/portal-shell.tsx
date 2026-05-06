@@ -37,6 +37,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 // ==========================================
 import { NetworkContent } from "@/components/network-content"
 import { PagePlaceholder } from "@/components/page-placeholder"
+import { GlobalFunctionsMenu } from "@/components/global-functions-menu"
 
 // ==========================================
 // Portal Shell
@@ -346,6 +347,7 @@ export function PortalShell() {
           </AnimatePresence>
         </main>
       </div>
+      <GlobalFunctionsMenu />
     </div>
   )
 }
