@@ -19,7 +19,21 @@ import {
   Box,
   Cpu,
   Zap,
+  Plus,
+  Pencil,
+  Trash2,
+  Copy,
+  FileUp,
+  FileDown,
 } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -163,38 +177,157 @@ function HierarchyTreeNode({
 
   return (
     <div>
-      <button
-        onClick={() => {
-          if (hasChildren) setIsOpen(!isOpen)
-          onSelect(node)
-        }}
-        className={cn(
-          "flex w-full items-center gap-2 py-1.5 px-2 rounded-md text-sm transition-colors hover:bg-secondary/50",
-          isSelected && "bg-primary/10 text-primary"
-        )}
-        style={{ paddingLeft: `${depth * 16 + 8}px` }}
-      >
-        {hasChildren ? (
-          isOpen ? (
-            <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-          ) : (
-            <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-          )
-        ) : (
-          <span className="w-3" />
-        )}
-        <div className={cn("h-2 w-2 rounded-full shrink-0", getStatusColor(node.status))} />
-        <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <span className={cn("truncate", isSelected ? "text-primary font-medium" : "text-foreground")}>
-          {node.name}
-        </span>
-        <Badge
-          variant="outline"
-          className="ml-auto text-[9px] px-1.5 py-0 h-4 border-border/50 text-muted-foreground"
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+        <button
+          onClick={() => {
+            if (hasChildren) setIsOpen(!isOpen)
+            onSelect(node)
+          }}
+          className={cn(
+            "flex w-full items-center gap-2 py-1.5 px-2 rounded-md text-sm transition-colors hover:bg-secondary/50 group",
+            isSelected && "bg-primary/10 text-primary"
+          )}
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
-          {node.type}
-        </Badge>
-      </button>
+          {hasChildren ? (
+            isOpen ? (
+              <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+            ) : (
+              <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+            )
+          ) : (
+            <span className="w-3" />
+          )}
+          <div className={cn("h-2 w-2 rounded-full shrink-0", getStatusColor(node.status))} />
+          <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className={cn("truncate flex-1 text-left", isSelected ? "text-primary font-medium" : "text-foreground")}>
+            {node.name}
+          </span>
+          
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                  onClick={(e) => { e.stopPropagation(); console.log("Import", node.name); }}
+                >
+                  <FileUp className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Import</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                  onClick={(e) => { e.stopPropagation(); console.log("Export", node.name); }}
+                >
+                  <FileDown className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Export</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                  onClick={(e) => { e.stopPropagation(); console.log("Copy", node.name); }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Copy</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                  onClick={(e) => { e.stopPropagation(); console.log("Add", node.name); }}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Add</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                  onClick={(e) => { e.stopPropagation(); console.log("Edit", node.name); }}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Edit</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 p-0 hover:bg-destructive/10 hover:text-destructive"
+                  onClick={(e) => { e.stopPropagation(); console.log("Delete", node.name); }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Delete</TooltipContent>
+            </Tooltip>
+          </div>
+
+          <Badge
+            variant="outline"
+            className="text-[9px] px-1.5 py-0 h-4 border-border/50 text-muted-foreground shrink-0 group-hover:hidden"
+          >
+            {node.type}
+          </Badge>
+        </button>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-48">
+        <ContextMenuItem onClick={() => console.log("Import", node.name)}>
+          <FileUp className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span>Import</span>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => console.log("Export", node.name)}>
+          <FileDown className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span>Export</span>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => console.log("Copy", node.name)}>
+          <Copy className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span>Copy</span>
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={() => console.log("Add", node.name)}>
+          <Plus className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span>Add New</span>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => console.log("Edit", node.name)}>
+          <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span>Edit Node</span>
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={() => console.log("Delete", node.name)} className="text-destructive focus:text-destructive">
+          <Trash2 className="mr-2 h-4 w-4" />
+          <span>Delete</span>
+        </ContextMenuItem>
+      </ContextMenuContent>
+      </ContextMenu>
       {hasChildren && isOpen && (
         <div>
           {node.nodes.map((child) => (
@@ -211,6 +344,7 @@ function HierarchyTreeNode({
     </div>
   )
 }
+
 
 // Device GUI View Types
 type GUIViewLevel = "container" | "rack" | "shelf" | "slot" | "card" | "splitter" | "ports"
@@ -956,214 +1090,216 @@ export function ResourceOverview() {
   }
 
   return (
-    <div className="space-y-1">
-      {/* Search Section */}
-      <Card className="rounded-lg border-border/50">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm text-foreground flex items-center gap-2">
-              <Search className="h-4 w-4 text-primary" />
-              Equipment Search
-            </CardTitle>
-            <Badge variant="outline" className="text-[9px] uppercase">
-              ENV: {currentEnv}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-2">
-          <div className="flex flex-col gap-3">
-            {/* Single Row: Search Input + Category Filter + Search Button */}
-            <div className="flex items-end gap-2">
-              {/* Equipment Name Typeahead - Flexible Width */}
-              <div className="flex-1 min-w-0">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Equipment Name</label>
-                <EquipmentTypeaheadSearch
-                  onSelect={(equipment) => {
-                    setSearchQuery(equipment.nodeName)
-                  }}
-                  isLoading={isSearching}
-                />
-              </div>
-
-              {/* Category Filter */}
-              <div className="w-32">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Category</label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="h-10 text-sm">
-                    <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="olt">OLT</SelectItem>
-                    <SelectItem value="ont">ONT</SelectItem>
-                    <SelectItem value="fdh">FDH</SelectItem>
-                    <SelectItem value="ap">AP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Search Button */}
-              <Button
-                onClick={() => handleSearch(searchQuery)}
-                disabled={isSearching}
-                className="h-10 px-4 whitespace-nowrap"
-              >
-                {isSearching ? (
-                  <>
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Searching
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-3 w-3 mr-1" />
-                    Search
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-          {error && (
-            <div className="mt-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
-              <AlertCircle className="h-3 w-3 text-destructive shrink-0" />
-              <span className="text-xs text-destructive">{error}</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Results Section */}
-      {isSearching ? (
+    <TooltipProvider>
+      <div className="space-y-1">
+        {/* Search Section */}
         <Card className="rounded-lg border-border/50">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Loader2 className="h-10 w-10 text-primary animate-spin mb-3" />
-            <h3 className="text-sm font-semibold text-foreground">Loading Equipment Hierarchy</h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              Fetching data from API...
-            </p>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-foreground flex items-center gap-2">
+                <Search className="h-4 w-4 text-primary" />
+                Equipment Search
+              </CardTitle>
+              <Badge variant="outline" className="text-[9px] uppercase">
+                ENV: {currentEnv}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="flex flex-col gap-3">
+              {/* Single Row: Search Input + Category Filter + Search Button */}
+              <div className="flex items-end gap-2">
+                {/* Equipment Name Typeahead - Flexible Width */}
+                <div className="flex-1 min-w-0">
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Equipment Name</label>
+                  <EquipmentTypeaheadSearch
+                    onSelect={(equipment) => {
+                      setSearchQuery(equipment.nodeName)
+                    }}
+                    isLoading={isSearching}
+                  />
+                </div>
+
+                {/* Category Filter */}
+                <div className="w-32">
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Category</label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="h-10 text-sm">
+                      <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="olt">OLT</SelectItem>
+                      <SelectItem value="ont">ONT</SelectItem>
+                      <SelectItem value="fdh">FDH</SelectItem>
+                      <SelectItem value="ap">AP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Search Button */}
+                <Button
+                  onClick={() => handleSearch(searchQuery)}
+                  disabled={isSearching}
+                  className="h-10 px-4 whitespace-nowrap"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Searching
+                    </>
+                  ) : (
+                    <>
+                      <Search className="h-3 w-3 mr-1" />
+                      Search
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            {error && (
+              <div className="mt-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+                <AlertCircle className="h-3 w-3 text-destructive shrink-0" />
+                <span className="text-xs text-destructive">{error}</span>
+              </div>
+            )}
           </CardContent>
         </Card>
-      ) : !searchResult ? (
-        <Card className="rounded-lg border-border/50">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary mb-3">
-              <Server className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-sm font-semibold text-foreground">Search for Equipment</h3>
-            <p className="text-xs text-muted-foreground mt-1 max-w-md">
-              Enter an equipment name above to search and explore the device hierarchy.
-              Results will show the full structure from OLT/FDH down to individual ports.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-1">
-          {/* Hierarchy Tree Panel - Left Side with Slide Animation */}
-          <AnimatePresence>
-            {showHierarchy && (
-              <motion.div
-                initial={{ x: -300, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -300, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="lg:col-span-4"
-              >
-                <Card className="rounded-lg border-border/50 h-fit">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm text-foreground">Hierarchy</CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowHierarchy(false)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="max-h-[60vh] overflow-y-auto px-3 pb-2">
-                      <HierarchyTreeNode
-                        node={searchResult.equipment}
-                        onSelect={handleNodeSelect}
-                        selectedNode={selectedNode}
-                      />
-                    </div>
 
-                    {/* Summary Stats - Toggle Show/Hide */}
-                    <motion.div
-                      initial={showSummary ? { opacity: 1, height: "auto" } : { opacity: 1, height: "auto" }}
-                      animate={showSummary ? { opacity: 1, height: "auto" } : { opacity: 1, height: "auto" }}
-                      transition={{ duration: 0.2 }}
-                      className="border-t border-border/50 px-3 py-2"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-[10px] text-muted-foreground">Summary</p>
+        {/* Results Section */}
+        {isSearching ? (
+          <Card className="rounded-lg border-border/50">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <Loader2 className="h-10 w-10 text-primary animate-spin mb-3" />
+              <h3 className="text-sm font-semibold text-foreground">Loading Equipment Hierarchy</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Fetching data from API...
+              </p>
+            </CardContent>
+          </Card>
+        ) : !searchResult ? (
+          <Card className="rounded-lg border-border/50">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary mb-3">
+                <Server className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground">Search for Equipment</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md">
+                Enter an equipment name above to search and explore the device hierarchy.
+                Results will show the full structure from OLT/FDH down to individual ports.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-1">
+            {/* Hierarchy Tree Panel - Left Side with Slide Animation */}
+            <AnimatePresence>
+              {showHierarchy && (
+                <motion.div
+                  initial={{ x: -300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="lg:col-span-5"
+                >
+                  <Card className="rounded-lg border-border/50 h-fit">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm text-foreground">Hierarchy</CardTitle>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setShowSummary(!showSummary)}
-                          className="h-5 w-5 p-0"
+                          onClick={() => setShowHierarchy(false)}
+                          className="h-6 w-6 p-0"
                         >
-                          {showSummary ? (
-                            <ChevronUp className="h-3 w-3" />
-                          ) : (
-                            <ChevronDown className="h-3 w-3" />
-                          )}
+                          <ChevronLeft className="h-4 w-4" />
                         </Button>
                       </div>
-                      {showSummary && (
-                        <div className="grid grid-cols-3 gap-1">
-                          {Object.entries(searchResult.summary.countsByType).map(([type, count]) => (
-                            <div
-                              key={type}
-                              className="text-center p-1 rounded bg-secondary/30 border border-border/30"
-                            >
-                              <p className="text-xs font-bold text-foreground">{count}</p>
-                              <p className="text-[8px] text-muted-foreground">{type}</p>
-                            </div>
-                          ))}
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="max-h-[60vh] overflow-y-auto px-3 pb-2">
+                        <HierarchyTreeNode
+                          node={searchResult.equipment}
+                          onSelect={handleNodeSelect}
+                          selectedNode={selectedNode}
+                        />
+                      </div>
+
+                      {/* Summary Stats - Toggle Show/Hide */}
+                      <motion.div
+                        initial={showSummary ? { opacity: 1, height: "auto" } : { opacity: 1, height: "auto" }}
+                        animate={showSummary ? { opacity: 1, height: "auto" } : { opacity: 1, height: "auto" }}
+                        transition={{ duration: 0.2 }}
+                        className="border-t border-border/50 px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-[10px] text-muted-foreground">Summary</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowSummary(!showSummary)}
+                            className="h-5 w-5 p-0"
+                          >
+                            {showSummary ? (
+                              <ChevronUp className="h-3 w-3" />
+                            ) : (
+                              <ChevronDown className="h-3 w-3" />
+                            )}
+                          </Button>
                         </div>
-                      )}
-                    </motion.div>
-                  </CardContent>
-                </Card>
+                        {showSummary && (
+                          <div className="grid grid-cols-3 gap-1">
+                            {Object.entries(searchResult.summary.countsByType).map(([type, count]) => (
+                              <div
+                                key={type}
+                                className="text-center p-1 rounded bg-secondary/30 border border-border/30"
+                              >
+                                <p className="text-xs font-bold text-foreground">{count}</p>
+                                <p className="text-[8px] text-muted-foreground">{type}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Toggle Button to show/hide hierarchy - Slide in from left */}
+            {!showHierarchy && (
+              <motion.div
+                initial={{ x: -50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -50, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="lg:col-span-1 flex items-center justify-center"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowHierarchy(true)}
+                  className="h-8 px-2 text-xs"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
               </motion.div>
             )}
-          </AnimatePresence>
 
-          {/* Toggle Button to show/hide hierarchy - Slide in from left */}
-          {!showHierarchy && (
-            <motion.div
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -50, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="lg:col-span-1 flex items-center justify-center"
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowHierarchy(true)}
-                className="h-8 px-2 text-xs"
-              >
-                <ChevronRight className="h-3 w-3" />
-              </Button>
-            </motion.div>
-          )}
-
-          {/* Device GUI Panel - Right Side */}
-          <Card className={cn("rounded-lg border-border/50 overflow-auto max-h-[70vh]", showHierarchy ? "lg:col-span-8" : "lg:col-span-12")}>
-            <CardHeader className="pb-2 sticky top-0 bg-card z-10 border-b border-border/50">
-              <CardTitle className="text-sm text-foreground">Device Explorer</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <DeviceGUIPanel equipment={searchResult.equipment} selectedNode={selectedNode} />
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
+            {/* Device GUI Panel - Right Side */}
+            <Card className={cn("rounded-lg border-border/50 overflow-auto max-h-[70vh]", showHierarchy ? "lg:col-span-7" : "lg:col-span-12")}>
+              <CardHeader className="pb-2 sticky top-0 bg-card z-10 border-b border-border/50">
+                <CardTitle className="text-sm text-foreground">Device Explorer</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <DeviceGUIPanel equipment={searchResult.equipment} selectedNode={selectedNode} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   )
 }
