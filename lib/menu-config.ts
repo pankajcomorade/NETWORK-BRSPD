@@ -6,7 +6,7 @@
 // ==========================================
 
 import {
-  LayoutDashboard,
+  Home,
   FileText,
   ShieldCheck,
   Server,
@@ -130,7 +130,7 @@ export const MENU_CONFIG: MenuItem[] = [
   {
     id: MenuId.HOME,
     label: "Home",
-    icon: LayoutDashboard,
+    icon: Home,
     allowedRoles: [],
     subMenus: [
       { id: SubMenuId.HOME_DASHBOARD, label: "Dashboard", allowedRoles: [] },

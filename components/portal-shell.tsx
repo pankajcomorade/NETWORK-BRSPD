@@ -46,54 +46,19 @@ export function PortalShell() {
   const [activeMenu, setActiveMenu] = useState<MenuId>("home" as MenuId)
   const [activeSubMenu, setActiveSubMenu] = useState<SubMenuId>("home_dashboard" as SubMenuId)
 
-  // Auto-hide sidebar state
-  const [sidebarVisible, setSidebarVisible] = useState(false)
-  const [sidebarPinned, setSidebarPinned] = useState(true)
+  // Sidebar state
+  const [isExpanded, setIsExpanded] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLDivElement>(null)
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Role-based menu filtering
   const filteredMenus = user ? getMenusForRole(user.role) : []
 
-  // Auto-hide: show on hover near left edge
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (sidebarPinned) return
-      if (e.clientX <= 8) {
-        if (hideTimeoutRef.current) {
-          clearTimeout(hideTimeoutRef.current)
-          hideTimeoutRef.current = null
-        }
-        setSidebarVisible(true)
-      }
-    },
-    [sidebarPinned]
-  )
-
-  // Auto-hide: hide when mouse leaves sidebar
-  const handleSidebarLeave = useCallback(() => {
-    if (sidebarPinned) return
-    hideTimeoutRef.current = setTimeout(() => {
-      setSidebarVisible(false)
-    }, 300)
-  }, [sidebarPinned])
-
-  const handleSidebarEnter = useCallback(() => {
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current)
-      hideTimeoutRef.current = null
-    }
-  }, [])
-
+  // No auto-hide logic needed for the new slim sidebar
   useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove)
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
-    }
-  }, [handleMouseMove])
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
+  }, [])
 
   // Navigate to menu + default submenu
   const navigateToMenu = (menuId: MenuId) => {
@@ -102,8 +67,6 @@ export function PortalShell() {
     if (menu && menu.subMenus.length > 0) {
       setActiveSubMenu(menu.subMenus[0].id)
     }
-    // Auto-close sidebar if not pinned
-    if (!sidebarPinned) setSidebarVisible(false)
     setMobileMenuOpen(false)
   }
 
@@ -113,42 +76,28 @@ export function PortalShell() {
   // ==========================================
   // Sidebar rendering
   // ==========================================
-  const renderSidebarContent = () => (
-    <div className="flex h-full flex-col">
+  const renderSidebarContent = (isMobile = false) => (
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Logo */}
-      <div className="flex items-center justify-between p-4 border-b border-border/50">
+      <div className={cn(
+        "flex items-center border-b border-border/50 transition-all duration-300",
+        !isExpanded && !isMobile ? "justify-center p-3" : "justify-between p-4"
+      )}>
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 shrink-0">
             <Activity className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">FiberNet</h2>
-            <p className="text-[10px] text-muted-foreground">v2.0</p>
-          </div>
+          {(isExpanded || isMobile) && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <h2 className="text-sm font-semibold text-foreground">FiberNet</h2>
+              <p className="text-[10px] text-muted-foreground">v2.0</p>
+            </motion.div>
+          )}
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-lg"
-                onClick={() => {
-                  setSidebarPinned(!sidebarPinned)
-                  if (sidebarPinned) setSidebarVisible(false)
-                  else setSidebarVisible(true)
-                }}
-              >
-                <PanelLeftClose
-                  className={cn("h-4 w-4 transition-transform", sidebarPinned && "rotate-180")}
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {sidebarPinned ? "Unpin sidebar" : "Pin sidebar"}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
 
       {/* Menu items */}
@@ -158,22 +107,41 @@ export function PortalShell() {
             const Icon = menu.icon
             const isActive = activeMenu === menu.id
             return (
-              <button
-                key={menu.id}
-                onClick={() => navigateToMenu(menu.id)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                )}
-              >
-                <Icon className="h-4.5 w-4.5 shrink-0" />
-                <span className="truncate">{menu.label}</span>
-                {isActive && (
-                  <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
-                )}
-              </button>
+              <TooltipProvider key={menu.id}>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => navigateToMenu(menu.id)}
+                      className={cn(
+                        "flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                        !isExpanded && !isMobile ? "justify-center px-0" : "gap-3",
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="h-4.5 w-4.5 shrink-0" />
+                      {(isExpanded || isMobile) && (
+                        <motion.span 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="truncate"
+                        >
+                          {menu.label}
+                        </motion.span>
+                      )}
+                      {(isExpanded || isMobile) && isActive && (
+                        <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  {!isExpanded && !isMobile && (
+                    <TooltipContent side="right">
+                      {menu.label}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             )
           })}
         </div>
@@ -181,14 +149,19 @@ export function PortalShell() {
 
       {/* User footer */}
       <div className="border-t border-border/50 p-3">
-        <div className="flex items-center gap-3 rounded-xl px-3 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary">
+        <div className={cn(
+          "flex items-center gap-3 rounded-xl px-3 py-2",
+          !isExpanded && !isMobile && "justify-center px-0"
+        )}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary shrink-0">
             <User className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground truncate">{user?.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{getRoleLabel()}</p>
-          </div>
+          {(isExpanded || isMobile) && (
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground truncate">{user?.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{getRoleLabel()}</p>
+            </div>
+          )}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -236,28 +209,25 @@ export function PortalShell() {
         />
       )}
 
-      {/* ---- Sidebar: Desktop auto-hide ---- */}
-      <div
-        ref={triggerRef}
-        className="fixed inset-y-0 left-0 z-30 hidden w-1 md:block"
-        aria-hidden="true"
-      />
-      <AnimatePresence>
-        {(sidebarVisible || sidebarPinned) && (
-          <motion.div
-            ref={sidebarRef}
-            initial={{ x: -280 }}
-            animate={{ x: 0 }}
-            exit={{ x: -280 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-y-0 left-0 z-30 hidden w-[268px] border-r border-border bg-background md:block"
-            onMouseEnter={handleSidebarEnter}
-            onMouseLeave={handleSidebarLeave}
-          >
-            {renderSidebarContent()}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ---- Sidebar: Desktop slim/expanded ---- */}
+      <motion.div
+        ref={sidebarRef}
+        initial={false}
+        animate={{ width: isExpanded ? 268 : 64 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="fixed inset-y-0 left-0 z-30 hidden border-r border-border bg-background md:block overflow-hidden"
+        onMouseEnter={() => setIsExpanded(true)}
+        onMouseLeave={() => setIsExpanded(false)}
+        onFocus={() => setIsExpanded(true)}
+        onBlur={(e) => {
+          // Only collapse if the new focused element is not inside the sidebar
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setIsExpanded(false)
+          }
+        }}
+      >
+        {renderSidebarContent()}
+      </motion.div>
 
       {/* ---- Sidebar: Mobile slide-out ---- */}
       <AnimatePresence>
@@ -269,7 +239,7 @@ export function PortalShell() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="fixed inset-y-0 left-0 z-50 w-[268px] border-r border-border bg-background md:hidden"
           >
-            {renderSidebarContent()}
+            {renderSidebarContent(true)}
           </motion.div>
         )}
       </AnimatePresence>
@@ -277,8 +247,7 @@ export function PortalShell() {
       {/* ---- Main content area ---- */}
       <div
         className={cn(
-          "min-h-screen transition-all duration-300",
-          sidebarPinned ? "md:pl-[268px]" : "md:pl-0"
+          "min-h-screen transition-all duration-300 md:pl-[64px]"
         )}
       >
         {/* ---- Top bar with submenu ---- */}
@@ -294,17 +263,8 @@ export function PortalShell() {
               <Menu className="h-5 w-5" />
             </Button>
 
-            {/* Show menu trigger for desktop when not pinned */}
-            {!sidebarPinned && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden md:flex h-8 w-8 rounded-lg"
-                onClick={() => setSidebarPinned(true)}
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-            )}
+            {/* Show menu trigger for desktop when sidebar is hidden - NO LONGER NEEDED as sidebar is always slim */}
+
 
             {/* Current section title */}
             <div className="flex items-center gap-2">
