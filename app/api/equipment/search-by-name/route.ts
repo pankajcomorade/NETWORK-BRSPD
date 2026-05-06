@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const equipmentName = searchParams.get("equipmentName")
     const equipCategory = searchParams.get("equipCategory")
 
-    console.log("[v0] Search Equipment by Name - equipmentName:", equipmentName, "equipCategory:", equipCategory)
+    console.log("Search Equipment by Name - equipmentName:", equipmentName, "equipCategory:", equipCategory)
 
     if (!equipmentName) {
       return NextResponse.json(
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       equipmentName
     )}${equipCategory && equipCategory !== "all" ? `&equipCategory=${encodeURIComponent(equipCategory)}` : ""}`
 
-    console.log("[v0] Calling external API:", externalUrl)
+    console.log("Calling external API:", externalUrl)
 
     const response = await fetch(externalUrl, {
       method: "GET",
@@ -35,11 +35,11 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    console.log("[v0] External API response status:", response.status)
+    console.log("External API response status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] External API error:", response.status, errorText)
+      console.error("External API error:", response.status, errorText)
       return NextResponse.json(
         { error: `External API error: ${response.status}`, details: errorText },
         { status: response.status }
@@ -47,11 +47,11 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    console.log("[v0] Equipment search response received")
+    console.log("Equipment search response received")
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error("[v0] Equipment search error:", error)
+    console.error("Equipment search error:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to search equipment" },
       { status: 500 }

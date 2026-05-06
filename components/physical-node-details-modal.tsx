@@ -62,7 +62,7 @@ export function PhysicalNodeDetailsModal({
     setLoading(true)
     setError(null)
     try {
-      console.log("[v0] Fetching equipment by name:", equipmentName)
+      console.log("Fetching equipment by name:", equipmentName)
       const apiUrl = `/api/address/equipment-by-name?equipmentName=${encodeURIComponent(equipmentName)}`
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -78,7 +78,7 @@ export function PhysicalNodeDetailsModal({
       }
 
       const data: EquipmentResponse = await response.json()
-      console.log("[v0] Equipment data:", data)
+      console.log("Equipment data:", data)
 
       // Handle null equipment
       if (!data.equipment) {
@@ -89,7 +89,7 @@ export function PhysicalNodeDetailsModal({
       setEquipmentData(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch equipment details"
-      console.error("[v0] Equipment fetch error:", err)
+      console.error("Equipment fetch error:", err)
       setError(errorMessage)
       toast({
         title: "Error",

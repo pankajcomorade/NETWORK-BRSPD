@@ -48,7 +48,7 @@ export function PhysicalResourceDetail() {
 
       try {
         // Fetch wire centers
-        console.log("[v0] Fetching wire centers...")
+        console.log("Fetching wire centers...")
         const wcResponse = await fetch("/api/physical-resources/fetch-wire-centers", {
           method: "GET",
           headers: {
@@ -63,7 +63,7 @@ export function PhysicalResourceDetail() {
         }
 
         const wcData = await wcResponse.json()
-        console.log("[v0] Wire centers received:", wcData)
+        console.log("Wire centers received:", wcData)
 
         if (wcData.wireCenters && Array.isArray(wcData.wireCenters)) {
           setWireCenters(wcData.wireCenters)
@@ -74,7 +74,7 @@ export function PhysicalResourceDetail() {
         }
 
         // Fetch equipment types
-        console.log("[v0] Fetching equipment types...")
+        console.log("Fetching equipment types...")
         const etResponse = await fetch("/api/physical-resources/fetch-equipment-types", {
           method: "GET",
           headers: {
@@ -89,7 +89,7 @@ export function PhysicalResourceDetail() {
         }
 
         const etData = await etResponse.json()
-        console.log("[v0] Equipment types received:", etData)
+        console.log("Equipment types received:", etData)
 
         if (etData.equipTypes && Array.isArray(etData.equipTypes)) {
           setEquipmentTypes(etData.equipTypes)
@@ -100,7 +100,7 @@ export function PhysicalResourceDetail() {
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load dropdown data"
-        console.error("[v0] Dropdown fetch error:", err)
+        console.error("Dropdown fetch error:", err)
         setDropdownError(errorMessage)
       } finally {
         setIsLoadingDropdowns(false)
@@ -126,7 +126,7 @@ export function PhysicalResourceDetail() {
     setEquipment([])
 
     try {
-      console.log("[v0] Fetching equipment with type:", type, "WC:", wcName)
+      console.log("Fetching equipment with type:", type, "WC:", wcName)
       let url = `/api/physical-resources/fetch-equipments`
       if (wcName) {
         url = url + `?WC=${encodeURIComponent(wcName)}`
@@ -143,16 +143,16 @@ export function PhysicalResourceDetail() {
         cache: "no-store",
       })
 
-      console.log("[v0] API response status:", response.status)
+      console.log("API response status:", response.status)
 
       if (!response.ok) {
         const errorData = await response.text()
-        console.error("[v0] API error:", response.status, errorData)
+        console.error("API error:", response.status, errorData)
         throw new Error(`API Error: ${response.status}`)
       }
 
       const data = await response.json()
-      console.log("[v0] Equipment data received:", data)
+      console.log("Equipment data received:", data)
 
       if (data.equipment && Array.isArray(data.equipment)) {
         setEquipment(data.equipment)
@@ -163,7 +163,7 @@ export function PhysicalResourceDetail() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch equipment"
-      console.error("[v0] Error fetching equipment:", err)
+      console.error("Error fetching equipment:", err)
       setError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -177,7 +177,7 @@ export function PhysicalResourceDetail() {
   }
 
   const handleNodeNameClick = (nodeName: string) => {
-    console.log("[v0] Opening equipment details for:", nodeName)
+    console.log("Opening equipment details for:", nodeName)
     setSelectedEquipmentName(nodeName)
     setEquipmentModalOpen(true)
   }

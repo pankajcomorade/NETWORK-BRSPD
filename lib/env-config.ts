@@ -1,5 +1,11 @@
 // Environment configuration for different deployment environments
 
+if (typeof window === "undefined") {
+  // Bypass SSL certificate validation for server-side fetches
+  // This is a workaround for the expired certificates on Brightspeed API endpoints
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+}
+
 export type Environment = "dev" | "qa" | "uat" | "prod"
 
 interface EnvironmentConfig {

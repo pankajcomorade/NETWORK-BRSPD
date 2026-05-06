@@ -62,7 +62,7 @@ export function PhysicalEquipmentModal({
     setLoading(true)
     setError(null)
     try {
-      console.log("[v0] Fetching physical equipment for:", equipmentName)
+      console.log("Fetching physical equipment for:", equipmentName)
       const apiUrl = `/api/physical-resources/equipment-by-name?equipmentName=${encodeURIComponent(equipmentName)}`
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -78,7 +78,7 @@ export function PhysicalEquipmentModal({
       }
 
       const equipmentData: EquipmentResponse = await response.json()
-      console.log("[v0] Physical equipment data received:", equipmentData)
+      console.log("Physical equipment data received:", equipmentData)
 
       if (!equipmentData.equipment) {
         setError("No equipment data found")
@@ -88,7 +88,7 @@ export function PhysicalEquipmentModal({
       setData(equipmentData)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch equipment details"
-      console.error("[v0] Physical equipment fetch error:", err)
+      console.error("Physical equipment fetch error:", err)
       setError(errorMessage)
       toast({
         title: "Error",

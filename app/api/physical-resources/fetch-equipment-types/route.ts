@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(req: NextRequest) {
   try {
-    console.log("[v0] Fetching Equipment Types from external API")
+    console.log("Fetching Equipment Types from external API")
 
     const externalUrl = "https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchEquipType"
 
@@ -15,11 +15,11 @@ export async function GET(req: NextRequest) {
       cache: "no-store",
     })
 
-    console.log("[v0] External API response status:", response.status)
+    console.log("External API response status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] External API error:", response.status, errorText)
+      console.error("External API error:", response.status, errorText)
       return NextResponse.json(
         { error: `External API error: ${response.status}` },
         { status: response.status }
@@ -27,11 +27,11 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json()
-    console.log("[v0] Equipment Types received:", data)
+    console.log("Equipment Types received:", data)
 
     // Ensure the response has equipTypes array
     if (!data.equipTypes || !Array.isArray(data.equipTypes)) {
-      console.error("[v0] Invalid response format:", data)
+      console.error("Invalid response format:", data)
       return NextResponse.json(
         { error: "Invalid response format from external API" },
         { status: 500 }
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[v0] Error fetching equipment types:", error)
+    console.error("Error fetching equipment types:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch equipment types" },
       { status: 500 }

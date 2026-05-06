@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(req: NextRequest) {
   try {
-    console.log("[v0] Fetching Wire Centers from external API")
+    console.log("Fetching Wire Centers from external API")
 
     const externalUrl = "https://api-dv.brightspeed.com/brspd/nextgenfiber/fetchWireCenter"
 
@@ -15,11 +15,11 @@ export async function GET(req: NextRequest) {
       cache: "no-store",
     })
 
-    console.log("[v0] External API response status:", response.status)
+    console.log("External API response status:", response.status)
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[v0] External API error:", response.status, errorText)
+      console.error("External API error:", response.status, errorText)
       return NextResponse.json(
         { error: `External API error: ${response.status}` },
         { status: response.status }
@@ -27,11 +27,11 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json()
-    console.log("[v0] Wire Centers received:", data)
+    console.log("Wire Centers received:", data)
 
     // Ensure the response has wireCenters array
     if (!data.wireCenters || !Array.isArray(data.wireCenters)) {
-      console.error("[v0] Invalid response format:", data)
+      console.error("Invalid response format:", data)
       return NextResponse.json(
         { error: "Invalid response format from external API" },
         { status: 500 }
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[v0] Error fetching wire centers:", error)
+    console.error("Error fetching wire centers:", error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch wire centers" },
       { status: 500 }
