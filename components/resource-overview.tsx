@@ -50,7 +50,16 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { cn } from "@/lib/utils"
 import {
   fetchEquipmentHierarchy,
@@ -164,11 +173,17 @@ function HierarchyTreeNode({
   depth = 0,
   onSelect,
   selectedNode,
+  onAdd,
+  onEdit,
+  onRemove,
 }: {
   node: EquipmentNode
   depth?: number
   onSelect: (node: EquipmentNode) => void
   selectedNode: EquipmentNode | null
+  onAdd?: (node: EquipmentNode, type: "parent" | "sibling") => void
+  onEdit?: (node: EquipmentNode) => void
+  onRemove?: (node: EquipmentNode) => void
 }) {
   const [isOpen, setIsOpen] = useState(depth < 2)
   const Icon = getNodeIcon(node.type)
@@ -179,154 +194,158 @@ function HierarchyTreeNode({
     <div>
       <ContextMenu>
         <ContextMenuTrigger asChild>
-        <button
-          onClick={() => {
-            if (hasChildren) setIsOpen(!isOpen)
-            onSelect(node)
-          }}
-          className={cn(
-            "flex w-full items-center gap-2 py-1.5 px-2 rounded-md text-sm transition-colors hover:bg-secondary/50 group",
-            isSelected && "bg-primary/10 text-primary"
-          )}
-          style={{ paddingLeft: `${depth * 16 + 8}px` }}
-        >
-          {hasChildren ? (
-            isOpen ? (
-              <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-            ) : (
-              <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-            )
-          ) : (
-            <span className="w-3" />
-          )}
-          <div className={cn("h-2 w-2 rounded-full shrink-0", getStatusColor(node.status))} />
-          <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className={cn("truncate flex-1 text-left", isSelected ? "text-primary font-medium" : "text-foreground")}>
-            {node.name}
-          </span>
-          
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                  onClick={(e) => { e.stopPropagation(); console.log("Import", node.name); }}
-                >
-                  <FileUp className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Import</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                  onClick={(e) => { e.stopPropagation(); console.log("Export", node.name); }}
-                >
-                  <FileDown className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Export</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                  onClick={(e) => { e.stopPropagation(); console.log("Copy", node.name); }}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Copy</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                  onClick={(e) => { e.stopPropagation(); console.log("Add", node.name); }}
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Add</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                  onClick={(e) => { e.stopPropagation(); console.log("Edit", node.name); }}
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Edit</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 p-0 hover:bg-destructive/10 hover:text-destructive"
-                  onClick={(e) => { e.stopPropagation(); console.log("Delete", node.name); }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Delete</TooltipContent>
-            </Tooltip>
-          </div>
-
-          <Badge
-            variant="outline"
-            className="text-[9px] px-1.5 py-0 h-4 border-border/50 text-muted-foreground shrink-0 group-hover:hidden"
+          <button
+            onClick={() => {
+              if (hasChildren) setIsOpen(!isOpen)
+              onSelect(node)
+            }}
+            className={cn(
+              "flex w-full items-center gap-2 py-1.5 px-2 rounded-md text-sm transition-colors hover:bg-secondary/50 group",
+              isSelected && "bg-primary/10 text-primary"
+            )}
+            style={{ paddingLeft: `${depth * 16 + 8}px` }}
           >
-            {node.type}
-          </Badge>
-        </button>
-      </ContextMenuTrigger>
-      <ContextMenuContent className="w-48">
-        <ContextMenuItem onClick={() => console.log("Import", node.name)}>
-          <FileUp className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span>Import</span>
-        </ContextMenuItem>
-        <ContextMenuItem onClick={() => console.log("Export", node.name)}>
-          <FileDown className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span>Export</span>
-        </ContextMenuItem>
-        <ContextMenuItem onClick={() => console.log("Copy", node.name)}>
-          <Copy className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span>Copy</span>
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem onClick={() => console.log("Add", node.name)}>
-          <Plus className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span>Add New</span>
-        </ContextMenuItem>
-        <ContextMenuItem onClick={() => console.log("Edit", node.name)}>
-          <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span>Edit Node</span>
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem onClick={() => console.log("Delete", node.name)} className="text-destructive focus:text-destructive">
-          <Trash2 className="mr-2 h-4 w-4" />
-          <span>Delete</span>
-        </ContextMenuItem>
-      </ContextMenuContent>
+            {hasChildren ? (
+              isOpen ? (
+                <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+              ) : (
+                <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+              )
+            ) : (
+              <span className="w-3" />
+            )}
+            <div className={cn("h-2 w-2 rounded-full shrink-0", getStatusColor(node.status))} />
+            <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className={cn("truncate flex-1 text-left", isSelected ? "text-primary font-medium" : "text-foreground")}>
+              {node.name}
+            </span>
+
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                    onClick={(e) => { e.stopPropagation(); console.log("Import", node.name); }}
+                  >
+                    <FileUp className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Import</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                    onClick={(e) => { e.stopPropagation(); console.log("Export", node.name); }}
+                  >
+                    <FileDown className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Export</TooltipContent>
+              </Tooltip>
+
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Add</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "parent"); }}>
+                    <Layers className="mr-2 h-4 w-4" />
+                    <span>Parent</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "sibling"); }}>
+                    <GitBranch className="mr-2 h-4 w-4" />
+                    <span>Sibling</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                    onClick={(e) => { e.stopPropagation(); onEdit?.(node); }}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Edit</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={(e) => { e.stopPropagation(); onRemove?.(node); }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Delete</TooltipContent>
+              </Tooltip>
+            </div>
+
+            <Badge
+              variant="outline"
+              className="text-[9px] px-1.5 py-0 h-4 border-border/50 text-muted-foreground shrink-0 group-hover:hidden"
+            >
+              {node.type}
+            </Badge>
+          </button>
+        </ContextMenuTrigger>
+        <ContextMenuContent className="w-48">
+          <ContextMenuItem onClick={() => console.log("Import", node.name)}>
+            <FileUp className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Import</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => console.log("Export", node.name)}>
+            <FileDown className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Export</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => console.log("Copy", node.name)}>
+            <Copy className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Copy</span>
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => onAdd?.(node, "parent")}>
+            <Layers className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Add Parent</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onAdd?.(node, "sibling")}>
+            <GitBranch className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Add Sibling</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onEdit?.(node)}>
+            <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Edit Node</span>
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => console.log("Delete", node.name)} className="text-destructive focus:text-destructive">
+            <Trash2 className="mr-2 h-4 w-4" />
+            <span>Delete</span>
+          </ContextMenuItem>
+        </ContextMenuContent>
       </ContextMenu>
       {hasChildren && isOpen && (
         <div>
@@ -337,6 +356,9 @@ function HierarchyTreeNode({
               depth={depth + 1}
               onSelect={onSelect}
               selectedNode={selectedNode}
+              onAdd={onAdd}
+              onEdit={onEdit}
+              onRemove={onRemove}
             />
           ))}
         </div>
@@ -357,7 +379,222 @@ interface GUIViewState {
   card?: EquipmentNode
 }
 
-// Device GUI Panel Component
+// Equipment Type options for adding new nodes
+const EQUIPMENT_TYPES = [
+  "OLT", "FDH", "AP", "RACK", "SHELF", "SLOT", "NETWORK CARD", "PORT", "SPLITTER", "SPLITTER LEG"
+]
+
+// Recursive component for editing/building hierarchy within the modal
+function EditableHierarchyNode({
+  node,
+  onUpdate,
+  onAddChild,
+  onRemove,
+  depth = 0
+}: {
+  node: EquipmentNode
+  onUpdate: (updatedNode: EquipmentNode) => void
+  onAddChild: (parentNode: EquipmentNode) => void
+  onRemove: (node: EquipmentNode) => void
+  depth?: number
+}) {
+  const Icon = getNodeIcon(node.type)
+
+  return (
+    <div className="space-y-2">
+      <div
+        className="flex items-center gap-2 p-2 rounded-md border border-border/50 bg-secondary/10"
+        style={{ marginLeft: `${depth * 20}px` }}
+      >
+        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Input
+          value={node.name}
+          onChange={(e) => onUpdate({ ...node, name: e.target.value })}
+          className="h-8 py-0 text-sm flex-1"
+          placeholder="Node Name"
+        />
+        <Select
+          value={node.type}
+          onValueChange={(val) => onUpdate({ ...node, type: val as any })}
+        >
+          <SelectTrigger className="h-8 w-32 text-[10px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {EQUIPMENT_TYPES.map(t => (
+              <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-primary hover:bg-primary/10"
+            onClick={() => onAddChild(node)}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+          {depth > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-destructive hover:bg-destructive/10"
+              onClick={() => onRemove(node)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      </div>
+      {node.nodes && node.nodes.map((child, idx) => (
+        <EditableHierarchyNode
+          key={child.erId || idx}
+          node={child}
+          onUpdate={(updatedChild) => {
+            const newNodes = [...node.nodes]
+            newNodes[idx] = updatedChild
+            onUpdate({ ...node, nodes: newNodes })
+          }}
+          onAddChild={onAddChild}
+          onRemove={(childToRemove) => {
+            onUpdate({
+              ...node,
+              nodes: node.nodes.filter(n => n.erId !== childToRemove.erId)
+            })
+          }}
+          depth={depth + 1}
+        />
+      ))}
+    </div>
+  )
+}
+
+function EquipmentHierarchyDialog({
+  isOpen,
+  onOpenChange,
+  mode,
+  context,
+  onSave
+}: {
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  mode: "add" | "edit"
+  context: { node: EquipmentNode | null; type?: "parent" | "sibling" }
+  onSave: (node: EquipmentNode) => void
+}) {
+  const [tempHierarchy, setTempHierarchy] = useState<EquipmentNode | null>(null)
+  const [newType, setNewType] = useState<string>("RACK")
+
+  useEffect(() => {
+    if (isOpen) {
+      if (mode === "edit" && context.node) {
+        setTempHierarchy(JSON.parse(JSON.stringify(context.node)))
+      } else if (mode === "add") {
+        // Initial new node based on context
+        const newNode: EquipmentNode = {
+          name: "New Equipment",
+          type: "RACK",
+          instanceID: null,
+          erId: "new-" + Date.now(),
+          status: "ACTIVE",
+          nodes: []
+        }
+        setTempHierarchy(newNode)
+      }
+    } else {
+      setTempHierarchy(null)
+    }
+  }, [isOpen, mode, context])
+
+  const handleAddChild = (parentNode: EquipmentNode) => {
+    if (!tempHierarchy) return
+
+    const newNode: EquipmentNode = {
+      name: `New ${newType}`,
+      type: newType as any,
+      instanceID: null,
+      erId: "new-" + Date.now(),
+      status: "ACTIVE",
+      nodes: []
+    }
+
+    const updateRecursive = (current: EquipmentNode): EquipmentNode => {
+      if (current.erId === parentNode.erId) {
+        return { ...current, nodes: [...current.nodes, newNode] }
+      }
+      return { ...current, nodes: current.nodes.map(updateRecursive) }
+    }
+
+    setTempHierarchy(updateRecursive(tempHierarchy))
+  }
+
+  if (!tempHierarchy) return null
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {mode === "add" ? (
+              <>
+                <Plus className="h-5 w-5 text-primary" />
+                Add New Equipment ({context.type})
+              </>
+            ) : (
+              <>
+                <Pencil className="h-5 w-5 text-primary" />
+                Edit Equipment Hierarchy
+              </>
+            )}
+          </DialogTitle>
+          <div className="text-xs text-muted-foreground px-1">
+            {mode === "add"
+              ? `Adding new ${context.type} relative to ${context.node?.name}`
+              : `Editing hierarchy starting from ${context.node?.name}`}
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto py-4 px-1 space-y-4">
+          <div className="flex items-center gap-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
+            <div className="space-y-1 flex-1">
+              <Label className="text-xs font-semibold">Equipment Type to Add</Label>
+              <p className="text-[10px] text-muted-foreground">Select type for when you click the + icon below</p>
+            </div>
+            <Select value={newType} onValueChange={setNewType}>
+              <SelectTrigger className="w-48 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EQUIPMENT_TYPES.map(t => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="border rounded-lg p-4 bg-background/50">
+            <EditableHierarchyNode
+              node={tempHierarchy}
+              onUpdate={setTempHierarchy}
+              onAddChild={handleAddChild}
+              onRemove={() => { }} // Root cannot be removed in this view
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="pt-4 border-t border-border/50">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={() => { onSave(tempHierarchy); onOpenChange(false); }}>
+            {mode === "add" ? "Create Equipment" : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// Device GUIPanel Component
 function DeviceGUIPanel({
   equipment,
   selectedNode,
@@ -1041,6 +1278,15 @@ export function ResourceOverview() {
   const [showHierarchy, setShowHierarchy] = useState(true)
   const [showSummary, setShowSummary] = useState(true)
 
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<"add" | "edit">("add")
+  const [modalContext, setModalContext] = useState<{
+    node: EquipmentNode | null
+    type?: "parent" | "sibling"
+  }>({ node: null })
+
+
   // Removed auto-load - user must click Search button to fetch data
 
   const handleSearch = useCallback(async (overrideQuery?: string) => {
@@ -1087,6 +1333,33 @@ export function ResourceOverview() {
 
   const handleNodeSelect = (node: EquipmentNode) => {
     setSelectedNode(node)
+  }
+
+  const onAdd = (node: EquipmentNode, type: "parent" | "sibling") => {
+    setModalMode("add")
+    setModalContext({ node, type })
+    setIsModalOpen(true)
+  }
+
+  const onEdit = (node: EquipmentNode) => {
+    setModalMode("edit")
+    setModalContext({ node })
+    setIsModalOpen(true)
+  }
+
+  const onRemove = (node: EquipmentNode) => {
+    if (confirm(`Are you sure you want to delete ${node.name}?`)) {
+      // Implement delete logic
+      console.log("Delete", node)
+    }
+  }
+
+  const handleCreateNewEquipment = (name: string) => {
+    const cleaned = (name || "").trim()
+    if (!cleaned) {
+      alert("Please enter an equipment name.")
+      return
+    }
   }
 
   return (
@@ -1153,6 +1426,24 @@ export function ResourceOverview() {
                     <>
                       <Search className="h-3 w-3 mr-1" />
                       Search
+                    </>
+                  )}
+                </Button>
+                {/* Search Button */}
+                <Button
+                  onClick={() => handleCreateNewEquipment()}
+                  disabled={isSearching}
+                  className="h-10 px-4 whitespace-nowrap"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Loading
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-3 w-3 mr-1" />
+                      New
                     </>
                   )}
                 </Button>
@@ -1223,6 +1514,9 @@ export function ResourceOverview() {
                           node={searchResult.equipment}
                           onSelect={handleNodeSelect}
                           selectedNode={selectedNode}
+                          onAdd={onAdd}
+                          onEdit={onEdit}
+                          onRemove={onRemove}
                         />
                       </div>
 
@@ -1299,6 +1593,18 @@ export function ResourceOverview() {
             </Card>
           </div>
         )}
+
+        <EquipmentHierarchyDialog
+          isOpen={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          mode={modalMode}
+          context={modalContext}
+          onSave={(updatedNode) => {
+            console.log("Saving hierarchy:", updatedNode)
+            // Here you would typically call an API to save
+            // For now we'll just log it
+          }}
+        />
       </div>
     </TooltipProvider>
   )
