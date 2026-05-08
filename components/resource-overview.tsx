@@ -181,7 +181,7 @@ function HierarchyTreeNode({
   depth?: number
   onSelect: (node: EquipmentNode) => void
   selectedNode: EquipmentNode | null
-  onAdd?: (node: EquipmentNode, type: "parent" | "sibling") => void
+  onAdd?: (node: EquipmentNode, type: "child" | "sibling") => void
   onEdit?: (node: EquipmentNode) => void
   onRemove?: (node: EquipmentNode) => void
 }) {
@@ -221,34 +221,6 @@ function HierarchyTreeNode({
             </span>
 
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                    onClick={(e) => { e.stopPropagation(); console.log("Import", node.name); }}
-                  >
-                    <FileUp className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Import</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                    onClick={(e) => { e.stopPropagation(); console.log("Export", node.name); }}
-                  >
-                    <FileDown className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Export</TooltipContent>
-              </Tooltip>
-
               <DropdownMenu>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -266,9 +238,9 @@ function HierarchyTreeNode({
                   <TooltipContent side="top">Add</TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "parent"); }}>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); `onAdd`?.(node, "child"); }}>
                     <Layers className="mr-2 h-4 w-4" />
-                    <span>Parent</span>
+                    <span>child</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "sibling"); }}>
                     <GitBranch className="mr-2 h-4 w-4" />
@@ -304,6 +276,48 @@ function HierarchyTreeNode({
                 </TooltipTrigger>
                 <TooltipContent side="top">Delete</TooltipContent>
               </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                    onClick={(e) => { e.stopPropagation(); console.log("Copy", node.name); }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Copy</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                    onClick={(e) => { e.stopPropagation(); console.log("Import", node.name); }}
+                  >
+                    <FileUp className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Import</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
+                    onClick={(e) => { e.stopPropagation(); console.log("Export", node.name); }}
+                  >
+                    <FileDown className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Export</TooltipContent>
+              </Tooltip>
+
+
             </div>
 
             <Badge
@@ -315,22 +329,10 @@ function HierarchyTreeNode({
           </button>
         </ContextMenuTrigger>
         <ContextMenuContent className="w-48">
-          <ContextMenuItem onClick={() => console.log("Import", node.name)}>
-            <FileUp className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>Import</span>
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => console.log("Export", node.name)}>
-            <FileDown className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>Export</span>
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => console.log("Copy", node.name)}>
-            <Copy className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>Copy</span>
-          </ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem onClick={() => onAdd?.(node, "parent")}>
+
+          <ContextMenuItem onClick={() => onAdd?.(node, "child")}>
             <Layers className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>Add Parent</span>
+            <span>Add Child</span>
           </ContextMenuItem>
           <ContextMenuItem onClick={() => onAdd?.(node, "sibling")}>
             <GitBranch className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -340,10 +342,22 @@ function HierarchyTreeNode({
             <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
             <span>Edit Node</span>
           </ContextMenuItem>
-          <ContextMenuSeparator />
           <ContextMenuItem onClick={() => console.log("Delete", node.name)} className="text-destructive focus:text-destructive">
             <Trash2 className="mr-2 h-4 w-4" />
             <span>Delete</span>
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => console.log("Copy", node.name)}>
+            <Copy className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Copy</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => console.log("Import", node.name)}>
+            <FileUp className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Import</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => console.log("Export", node.name)}>
+            <FileDown className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Export</span>
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
