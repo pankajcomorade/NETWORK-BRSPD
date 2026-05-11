@@ -1462,8 +1462,8 @@ export function ResourceOverview() {
       <Card className="rounded-lg border-border/50">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm text-foreground flex items-center gap-2">
-              <Search className="h-4 w-4 text-primary" />
+            <CardTitle className="text-xs text-foreground flex items-center gap-2">
+              <Search className="h-3 w-3 text-primary" />
               Equipment Search
             </CardTitle>
             <Badge variant="outline" className="text-[9px] uppercase">
@@ -1471,10 +1471,10 @@ export function ResourceOverview() {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="pt-1 px-3 pb-3">
-          <div className="flex flex-col gap-3">
+        <CardContent className="pt-1 px-2 pb-1">
+          <div className="flex flex-col gap-2">
             {/* Single Row: Search Input + Category Filter + Search Button */}
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-1">
               {/* Equipment Name Typeahead - Flexible Width */}
               <div className="flex-1 min-w-0">
                 <label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">Equipment Name</label>
@@ -1581,7 +1581,10 @@ export function ResourceOverview() {
                 <Card className="rounded-lg border-border/50 h-fit">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-xs text-foreground">Hierarchy</CardTitle>
+                      <CardTitle className="text-xs text-foreground flex items-center gap-2">
+                        <Server className="h-3 w-3 text-primary" />
+                        Hierarchy
+                      </CardTitle>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1607,7 +1610,7 @@ export function ResourceOverview() {
                     {/* Summary Stats */}
                     <div className="border-t border-border/50 px-3 py-2">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-[10px] text-muted-foreground">Summary</p>
+                        <p className="text-[10px] font-bold text-foreground">Summary</p>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1644,10 +1647,13 @@ export function ResourceOverview() {
 
           {/* Device GUI Panel */}
           <Card className={cn("rounded-lg border-border/50 overflow-y-auto overflow-x-hidden max-h-[70vh]", showHierarchy ? "lg:col-span-7" : "lg:col-span-12")}>
-            <CardHeader className="py-1 px-2 sticky top-0 bg-card z-10 border-b border-border/50">
-              <CardTitle className="text-xs text-foreground">Device Explorer</CardTitle>
+            <CardHeader className="pb-2 sticky top-0 bg-card z-10 border-b border-border/50">
+              <CardTitle className="text-xs text-foreground flex items-center gap-2">
+                <Monitor className="h-3 w-3 text-primary" />
+                Device Explorer
+              </CardTitle>
             </CardHeader>
-            <CardContent className="pt-1 px-2">
+            <CardContent className="pt-1 px-2 pb-1">
               <DeviceGUIPanel equipment={searchResult.equipment} selectedNode={selectedNode} />
             </CardContent>
           </Card>
@@ -1695,7 +1701,7 @@ export function ResourceOverview() {
 
     return (
       <Card className="rounded-lg border-border/50 shadow-sm">
-        <CardHeader className="pb-4 border-b border-border/50 bg-secondary/5">
+        <CardHeader className="pb-2 border-b border-border/50 bg-secondary/5">
           <CardTitle className="text-xs flex items-center gap-2">
             {tab.type === "edit" ? <Pencil className="h-3 w-3 text-primary" /> : <Plus className="h-3 w-3 text-primary" />}
             {tab.type === "edit" ? "Edit Equipment" : `Add ${tab.context?.type} Equipment`}
@@ -1706,7 +1712,7 @@ export function ResourceOverview() {
               : `Parent: ${tab.context?.node?.name}`}
           </div>
         </CardHeader>
-        <CardContent className="pt-3 px-3">
+        <CardContent className="pt-1 px-2 pb-1">
           <div className="max-w-full space-y-3">
             <EditableHierarchyNode
               node={localNode}
@@ -1735,14 +1741,14 @@ export function ResourceOverview() {
   const renderNewTab = (tab: TabData) => {
     return (
       <Card className="rounded-lg border-border/50">
-        <CardHeader className="pb-4 border-b border-border/50">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Plus className="h-4 w-4 text-primary" />
+        <CardHeader className="pb-2 border-b border-border/50">
+          <CardTitle className="text-xs flex items-center gap-2">
+            <Plus className="h-3 w-3 text-primary" />
             Create New Equipment
           </CardTitle>
-          <p className="text-[10px] text-muted-foreground">Define a new root equipment node</p>
+          <p className="text-[7px] text-muted-foreground uppercase font-bold tracking-tight">Define a new root equipment node</p>
         </CardHeader>
-        <CardContent className="pt-3 px-3">
+        <CardContent className="pt-1 px-2 pb-1">
           <div className="max-w-full space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
