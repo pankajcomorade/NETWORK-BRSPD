@@ -26,6 +26,7 @@ import {
   FileUp,
   FileDown,
   X,
+  Monitor,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
@@ -1321,6 +1322,8 @@ export function ResourceOverview() {
     { id: "search", title: "Search", type: "search", closable: false }
   ])
   const [activeTabId, setActiveTabId] = useState<string>("search")
+  const [isTabLoading, setIsTabLoading] = useState(false)
+
 
   const addTab = (type: TabType, title: string, context?: any) => {
     const id = context?.node?.erId ? `${type}-${context.node.erId}` : `${type}-${Date.now()}`
@@ -1332,15 +1335,21 @@ export function ResourceOverview() {
       return
     }
 
-    const newTab: TabData = {
-      id,
-      title,
-      type,
-      closable: true,
-      context
-    }
-    setTabs([...tabs, newTab])
-    setActiveTabId(id)
+    setIsTabLoading(true)
+
+    // Simulate loading delay for better UX as requested
+    setTimeout(() => {
+      const newTab: TabData = {
+        id,
+        title,
+        type,
+        closable: true,
+        context
+      }
+      setTabs([...tabs, newTab])
+      setActiveTabId(id)
+      setIsTabLoading(false)
+    }, 600)
   }
 
   const removeTab = (e: React.MouseEvent | React.KeyboardEvent | any, id: string) => {
@@ -1850,20 +1859,42 @@ export function ResourceOverview() {
 
         {/* Tab Content Area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTabId}
-              initial={{ opacity: 0, x: 5 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -5 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="h-full"
-            >
-              {activeTab?.type === "search" && renderSearchTab()}
-              {(activeTab?.type === "edit" || activeTab?.type === "add-child" || activeTab?.type === "add-sibling") && renderEditorTab(activeTab)}
-              {activeTab?.type === "new" && renderNewTab(activeTab)}
-            </motion.div>
-          </AnimatePresence>
+          {isTabLoading ? (
+            <div className="h-full min-h-[400px] flex flex-col items-center justify-center p-8 bg-secondary/5 rounded-xl border border-dashed border-border/50 animate-in fade-in duration-300">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                <div className="relative bg-background p-4 rounded-full border border-primary/20 shadow-xl">
+                  <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                </div>
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-sm font-semibold text-foreground tracking-tight">Initializing Workspace</h3>
+                <p className="text-[11px] text-muted-foreground max-w-[200px] leading-relaxed">
+                  Loading equipment configuration and hierarchy data...
+                </p>
+              </div>
+              <div className="mt-8 flex gap-1.5">
+                <div className="h-1 w-1 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                <div className="h-1 w-1 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                <div className="h-1 w-1 rounded-full bg-primary animate-bounce" />
+              </div>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTabId}
+                initial={{ opacity: 0, x: 5 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -5 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="h-full"
+              >
+                {activeTab?.type === "search" && renderSearchTab()}
+                {(activeTab?.type === "edit" || activeTab?.type === "add-child" || activeTab?.type === "add-sibling") && renderEditorTab(activeTab)}
+                {activeTab?.type === "new" && renderNewTab(activeTab)}
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </TooltipProvider>
