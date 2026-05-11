@@ -108,41 +108,37 @@ export function PortalShell() {
             const Icon = menu.icon
             const isActive = activeMenu === menu.id
             return (
-              <TooltipProvider key={menu.id}>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => navigateToMenu(menu.id)}
-                      className={cn(
-                        "flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                        !isExpanded && !isMobile ? "justify-center px-0" : "gap-3",
-                        isActive
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                      )}
-                    >
-                      <Icon className="h-4.5 w-4.5 shrink-0" />
-                      {(isExpanded || isMobile) && (
-                        <motion.span 
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="truncate"
-                        >
-                          {menu.label}
-                        </motion.span>
-                      )}
-                      {(isExpanded || isMobile) && isActive && (
-                        <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  {!isExpanded && !isMobile && (
-                    <TooltipContent side="right">
-                      {menu.label}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip key={menu.id} open={isExpanded || isMobile ? false : undefined}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => navigateToMenu(menu.id)}
+                    className={cn(
+                      "flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      !isExpanded && !isMobile ? "justify-center px-0" : "gap-3",
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {(isExpanded || isMobile) && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="truncate"
+                      >
+                        {menu.label}
+                      </motion.span>
+                    )}
+                    {(isExpanded || isMobile) && isActive && (
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {menu.label}
+                </TooltipContent>
+              </Tooltip>
             )
           })}
         </div>
@@ -163,16 +159,14 @@ export function PortalShell() {
               <p className="text-[10px] text-muted-foreground truncate">{getRoleLabel()}</p>
             </div>
           )}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg shrink-0" onClick={logout}>
-                  <LogOut className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Sign out</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg shrink-0" onClick={logout}>
+                <LogOut className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Sign out</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>
@@ -201,93 +195,90 @@ export function PortalShell() {
   // Main render
   // ==========================================
   return (
-    <div className="relative min-h-screen bg-background">
-      {/* ---- Mobile overlay ---- */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* ---- Sidebar: Desktop slim/expanded ---- */}
-      <motion.div
-        ref={sidebarRef}
-        initial={false}
-        animate={{ width: isExpanded ? 268 : 64 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed inset-y-0 left-0 z-30 hidden border-r border-border bg-background md:block overflow-hidden"
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
-        onFocus={() => setIsExpanded(true)}
-        onBlur={(e) => {
-          // Only collapse if the new focused element is not inside the sidebar
-          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-            setIsExpanded(false)
-          }
-        }}
-      >
-        {renderSidebarContent()}
-      </motion.div>
-
-      {/* ---- Sidebar: Mobile slide-out ---- */}
-      <AnimatePresence>
+    <TooltipProvider delayDuration={0}>
+      <div className="relative min-h-screen bg-background">
+        {/* ---- Mobile overlay ---- */}
         {mobileMenuOpen && (
-          <motion.div
-            initial={{ x: -280 }}
-            animate={{ x: 0 }}
-            exit={{ x: -280 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-y-0 left-0 z-50 w-[268px] border-r border-border bg-background md:hidden"
-          >
-            {renderSidebarContent(true)}
-          </motion.div>
+          <div
+            className="fixed inset-0 z-40 bg-black/60 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
         )}
-      </AnimatePresence>
 
-      {/* ---- Main content area ---- */}
-      <div
-        className={cn(
-          "min-h-screen transition-all duration-300 md:pl-[64px]"
-        )}
-      >
-        {/* ---- Top bar with submenu ---- */}
-        <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-          {/* Primary bar */}
-          <div className="flex h-12 items-center gap-3 px-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-lg md:hidden"
-              onClick={() => setMobileMenuOpen(true)}
+        {/* ---- Sidebar: Desktop slim/expanded ---- */}
+        <motion.div
+          ref={sidebarRef}
+          initial={false}
+          animate={{ width: isExpanded ? 268 : 64 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed inset-y-0 left-0 z-30 hidden border-r border-border bg-background md:block overflow-hidden"
+          onMouseEnter={() => setIsExpanded(true)}
+          onMouseLeave={() => setIsExpanded(false)}
+          onFocus={() => setIsExpanded(true)}
+          onBlur={(e) => {
+            // Only collapse if the new focused element is not inside the sidebar
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+              setIsExpanded(false)
+            }
+          }}
+        >
+          {renderSidebarContent()}
+        </motion.div>
+
+        {/* ---- Sidebar: Mobile slide-out ---- */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-y-0 left-0 z-50 w-[268px] border-r border-border bg-background md:hidden"
             >
-              <Menu className="h-5 w-5" />
-            </Button>
+              {renderSidebarContent(true)}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* Show menu trigger for desktop when sidebar is hidden - NO LONGER NEEDED as sidebar is always slim */}
+        {/* ---- Main content area ---- */}
+        <div
+          className={cn(
+            "min-h-screen transition-all duration-300 md:pl-[64px]"
+          )}
+        >
+          {/* ---- Top bar with submenu ---- */}
+          <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+            {/* Primary bar */}
+            <div className="flex h-12 items-center gap-3 px-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-lg md:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
 
+              {/* Current section title */}
+              <div className="flex items-center gap-2">
+                {currentMenu && (
+                  <>
+                    <currentMenu.icon className="h-4 w-4 text-primary" />
+                    <h1 className="text-sm font-semibold text-foreground">
+                      {currentMenu.label}
+                    </h1>
+                  </>
+                )}
+              </div>
 
-            {/* Current section title */}
-            <div className="flex items-center gap-2">
-              {currentMenu && (
-                <>
-                  <currentMenu.icon className="h-4 w-4 text-primary" />
-                  <h1 className="text-sm font-semibold text-foreground">
-                    {currentMenu.label}
-                  </h1>
-                </>
-              )}
-            </div>
-
-            {/* Right side actions */}
-            <div className="ml-auto flex items-center gap-2">
-              <ThemeToggle />
-              {user?.provider === "microsoft_sso" && (
-                <Badge variant="outline" className="rounded-md text-[10px] border-sky-500/30 text-sky-400 bg-sky-500/10">
-                  SSO
-                </Badge>
-              )}
-              <TooltipProvider>
+              {/* Right side actions */}
+              <div className="ml-auto flex items-center gap-2">
+                <ThemeToggle />
+                {user?.provider === "microsoft_sso" && (
+                  <Badge variant="outline" className="rounded-md text-[10px] border-sky-500/30 text-sky-400 bg-sky-500/10">
+                    SSO
+                  </Badge>
+                )}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg relative">
@@ -299,21 +290,21 @@ export function PortalShell() {
                   </TooltipTrigger>
                   <TooltipContent>Notifications</TooltipContent>
                 </Tooltip>
-              </TooltipProvider>
-              <div className="hidden md:flex items-center gap-2 ml-2 pl-2 border-l border-border/50">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary">
-                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="hidden md:flex items-center gap-2 ml-2 pl-2 border-l border-border/50">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                    {user?.name}
+                  </span>
                 </div>
-                <span className="text-xs text-muted-foreground truncate max-w-[120px]">
-                  {user?.name}
-                </span>
               </div>
             </div>
-          </div>
+          </header>
 
           {/* ---- Submenu bar ---- */}
           {currentMenu && currentMenu.subMenus.length > 0 && (
-            <div className="flex items-center gap-1 px-4 pb-2 overflow-x-auto">
+            <div className="flex items-center gap-1 px-4 py-2 overflow-x-auto border-b border-border/50 bg-background/50">
               {currentMenu.subMenus.map((sub) => (
                 <button
                   key={sub.id}
@@ -330,24 +321,24 @@ export function PortalShell() {
               ))}
             </div>
           )}
-        </header>
 
-        {/* ---- Page content ---- */}
-        <main className="p-4 md:p-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${activeMenu}-${activeSubMenu}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.15 }}
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
-        </main>
+          {/* Main Content */}
+          <main className="flex-1 p-1 md:p-1.5 overflow-y-auto overflow-x-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${activeMenu}-${activeSubMenu}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+              >
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
+        <GlobalFunctionsMenu />
       </div>
-      <GlobalFunctionsMenu />
-    </div>
+    </TooltipProvider>
   )
 }

@@ -92,7 +92,6 @@ export function OrderDetails() {
   const [isLoading, setIsLoading] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null)
-  const [fetchDetailsFunction, setFetchDetailsFunction] = useState<(() => Promise<void>) | null>(null)
 
   // Format date to MM-DD-YYYY
   const formatDate = (dateString: string | null | undefined): string => {
@@ -259,13 +258,6 @@ export function OrderDetails() {
     if (order) {
       setSelectedOrder(order)
       setDetailsOpen(true)
-      
-      // Trigger API call after dock is opened
-      setTimeout(() => {
-        if (fetchDetailsFunction) {
-          fetchDetailsFunction()
-        }
-      }, 100)
     }
   }
 
@@ -525,7 +517,6 @@ export function OrderDetails() {
         }}
         orderNumber={selectedOrder?.orderNumber || ""}
         lci={selectedOrder?.lci || ""}
-        onFetch={setFetchDetailsFunction}
       />
     </div>
   )

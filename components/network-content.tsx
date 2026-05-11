@@ -316,9 +316,9 @@ function StatCard({ title, value, icon, color }: { title: string; value: string 
 function PortGrid({ ports, onPortClick }: { ports: { id: string; name: string; status: DeviceStatus; connectedTo?: string }[]; onPortClick?: (portId: string) => void }) {
   return (
     <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
-      {ports.map((port) => (
-        <TooltipProvider key={port.id}>
-          <Tooltip>
+      <TooltipProvider delayDuration={0}>
+        {ports.map((port) => (
+          <Tooltip key={port.id}>
             <TooltipTrigger asChild>
               <button onClick={() => onPortClick?.(port.id)} className={cn("flex flex-col items-center justify-center rounded-lg border p-2 text-xs transition-all hover:scale-105", port.status === "active" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" : "border-border/50 bg-secondary/30 text-muted-foreground hover:bg-secondary")}>
                 <Zap className="h-3.5 w-3.5 mb-0.5" /><span className="font-mono text-[10px]">{port.name}</span>
@@ -329,8 +329,8 @@ function PortGrid({ ports, onPortClick }: { ports: { id: string; name: string; s
               {port.connectedTo && <p className="text-muted-foreground">Connected: {port.connectedTo}</p>}
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-      ))}
+        ))}
+      </TooltipProvider>
     </div>
   )
 }

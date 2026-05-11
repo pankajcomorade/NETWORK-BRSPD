@@ -67,22 +67,22 @@ export function GlobalFunctionsMenu() {
   }, [])
 
   return (
-    <div
-      className="fixed right-0 top-1/2 z-[100] -translate-y-1/2 flex items-center"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <AnimatePresence mode="wait">
-        {isOpen ? (
-          <motion.div
-            key="dock"
-            initial={{ x: 60, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 60, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="mr-2 flex flex-col gap-2 rounded-l-2xl border border-r-0 border-border bg-background/80 p-2 shadow-2xl backdrop-blur-xl"
-          >
-            <TooltipProvider delayDuration={0}>
+    <TooltipProvider delayDuration={0}>
+      <div
+        className="fixed right-0 top-1/2 z-[100] -translate-y-1/2 flex items-center"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <AnimatePresence mode="wait">
+          {isOpen ? (
+            <motion.div
+              key="dock"
+              initial={{ x: 60, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 60, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="mr-2 flex flex-col gap-2 rounded-l-2xl border border-r-0 border-border bg-background/80 p-2 shadow-2xl backdrop-blur-xl"
+            >
               {allowedActions.map((action) => {
                 const Icon = action.icon
                 return (
@@ -98,8 +98,6 @@ export function GlobalFunctionsMenu() {
                         )}
                         onClick={() => {
                           console.log(`Action: ${action.label}`)
-                          // Optional: collapse on click
-                          // setIsOpen(false)
                         }}
                       >
                         <Icon className="h-5 w-5" />
@@ -111,25 +109,25 @@ export function GlobalFunctionsMenu() {
                   </Tooltip>
                 )
               })}
-            </TooltipProvider>
-          </motion.div>
-        ) : (
-          <motion.button
-            key="trigger"
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 20, opacity: 0 }}
-            whileHover={{ x: -5 }}
-            className="flex h-24 w-8 items-center justify-center rounded-l-2xl border border-r-0 border-border bg-primary/10 text-primary shadow-lg backdrop-blur-md transition-colors hover:bg-primary hover:text-primary-foreground group"
-            onClick={() => setIsOpen(true)}
-          >
-            <div className="flex flex-col items-center gap-2">
-              <GripVertical className="h-5 w-5 opacity-50 group-hover:opacity-100 transition-opacity" />
-              <span className="[writing-mode:vertical-lr] text-[9px] font-bold tracking-[0.2em] uppercase"></span>
-            </div>
-          </motion.button>
-        )}
-      </AnimatePresence>
-    </div>
+            </motion.div>
+          ) : (
+            <motion.button
+              key="trigger"
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 20, opacity: 0 }}
+              whileHover={{ x: -5 }}
+              className="flex h-24 w-8 items-center justify-center rounded-l-2xl border border-r-0 border-border bg-primary/10 text-primary shadow-lg backdrop-blur-md transition-colors hover:bg-primary hover:text-primary-foreground group"
+              onClick={() => setIsOpen(true)}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <GripVertical className="h-5 w-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                <span className="[writing-mode:vertical-lr] text-[9px] font-bold tracking-[0.2em] uppercase"></span>
+              </div>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+    </TooltipProvider>
   )
 }

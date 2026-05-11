@@ -25,6 +25,7 @@ import {
   Copy,
   FileUp,
   FileDown,
+  X,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
@@ -84,6 +85,20 @@ interface EquipmentResponse {
 
 // Current environment info
 const currentEnv = getCurrentEnvironment()
+
+// Tab System Types
+type TabType = "search" | "new" | "edit" | "add-child" | "add-sibling"
+
+interface TabData {
+  id: string
+  title: string
+  type: TabType
+  closable: boolean
+  context?: {
+    node: EquipmentNode | null
+    type?: "child" | "sibling"
+  }
+}
 
 // Helper to convert API response to UI format
 function toEquipmentResponse(apiResponse: EquipmentHierarchyResponse): EquipmentResponse {
@@ -194,16 +209,25 @@ function HierarchyTreeNode({
     <div>
       <ContextMenu>
         <ContextMenuTrigger asChild>
-          <button
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => {
               if (hasChildren) setIsOpen(!isOpen)
               onSelect(node)
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                if (hasChildren) setIsOpen(!isOpen)
+                onSelect(node)
+              }
+            }}
             className={cn(
-              "flex w-full items-center gap-2 py-1.5 px-2 rounded-md text-sm transition-colors hover:bg-secondary/50 group",
+              "flex w-full items-center gap-1.5 py-1 px-1.5 rounded-md text-xs transition-colors hover:bg-secondary/50 group cursor-pointer outline-none",
               isSelected && "bg-primary/10 text-primary"
             )}
-            style={{ paddingLeft: `${depth * 16 + 8}px` }}
+            style={{ paddingLeft: `${depth * 12 + 6}px` }}
           >
             {hasChildren ? (
               isOpen ? (
@@ -216,7 +240,7 @@ function HierarchyTreeNode({
             )}
             <div className={cn("h-2 w-2 rounded-full shrink-0", getStatusColor(node.status))} />
             <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <span className={cn("truncate flex-1 text-left", isSelected ? "text-primary font-medium" : "text-foreground")}>
+            <span className={cn("truncate flex-1 text-left text-[10px]", isSelected ? "text-primary font-medium" : "text-foreground")}>
               {node.name}
             </span>
 
@@ -238,7 +262,7 @@ function HierarchyTreeNode({
                   <TooltipContent side="top">Add</TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); `onAdd`?.(node, "child"); }}>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "child"); }}>
                     <Layers className="mr-2 h-4 w-4" />
                     <span>child</span>
                   </DropdownMenuItem>
@@ -326,7 +350,7 @@ function HierarchyTreeNode({
             >
               {node.type}
             </Badge>
-          </button>
+          </div>
         </ContextMenuTrigger>
         <ContextMenuContent className="w-48">
 
@@ -415,23 +439,23 @@ function EditableHierarchyNode({
   const Icon = getNodeIcon(node.type)
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       <div
-        className="flex items-center gap-2 p-2 rounded-md border border-border/50 bg-secondary/10"
-        style={{ marginLeft: `${depth * 20}px` }}
+        className="flex items-center gap-2 p-1.5 rounded-md border border-border/50 bg-secondary/5"
+        style={{ marginLeft: `${depth * 16}px` }}
       >
-        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <Input
           value={node.name}
           onChange={(e) => onUpdate({ ...node, name: e.target.value })}
-          className="h-8 py-0 text-sm flex-1"
+          className="h-6 py-0 text-[9px] flex-1"
           placeholder="Node Name"
         />
         <Select
           value={node.type}
           onValueChange={(val) => onUpdate({ ...node, type: val as any })}
         >
-          <SelectTrigger className="h-8 w-32 text-[10px]">
+          <SelectTrigger className="h-6 w-24 text-[9px] px-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -440,23 +464,23 @@ function EditableHierarchyNode({
             ))}
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-primary hover:bg-primary/10"
+            className="h-5 w-5 text-primary hover:bg-primary/10"
             onClick={() => onAddChild(node)}
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3 w-3" />
           </Button>
           {depth > 0 && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-destructive hover:bg-destructive/10"
+              className="h-5 w-5 text-destructive hover:bg-destructive/10"
               onClick={() => onRemove(node)}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 w-3" />
             </Button>
           )}
         </div>
@@ -1290,9 +1314,45 @@ export function ResourceOverview() {
   const [isSearching, setIsSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showHierarchy, setShowHierarchy] = useState(true)
-  const [showSummary, setShowSummary] = useState(true)
+  const [showSummary, setShowSummary] = useState(false)
 
-  // Modal states
+  // Tab State
+  const [tabs, setTabs] = useState<TabData[]>([
+    { id: "search", title: "Search", type: "search", closable: false }
+  ])
+  const [activeTabId, setActiveTabId] = useState<string>("search")
+
+  const addTab = (type: TabType, title: string, context?: any) => {
+    const id = context?.node?.erId ? `${type}-${context.node.erId}` : `${type}-${Date.now()}`
+
+    // Check if tab already exists
+    const existingTab = tabs.find(t => t.id === id)
+    if (existingTab) {
+      setActiveTabId(id)
+      return
+    }
+
+    const newTab: TabData = {
+      id,
+      title,
+      type,
+      closable: true,
+      context
+    }
+    setTabs([...tabs, newTab])
+    setActiveTabId(id)
+  }
+
+  const removeTab = (e: React.MouseEvent | React.KeyboardEvent | any, id: string) => {
+    e.stopPropagation()
+    const newTabs = tabs.filter(t => t.id !== id)
+    if (activeTabId === id) {
+      setActiveTabId(newTabs[newTabs.length - 1].id)
+    }
+    setTabs(newTabs)
+  }
+
+  // Modal states (kept for internal components if needed, but tabs preferred now)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<"add" | "edit">("add")
   const [modalContext, setModalContext] = useState<{
@@ -1349,276 +1409,456 @@ export function ResourceOverview() {
     setSelectedNode(node)
   }
 
-  const onAdd = (node: EquipmentNode, type: "parent" | "sibling") => {
-    setModalMode("add")
-    setModalContext({ node, type })
-    setIsModalOpen(true)
+  const onAdd = (node: EquipmentNode, type: "child" | "sibling") => {
+    addTab(type === "child" ? "add-child" : "add-sibling", node.erId, { node, type })
   }
 
   const onEdit = (node: EquipmentNode) => {
-    setModalMode("edit")
-    setModalContext({ node })
-    setIsModalOpen(true)
+    addTab("edit", node.erId, { node })
   }
 
   const onRemove = (node: EquipmentNode) => {
     if (confirm(`Are you sure you want to delete ${node.name}?`)) {
-      // Implement delete logic
-      console.log("Delete", node)
+      if (searchResult) {
+        const removeRecursive = (current: EquipmentNode): EquipmentNode => ({
+          ...current,
+          nodes: current.nodes.filter(n => n.erId !== node.erId).map(removeRecursive)
+        })
+        const newEquipment = removeRecursive(searchResult.equipment)
+        setSearchResult({ ...searchResult, equipment: newEquipment })
+        if (selectedNode?.erId === node.erId) {
+          setSelectedNode(null)
+        }
+      }
     }
   }
 
-  const handleCreateNewEquipment = (name: string) => {
-    const cleaned = (name || "").trim()
-    if (!cleaned) {
-      alert("Please enter an equipment name.")
-      return
+  const updateNodeInHierarchy = (root: EquipmentNode, updatedNode: EquipmentNode): EquipmentNode => {
+    if (root.erId === updatedNode.erId) return updatedNode
+    return {
+      ...root,
+      nodes: root.nodes.map(node => updateNodeInHierarchy(node, updatedNode))
     }
   }
 
-  return (
-    <TooltipProvider>
-      <div className="space-y-1">
-        {/* Search Section */}
+  const handleSaveTab = (tab: TabData, updatedNode: EquipmentNode) => {
+    if (searchResult) {
+      const newEquipment = updateNodeInHierarchy(searchResult.equipment, updatedNode)
+      setSearchResult({ ...searchResult, equipment: newEquipment })
+      if (selectedNode?.erId === updatedNode.erId) {
+        setSelectedNode(updatedNode)
+      }
+    }
+    removeTab({ stopPropagation: () => { } } as any, tab.id)
+  }
+
+  const handleCreateNewEquipment = (name?: string) => {
+    addTab("new", "New")
+  }
+
+  const renderSearchTab = () => (
+    <div className="space-y-1">
+      {/* Search Section */}
+      <Card className="rounded-lg border-border/50">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm text-foreground flex items-center gap-2">
+              <Search className="h-4 w-4 text-primary" />
+              Equipment Search
+            </CardTitle>
+            <Badge variant="outline" className="text-[9px] uppercase">
+              ENV: {currentEnv}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-1 px-3 pb-3">
+          <div className="flex flex-col gap-3">
+            {/* Single Row: Search Input + Category Filter + Search Button */}
+            <div className="flex items-end gap-2">
+              {/* Equipment Name Typeahead - Flexible Width */}
+              <div className="flex-1 min-w-0">
+                <label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">Equipment Name</label>
+                <EquipmentTypeaheadSearch
+                  onSelect={(equipment) => {
+                    setSearchQuery(equipment.nodeName)
+                  }}
+                  isLoading={isSearching}
+                />
+              </div>
+
+              {/* Category Filter */}
+              <div className="w-28">
+                <label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">Category</label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <Filter className="h-2.5 w-2.5 mr-1 text-muted-foreground" />
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="olt">OLT</SelectItem>
+                    <SelectItem value="ont">ONT</SelectItem>
+                    <SelectItem value="fdh">FDH</SelectItem>
+                    <SelectItem value="ap">AP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Search Button */}
+              <Button
+                onClick={() => handleSearch(searchQuery)}
+                disabled={isSearching}
+                className="h-10 px-4 whitespace-nowrap"
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Searching
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-3 w-3 mr-1" />
+                    Search
+                  </>
+                )}
+              </Button>
+              {/* New Button */}
+              <Button
+                onClick={() => handleCreateNewEquipment()}
+                disabled={isSearching}
+                className="h-10 px-4 whitespace-nowrap"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                New
+              </Button>
+            </div>
+          </div>
+          {error && (
+            <div className="mt-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+              <AlertCircle className="h-3 w-3 text-destructive shrink-0" />
+              <span className="text-xs text-destructive">{error}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Results Section */}
+      {isSearching ? (
         <Card className="rounded-lg border-border/50">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-foreground flex items-center gap-2">
-                <Search className="h-4 w-4 text-primary" />
-                Equipment Search
-              </CardTitle>
-              <Badge variant="outline" className="text-[9px] uppercase">
-                ENV: {currentEnv}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="flex flex-col gap-3">
-              {/* Single Row: Search Input + Category Filter + Search Button */}
-              <div className="flex items-end gap-2">
-                {/* Equipment Name Typeahead - Flexible Width */}
-                <div className="flex-1 min-w-0">
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Equipment Name</label>
-                  <EquipmentTypeaheadSearch
-                    onSelect={(equipment) => {
-                      setSearchQuery(equipment.nodeName)
-                    }}
-                    isLoading={isSearching}
-                  />
-                </div>
-
-                {/* Category Filter */}
-                <div className="w-32">
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Category</label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger className="h-10 text-sm">
-                      <Filter className="h-3 w-3 mr-1 text-muted-foreground" />
-                      <SelectValue placeholder="All" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="olt">OLT</SelectItem>
-                      <SelectItem value="ont">ONT</SelectItem>
-                      <SelectItem value="fdh">FDH</SelectItem>
-                      <SelectItem value="ap">AP</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Search Button */}
-                <Button
-                  onClick={() => handleSearch(searchQuery)}
-                  disabled={isSearching}
-                  className="h-10 px-4 whitespace-nowrap"
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Searching
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-3 w-3 mr-1" />
-                      Search
-                    </>
-                  )}
-                </Button>
-                {/* Search Button */}
-                <Button
-                  onClick={() => handleCreateNewEquipment()}
-                  disabled={isSearching}
-                  className="h-10 px-4 whitespace-nowrap"
-                >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Loading
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-3 w-3 mr-1" />
-                      New
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-            {error && (
-              <div className="mt-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-2">
-                <AlertCircle className="h-3 w-3 text-destructive shrink-0" />
-                <span className="text-xs text-destructive">{error}</span>
-              </div>
-            )}
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <Loader2 className="h-10 w-10 text-primary animate-spin mb-3" />
+            <h3 className="text-sm font-semibold text-foreground">Loading Equipment Hierarchy</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Fetching data from API...
+            </p>
           </CardContent>
         </Card>
+      ) : !searchResult ? (
+        <Card className="rounded-lg border-border/50">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary mb-3">
+              <Server className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-sm font-semibold text-foreground">Search for Equipment</h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">
+              Enter an equipment name above to search and explore the device hierarchy.
+              Results will show the full structure from OLT/FDH down to individual ports.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-1">
+          {/* Hierarchy Tree Panel */}
+          <AnimatePresence>
+            {showHierarchy && (
+              <motion.div
+                initial={{ x: -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -300, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="lg:col-span-5"
+              >
+                <Card className="rounded-lg border-border/50 h-fit">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xs text-foreground">Hierarchy</CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowHierarchy(false)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="max-h-[65vh] overflow-y-auto px-2 pb-1">
+                      <HierarchyTreeNode
+                        node={searchResult.equipment}
+                        onSelect={handleNodeSelect}
+                        selectedNode={selectedNode}
+                        onAdd={onAdd}
+                        onEdit={onEdit}
+                        onRemove={onRemove}
+                      />
+                    </div>
 
-        {/* Results Section */}
-        {isSearching ? (
-          <Card className="rounded-lg border-border/50">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <Loader2 className="h-10 w-10 text-primary animate-spin mb-3" />
-              <h3 className="text-sm font-semibold text-foreground">Loading Equipment Hierarchy</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Fetching data from API...
-              </p>
-            </CardContent>
-          </Card>
-        ) : !searchResult ? (
-          <Card className="rounded-lg border-border/50">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary mb-3">
-                <Server className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">Search for Equipment</h3>
-              <p className="text-xs text-muted-foreground mt-1 max-w-md">
-                Enter an equipment name above to search and explore the device hierarchy.
-                Results will show the full structure from OLT/FDH down to individual ports.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-1">
-            {/* Hierarchy Tree Panel - Left Side with Slide Animation */}
-            <AnimatePresence>
-              {showHierarchy && (
-                <motion.div
-                  initial={{ x: -300, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -300, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="lg:col-span-5"
-                >
-                  <Card className="rounded-lg border-border/50 h-fit">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm text-foreground">Hierarchy</CardTitle>
+                    {/* Summary Stats */}
+                    <div className="border-t border-border/50 px-3 py-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-[10px] text-muted-foreground">Summary</p>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setShowHierarchy(false)}
-                          className="h-6 w-6 p-0"
+                          onClick={() => setShowSummary(!showSummary)}
+                          className="h-5 w-5 p-0"
                         >
-                          <ChevronLeft className="h-4 w-4" />
+                          {showSummary ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </Button>
                       </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="max-h-[60vh] overflow-y-auto px-3 pb-2">
-                        <HierarchyTreeNode
-                          node={searchResult.equipment}
-                          onSelect={handleNodeSelect}
-                          selectedNode={selectedNode}
-                          onAdd={onAdd}
-                          onEdit={onEdit}
-                          onRemove={onRemove}
-                        />
-                      </div>
-
-                      {/* Summary Stats - Toggle Show/Hide */}
-                      <motion.div
-                        initial={showSummary ? { opacity: 1, height: "auto" } : { opacity: 1, height: "auto" }}
-                        animate={showSummary ? { opacity: 1, height: "auto" } : { opacity: 1, height: "auto" }}
-                        transition={{ duration: 0.2 }}
-                        className="border-t border-border/50 px-3 py-2"
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-[10px] text-muted-foreground">Summary</p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowSummary(!showSummary)}
-                            className="h-5 w-5 p-0"
-                          >
-                            {showSummary ? (
-                              <ChevronUp className="h-3 w-3" />
-                            ) : (
-                              <ChevronDown className="h-3 w-3" />
-                            )}
-                          </Button>
+                      {showSummary && (
+                        <div className="grid grid-cols-3 gap-1">
+                          {Object.entries(searchResult.summary.countsByType).map(([type, count]) => (
+                            <div key={type} className="text-center p-1 rounded bg-secondary/30 border border-border/30">
+                              <p className="text-xs font-bold text-foreground">{count}</p>
+                              <p className="text-[8px] text-muted-foreground">{type}</p>
+                            </div>
+                          ))}
                         </div>
-                        {showSummary && (
-                          <div className="grid grid-cols-3 gap-1">
-                            {Object.entries(searchResult.summary.countsByType).map(([type, count]) => (
-                              <div
-                                key={type}
-                                className="text-center p-1 rounded bg-secondary/30 border border-border/30"
-                              >
-                                <p className="text-xs font-bold text-foreground">{count}</p>
-                                <p className="text-[8px] text-muted-foreground">{type}</p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </motion.div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Toggle Button to show/hide hierarchy - Slide in from left */}
-            {!showHierarchy && (
-              <motion.div
-                initial={{ x: -50, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -50, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="lg:col-span-1 flex items-center justify-center"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowHierarchy(true)}
-                  className="h-8 px-2 text-xs"
-                >
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             )}
+          </AnimatePresence>
 
-            {/* Device GUI Panel - Right Side */}
-            <Card className={cn("rounded-lg border-border/50 overflow-auto max-h-[70vh]", showHierarchy ? "lg:col-span-7" : "lg:col-span-12")}>
-              <CardHeader className="pb-2 sticky top-0 bg-card z-10 border-b border-border/50">
-                <CardTitle className="text-sm text-foreground">Device Explorer</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <DeviceGUIPanel equipment={searchResult.equipment} selectedNode={selectedNode} />
-              </CardContent>
-            </Card>
+          {!showHierarchy && (
+            <div className="lg:col-span-1 flex items-center justify-center">
+              <Button variant="outline" size="sm" onClick={() => setShowHierarchy(true)} className="h-8 px-2 text-xs">
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+
+          {/* Device GUI Panel */}
+          <Card className={cn("rounded-lg border-border/50 overflow-y-auto overflow-x-hidden max-h-[70vh]", showHierarchy ? "lg:col-span-7" : "lg:col-span-12")}>
+            <CardHeader className="py-1 px-2 sticky top-0 bg-card z-10 border-b border-border/50">
+              <CardTitle className="text-xs text-foreground">Device Explorer</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-1 px-2">
+              <DeviceGUIPanel equipment={searchResult.equipment} selectedNode={selectedNode} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+
+  const renderEditorTab = (tab: TabData) => {
+    if (!tab.context || !tab.context.node) return null
+
+    // Use local state for the tab content to allow "Save" vs "Cancel"
+    // Since this is inside render, we'll use a component to wrap it
+    return (
+      <EditorTabContent
+        tab={tab}
+        onSave={(updated) => handleSaveTab(tab, updated)}
+        onCancel={() => removeTab({ stopPropagation: () => { } } as any, tab.id)}
+      />
+    )
+  }
+
+  function EditorTabContent({ tab, onSave, onCancel }: { tab: TabData, onSave: (node: EquipmentNode) => void, onCancel: () => void }) {
+    const [localNode, setLocalNode] = useState<EquipmentNode>(JSON.parse(JSON.stringify(tab.context!.node)))
+
+    const handleAddChildLocal = (parentNode: EquipmentNode) => {
+      const newNode: EquipmentNode = {
+        name: "New Node",
+        type: "RACK",
+        instanceID: null,
+        erId: "new-" + Date.now(),
+        status: "ACTIVE",
+        nodes: []
+      }
+
+      const updateRecursive = (current: EquipmentNode): EquipmentNode => {
+        if (current.erId === parentNode.erId) {
+          return { ...current, nodes: [...current.nodes, newNode] }
+        }
+        return { ...current, nodes: current.nodes.map(updateRecursive) }
+      }
+
+      setLocalNode(updateRecursive(localNode))
+    }
+
+    return (
+      <Card className="rounded-lg border-border/50 shadow-sm">
+        <CardHeader className="pb-4 border-b border-border/50 bg-secondary/5">
+          <CardTitle className="text-xs flex items-center gap-2">
+            {tab.type === "edit" ? <Pencil className="h-3 w-3 text-primary" /> : <Plus className="h-3 w-3 text-primary" />}
+            {tab.type === "edit" ? "Edit Equipment" : `Add ${tab.context?.type} Equipment`}
+          </CardTitle>
+          <div className="text-[9px] text-muted-foreground font-mono">
+            {tab.type === "edit"
+              ? `Ref ID: ${tab.context?.node?.erId}`
+              : `Parent: ${tab.context?.node?.name}`}
           </div>
-        )}
+        </CardHeader>
+        <CardContent className="pt-3 px-3">
+          <div className="max-w-full space-y-3">
+            <EditableHierarchyNode
+              node={localNode}
+              onUpdate={setLocalNode}
+              onAddChild={handleAddChildLocal}
+              onRemove={(nodeToRemove) => {
+                const removeRecursive = (current: EquipmentNode): EquipmentNode => ({
+                  ...current,
+                  nodes: current.nodes.filter(n => n.erId !== nodeToRemove.erId).map(removeRecursive)
+                })
+                setLocalNode(removeRecursive(localNode))
+              }}
+            />
+            <div className="mt-4 pt-4 border-t border-border/50 flex justify-end gap-3">
+              <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
+              <Button size="sm" onClick={() => onSave(localNode)}>
+                {tab.type === "edit" ? "Update Record" : "Create Record"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
-        <EquipmentHierarchyDialog
-          isOpen={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          mode={modalMode}
-          context={modalContext}
-          onSave={(updatedNode) => {
-            console.log("Saving hierarchy:", updatedNode)
-            // Here you would typically call an API to save
-            // For now we'll just log it
-          }}
-        />
+  const renderNewTab = (tab: TabData) => {
+    return (
+      <Card className="rounded-lg border-border/50">
+        <CardHeader className="pb-4 border-b border-border/50">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Plus className="h-4 w-4 text-primary" />
+            Create New Equipment
+          </CardTitle>
+          <p className="text-[10px] text-muted-foreground">Define a new root equipment node</p>
+        </CardHeader>
+        <CardContent className="pt-3 px-3">
+          <div className="max-w-full space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-equip-name">Equipment Name</Label>
+                <Input id="new-equip-name" placeholder="Enter name (e.g. OLT-BOS-01)" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-equip-type">Equipment Type</Label>
+                <Select defaultValue="OLT">
+                  <SelectTrigger id="new-equip-type">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="OLT">OLT</SelectItem>
+                    <SelectItem value="FDH">FDH</SelectItem>
+                    <SelectItem value="AP">AP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="pt-3 border-t border-border/50 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => removeTab({ stopPropagation: () => { } } as any, tab.id)}>Cancel</Button>
+              <Button onClick={() => removeTab({ stopPropagation: () => { } } as any, tab.id)}>Create Root Equipment</Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const activeTab = tabs.find(t => t.id === activeTabId)
+
+  return (
+    <TooltipProvider>
+      <div className="flex flex-col h-full">
+        {/* ServiceNow Style Tab Bar */}
+        <div className="flex items-center gap-0.5 border-b border-border/50 bg-secondary/5 px-1 pt-1 -mx-4 md:-mx-6 -mt-4 md:-mt-6 shadow-sm overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => (
+            <div
+              key={tab.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setActiveTabId(tab.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setActiveTabId(tab.id)
+                }
+              }}
+              className={cn(
+                "group relative flex items-center gap-2 px-4 py-2.5 text-[11px] font-medium transition-all rounded-t-md border-t border-x whitespace-nowrap min-w-[80px] cursor-pointer outline-none",
+                activeTabId === tab.id
+                  ? "bg-background border-border/50 text-primary z-10 -mb-[px] font-semibold"
+                  : "bg-transparent border-transparent text-muted-foreground hover:bg-secondary/20 hover:text-foreground"
+              )}
+            >
+              <div className={cn(
+                "p-1 rounded-sm",
+                activeTabId === tab.id ? "bg-primary/10 text-primary" : "text-muted-foreground/60"
+              )}>
+                {tab.type === "search" && <Search className="h-3 w-3" />}
+                {tab.type === "new" && <Plus className="h-3 w-3" />}
+                {(tab.type === "edit" || tab.type === "add-child" || tab.type === "add-sibling") && <Pencil className="h-3 w-3" />}
+              </div>
+
+              <span className="max-w-[120px] truncate">{tab.title}</span>
+
+              {tab.closable && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className="ml-1 p-0.5 rounded-sm hover:bg-destructive/10 hover:text-destructive opacity-40 group-hover:opacity-100 transition-all cursor-pointer"
+                      onClick={(e) => removeTab(e, tab.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          removeTab(e, tab.id)
+                        }
+                      }}
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Close tab</TooltipContent>
+                </Tooltip>
+              )}
+
+              {activeTabId === tab.id && (
+                <motion.div
+                  layoutId="activeTabUnderline"
+                  className="absolute top-0 left-0 right-0 h-[2px] bg-primary rounded-t-full"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Tab Content Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTabId}
+              initial={{ opacity: 0, x: 5 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -5 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="h-full"
+            >
+              {activeTab?.type === "search" && renderSearchTab()}
+              {(activeTab?.type === "edit" || activeTab?.type === "add-child" || activeTab?.type === "add-sibling") && renderEditorTab(activeTab)}
+              {activeTab?.type === "new" && renderNewTab(activeTab)}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </TooltipProvider>
   )

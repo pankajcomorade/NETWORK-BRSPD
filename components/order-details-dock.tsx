@@ -92,15 +92,7 @@ interface PONConnection {
   }
 }
 
-interface OrderDetailsDockProps {
-  isOpen: boolean
-  onClose: () => void
-  orderNumber: string
-  lci: string
-  onFetch?: (fetch: () => Promise<void>) => void
-}
-
-export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }: OrderDetailsDockProps) {
+export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci }: { isOpen: boolean, onClose: () => void, orderNumber: string, lci: string }) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -151,10 +143,10 @@ export function OrderDetailsDock({ isOpen, onClose, orderNumber, lci, onFetch }:
   }, [orderNumber, lci, toast])
 
   useEffect(() => {
-    if (onFetch) {
-      onFetch(fetchOrderDetails)
+    if (isOpen) {
+      fetchOrderDetails()
     }
-  }, [onFetch, fetchOrderDetails])
+  }, [isOpen, fetchOrderDetails])
 
   useEffect(() => {
     if (!isOpen) {
