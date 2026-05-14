@@ -27,6 +27,8 @@ import {
   FileDown,
   X,
   Monitor,
+  Lock,
+  AlertTriangle,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
@@ -99,6 +101,64 @@ interface TabData {
     node: EquipmentNode | null
     type?: "child" | "sibling"
   }
+  hierarchyPath?: string[]
+  breadcrumb?: string
+}
+
+interface ConflictAlert {
+  blockedBy: TabData
+  attempted: {
+    node: EquipmentNode
+    operationType: TabType
+    breadcrumb: string
+  }
+}
+
+const ROOT_EQUIPMENT_TYPES = ["OLT", "ONT", "FDH", "AP"] as const
+const isRootEquipment = (node: EquipmentNode): boolean => ROOT_EQUIPMENT_TYPES.includes(node.type as any)
+
+const LEAF_EQUIPMENT_TYPES = ["PORT", "SPLITTER LEG"] as const
+const isLeafEquipment = (node: EquipmentNode): boolean => LEAF_EQUIPMENT_TYPES.includes(node.type as any)
+
+function findHierarchyPath(root: EquipmentNode, targetId: string, currentPath: string[] = []): string[] | null {
+  const path = [...currentPath, root.erId]
+  if (root.erId === targetId) return path
+  for (const child of root.nodes ?? []) {
+    const result = findHierarchyPath(child, targetId, path)
+    if (result) return result
+  }
+  return null
+}
+
+function buildBreadcrumb(root: EquipmentNode, path: string[]): string {
+  const findNodeById = (node: EquipmentNode, id: string): EquipmentNode | null => {
+    if (node.erId === id) return node
+    for (const child of node.nodes ?? []) {
+      const res = findNodeById(child, id)
+      if (res) return res
+    }
+    return null
+  }
+  return path.map(id => findNodeById(root, id)?.name ?? id).join(' › ')
+}
+
+function isHierarchyConflict(existingPath: string[], newPath: string[]): boolean {
+  const minLen = Math.min(existingPath.length, newPath.length)
+  for (let i = 0; i < minLen; i++) {
+    if (existingPath[i] !== newPath[i]) return false
+  }
+  return true
+}
+
+function getConflictForNode(node: EquipmentNode, tabs: TabData[], root: EquipmentNode | null): TabData | null {
+  if (!root) return null
+  const path = findHierarchyPath(root, node.erId)
+  if (!path) return null
+  return tabs.find(t =>
+    t.hierarchyPath &&
+    t.type !== "search" &&
+    isHierarchyConflict(t.hierarchyPath, path)
+  ) ?? null
 }
 
 // Helper to convert API response to UI format
@@ -192,6 +252,8 @@ function HierarchyTreeNode({
   onAdd,
   onEdit,
   onRemove,
+  tabs = [],
+  rootEquipment = null,
 }: {
   node: EquipmentNode
   depth?: number
@@ -200,11 +262,26 @@ function HierarchyTreeNode({
   onAdd?: (node: EquipmentNode, type: "child" | "sibling") => void
   onEdit?: (node: EquipmentNode) => void
   onRemove?: (node: EquipmentNode) => void
+  tabs?: TabData[]
+  rootEquipment?: EquipmentNode | null
 }) {
-  const [isOpen, setIsOpen] = useState(depth < 2)
   const Icon = getNodeIcon(node.type)
   const hasChildren = node.nodes && node.nodes.length > 0
   const isSelected = selectedNode?.erId === node.erId
+  const conflictingTab = rootEquipment ? getConflictForNode(node, tabs, rootEquipment) : null
+  const isLocked = conflictingTab !== null
+  const activeOperationTab = tabs.find(t => t.context?.node?.erId === node.erId && t.type !== "search")
+  const isRoot = isRootEquipment(node)
+  const isLeaf = isLeafEquipment(node)
+
+  const isPartOfActivePath = tabs.some(t => t.hierarchyPath?.includes(node.erId))
+  const [isOpen, setIsOpen] = useState(depth < 2 || isPartOfActivePath)
+
+  useEffect(() => {
+    if (isPartOfActivePath) {
+      setIsOpen(true)
+    }
+  }, [isPartOfActivePath])
 
   return (
     <div>
@@ -245,59 +322,97 @@ function HierarchyTreeNode({
               {node.name}
             </span>
 
+            {activeOperationTab && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.5 rounded text-amber-600 dark:text-amber-500 mr-2 border border-amber-500/20">
+                    <Lock strokeWidth={3.5} className="h-2 w-2" />
+                    <span className="text-[8px] font-semibold uppercase">{activeOperationTab.type.replace('-', ' ')}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">Being edited in another tab</TooltipContent>
+              </Tooltip>
+            )}
+
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Add</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "child"); }}>
-                    <Layers className="mr-2 h-4 w-4" />
-                    <span>child</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "sibling"); }}>
-                    <GitBranch className="mr-2 h-4 w-4" />
-                    <span>Sibling</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {(!isLeaf || !isRoot) && (
+                <DropdownMenu>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <div className="relative">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-5 w-5 p-0",
+                              isLocked ? "hover:bg-amber-500/10 hover:text-amber-500" : "hover:bg-primary/10 hover:text-primary"
+                            )}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                          {isLocked && <Lock strokeWidth={3.5} className="absolute -top-1 -right-1 h-2 w-2 text-amber-400 pointer-events-none" />}
+                        </div>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Add</TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent align="end">
+                    {!isLeaf && (
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "child"); }}>
+                        <Layers className="mr-2 h-4 w-4" />
+                        <span>Child</span>
+                        {isLocked && <Lock strokeWidth={3.5} className="ml-auto h-3 w-3 text-amber-400" />}
+                      </DropdownMenuItem>
+                    )}
+                    {!isRoot && (
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAdd?.(node, "sibling"); }}>
+                        <GitBranch className="mr-2 h-4 w-4" />
+                        <span>Sibling</span>
+                        {isLocked && <Lock strokeWidth={3.5} className="ml-auto h-3 w-3 text-amber-400" />}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 p-0 hover:bg-primary/10 hover:text-primary"
-                    onClick={(e) => { e.stopPropagation(); onEdit?.(node); }}
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
+                  <div className="relative">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-5 w-5 p-0",
+                        isLocked ? "hover:bg-amber-500/10 hover:text-amber-500" : "hover:bg-primary/10 hover:text-primary"
+                      )}
+                      onClick={(e) => { e.stopPropagation(); onEdit?.(node); }}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    {isLocked && <Lock strokeWidth={3.5} className="absolute -top-1 -right-1 h-2 w-2 text-amber-400 pointer-events-none" />}
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent side="top">Edit</TooltipContent>
               </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 p-0 hover:bg-destructive/10 hover:text-destructive"
-                    onClick={(e) => { e.stopPropagation(); onRemove?.(node); }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  <div className="relative">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-5 w-5 p-0",
+                        isLocked ? "hover:bg-amber-500/10 hover:text-amber-500" : "hover:bg-destructive/10 hover:text-destructive"
+                      )}
+                      onClick={(e) => { e.stopPropagation(); onRemove?.(node); }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                    {isLocked && <Lock strokeWidth={3.5} className="absolute -top-1 -right-1 h-2 w-2 text-amber-400 pointer-events-none" />}
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent side="top">Delete</TooltipContent>
               </Tooltip>
@@ -341,8 +456,6 @@ function HierarchyTreeNode({
                 </TooltipTrigger>
                 <TooltipContent side="top">Export</TooltipContent>
               </Tooltip>
-
-
             </div>
 
             <Badge
@@ -355,21 +468,41 @@ function HierarchyTreeNode({
         </ContextMenuTrigger>
         <ContextMenuContent className="w-48">
 
-          <ContextMenuItem onClick={() => onAdd?.(node, "child")}>
-            <Layers className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>Add Child</span>
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => onAdd?.(node, "sibling")}>
-            <GitBranch className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>Add Sibling</span>
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => onEdit?.(node)}>
-            <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
+          {!isLeaf && (
+            <ContextMenuItem
+              onClick={() => onAdd?.(node, "child")}
+              className={isLocked ? "text-amber-500 focus:text-amber-500" : ""}
+            >
+              <Layers className={cn("mr-2 h-4 w-4", !isLocked && "text-muted-foreground")} />
+              <span>Add Child</span>
+              {isLocked && <Lock strokeWidth={3.5} className="ml-auto h-3 w-3 text-amber-400" />}
+            </ContextMenuItem>
+          )}
+          {!isRoot && (
+            <ContextMenuItem
+              onClick={() => onAdd?.(node, "sibling")}
+              className={isLocked ? "text-amber-500 focus:text-amber-500" : ""}
+            >
+              <GitBranch className={cn("mr-2 h-4 w-4", !isLocked && "text-muted-foreground")} />
+              <span>Add Sibling</span>
+              {isLocked && <Lock strokeWidth={3.5} className="ml-auto h-3 w-3 text-amber-400" />}
+            </ContextMenuItem>
+          )}
+          <ContextMenuItem
+            onClick={() => onEdit?.(node)}
+            className={isLocked ? "text-amber-500 focus:text-amber-500" : ""}
+          >
+            <Pencil className={cn("mr-2 h-4 w-4", !isLocked && "text-muted-foreground")} />
             <span>Edit Node</span>
+            {isLocked && <Lock strokeWidth={3.5} className="ml-auto h-3 w-3 text-amber-400" />}
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => console.log("Delete", node.name)} className="text-destructive focus:text-destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
+          <ContextMenuItem
+            onClick={() => onRemove?.(node)}
+            className={isLocked ? "text-amber-500 focus:text-amber-500" : "text-destructive focus:text-destructive"}
+          >
+            <Trash2 className={cn("mr-2 h-4 w-4", !isLocked && "text-destructive")} />
             <span>Delete</span>
+            {isLocked && <Lock strokeWidth={3.5} className="ml-auto h-3 w-3 text-amber-400" />}
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onClick={() => console.log("Copy", node.name)}>
@@ -398,6 +531,8 @@ function HierarchyTreeNode({
               onAdd={onAdd}
               onEdit={onEdit}
               onRemove={onRemove}
+              tabs={tabs}
+              rootEquipment={rootEquipment}
             />
           ))}
         </div>
@@ -429,15 +564,27 @@ function EditableHierarchyNode({
   onUpdate,
   onAddChild,
   onRemove,
-  depth = 0
+  depth = 0,
+  targetId,
+  tabType
 }: {
   node: EquipmentNode
   onUpdate: (updatedNode: EquipmentNode) => void
   onAddChild: (parentNode: EquipmentNode) => void
   onRemove: (node: EquipmentNode) => void
   depth?: number
+  targetId?: string
+  tabType?: string
 }) {
   const Icon = getNodeIcon(node.type)
+
+  const isTarget = targetId === node.erId
+  const isNewlyAdded = node.erId.startsWith("new-")
+  const isAncestor = !isTarget && !isNewlyAdded && !!targetId
+
+  const isReadOnly = isAncestor || (isTarget && tabType !== "edit")
+  const allowAdd = isNewlyAdded || (isTarget && (tabType === "add-child" || tabType === "add-sibling"))
+  const allowRemove = isNewlyAdded
 
   return (
     <div className="space-y-1">
@@ -446,35 +593,46 @@ function EditableHierarchyNode({
         style={{ marginLeft: `${depth * 16}px` }}
       >
         <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <Input
-          value={node.name}
-          onChange={(e) => onUpdate({ ...node, name: e.target.value })}
-          className="h-6 py-0 text-[9px] flex-1"
-          placeholder="Node Name"
-        />
-        <Select
-          value={node.type}
-          onValueChange={(val) => onUpdate({ ...node, type: val as any })}
-        >
-          <SelectTrigger className="h-6 w-24 text-[9px] px-1">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {EQUIPMENT_TYPES.map(t => (
-              <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {isReadOnly ? (
+          <>
+            <span className="h-6 py-0 text-[10px] flex-1 font-medium leading-6">{node.name}</span>
+            <Badge variant="outline" className="h-5 text-[9px] px-1.5 py-0 border-border/50 text-muted-foreground">{node.type}</Badge>
+          </>
+        ) : (
+          <>
+            <Input
+              value={node.name}
+              onChange={(e) => onUpdate({ ...node, name: e.target.value })}
+              className="h-6 py-0 text-[9px] flex-1"
+              placeholder="Node Name"
+            />
+            <Select
+              value={node.type}
+              onValueChange={(val) => onUpdate({ ...node, type: val as any })}
+            >
+              <SelectTrigger className="h-6 w-24 text-[9px] px-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EQUIPMENT_TYPES.map(t => (
+                  <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        )}
         <div className="flex items-center gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 text-primary hover:bg-primary/10"
-            onClick={() => onAddChild(node)}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-          {depth > 0 && (
+          {allowAdd && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-primary hover:bg-primary/10"
+              onClick={() => onAddChild(node)}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          )}
+          {allowRemove && depth > 0 && (
             <Button
               variant="ghost"
               size="icon"
@@ -503,6 +661,8 @@ function EditableHierarchyNode({
             })
           }}
           depth={depth + 1}
+          targetId={isNewlyAdded ? undefined : targetId}
+          tabType={tabType}
         />
       ))}
     </div>
@@ -1319,11 +1479,11 @@ export function ResourceOverview() {
 
   // Tab State
   const [tabs, setTabs] = useState<TabData[]>([
-    { id: "search", title: "Search", type: "search", closable: false }
+    { id: "search", title: "Hierarchy", type: "search", closable: false }
   ])
   const [activeTabId, setActiveTabId] = useState<string>("search")
   const [isTabLoading, setIsTabLoading] = useState(false)
-
+  const [conflictAlert, setConflictAlert] = useState<ConflictAlert | null>(null)
 
   const addTab = (type: TabType, title: string, context?: any) => {
     const id = context?.node?.erId ? `${type}-${context.node.erId}` : `${type}-${Date.now()}`
@@ -1335,6 +1495,30 @@ export function ResourceOverview() {
       return
     }
 
+    const newPath = searchResult && context?.node?.erId
+      ? findHierarchyPath(searchResult.equipment, context.node.erId)
+      : null
+
+    if (newPath) {
+      const conflictingTab = tabs.find(t =>
+        t.hierarchyPath &&
+        t.type !== "search" &&
+        isHierarchyConflict(t.hierarchyPath, newPath)
+      )
+
+      if (conflictingTab) {
+        setConflictAlert({
+          blockedBy: conflictingTab,
+          attempted: {
+            node: context.node,
+            operationType: type,
+            breadcrumb: buildBreadcrumb(searchResult!.equipment, newPath)
+          }
+        })
+        return
+      }
+    }
+
     setIsTabLoading(true)
 
     // Simulate loading delay for better UX as requested
@@ -1344,7 +1528,9 @@ export function ResourceOverview() {
         title,
         type,
         closable: true,
-        context
+        context,
+        hierarchyPath: newPath ?? undefined,
+        breadcrumb: newPath && searchResult ? buildBreadcrumb(searchResult.equipment, newPath) : undefined
       }
       setTabs([...tabs, newTab])
       setActiveTabId(id)
@@ -1427,6 +1613,28 @@ export function ResourceOverview() {
   }
 
   const onRemove = (node: EquipmentNode) => {
+    const newPath = searchResult ? findHierarchyPath(searchResult.equipment, node.erId) : null
+
+    if (newPath) {
+      const conflictingTab = tabs.find(t =>
+        t.hierarchyPath &&
+        t.type !== "search" &&
+        isHierarchyConflict(t.hierarchyPath, newPath)
+      )
+
+      if (conflictingTab) {
+        setConflictAlert({
+          blockedBy: conflictingTab,
+          attempted: {
+            node,
+            operationType: "delete" as TabType,
+            breadcrumb: buildBreadcrumb(searchResult!.equipment, newPath)
+          }
+        })
+        return
+      }
+    }
+
     if (confirm(`Are you sure you want to delete ${node.name}?`)) {
       if (searchResult) {
         const removeRecursive = (current: EquipmentNode): EquipmentNode => ({
@@ -1450,12 +1658,38 @@ export function ResourceOverview() {
     }
   }
 
-  const handleSaveTab = (tab: TabData, updatedNode: EquipmentNode) => {
+  const handleSaveTab = (tab: TabData, updatedData: EquipmentNode | EquipmentNode[]) => {
     if (searchResult) {
-      const newEquipment = updateNodeInHierarchy(searchResult.equipment, updatedNode)
-      setSearchResult({ ...searchResult, equipment: newEquipment })
-      if (selectedNode?.erId === updatedNode.erId) {
-        setSelectedNode(updatedNode)
+      if (tab.type === "edit") {
+        const updateRecursive = (current: EquipmentNode): EquipmentNode => {
+          if (current.erId === (updatedData as EquipmentNode).erId) {
+            return { ...current, name: (updatedData as EquipmentNode).name, type: (updatedData as EquipmentNode).type }
+          }
+          return { ...current, nodes: current.nodes.map(updateRecursive) }
+        }
+        const newEquipment = updateRecursive(searchResult.equipment)
+        setSearchResult({ ...searchResult, equipment: newEquipment })
+        if (selectedNode?.erId === (updatedData as EquipmentNode).erId) setSelectedNode(updatedData as EquipmentNode)
+      }
+      else if (tab.type === "add-child") {
+        const updateRecursive = (current: EquipmentNode): EquipmentNode => {
+          if (current.erId === tab.context!.node!.erId) {
+            return { ...current, nodes: [...current.nodes, ...(updatedData as EquipmentNode).nodes] }
+          }
+          return { ...current, nodes: current.nodes.map(updateRecursive) }
+        }
+        setSearchResult({ ...searchResult, equipment: updateRecursive(searchResult.equipment) })
+      }
+      else if (tab.type === "add-sibling") {
+        const updateRecursive = (current: EquipmentNode): EquipmentNode => {
+          if (current.nodes?.some(n => n.erId === tab.context!.node!.erId)) {
+            return { ...current, nodes: [...current.nodes, ...(updatedData as EquipmentNode[])] }
+          }
+          return { ...current, nodes: current.nodes?.map(updateRecursive) ?? [] }
+        }
+        if (searchResult.equipment.erId !== tab.context!.node!.erId) {
+          setSearchResult({ ...searchResult, equipment: updateRecursive(searchResult.equipment) })
+        }
       }
     }
     removeTab({ stopPropagation: () => { } } as any, tab.id)
@@ -1469,7 +1703,7 @@ export function ResourceOverview() {
     <div className="space-y-1">
       {/* Search Section */}
       <Card className="rounded-lg border-border/50">
-        <CardHeader className="pb-2">
+        {/*<CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs text-foreground flex items-center gap-2">
               <Search className="h-3 w-3 text-primary" />
@@ -1479,7 +1713,7 @@ export function ResourceOverview() {
               ENV: {currentEnv}
             </Badge>
           </div>
-        </CardHeader>
+        </CardHeader>*/}
         <CardContent className="pt-1 px-2 pb-1">
           <div className="flex flex-col gap-2">
             {/* Single Row: Search Input + Category Filter + Search Button */}
@@ -1613,6 +1847,8 @@ export function ResourceOverview() {
                         onAdd={onAdd}
                         onEdit={onEdit}
                         onRemove={onRemove}
+                        tabs={tabs}
+                        rootEquipment={searchResult.equipment}
                       />
                     </div>
 
@@ -1686,26 +1922,50 @@ export function ResourceOverview() {
   }
 
   function EditorTabContent({ tab, onSave, onCancel }: { tab: TabData, onSave: (node: EquipmentNode) => void, onCancel: () => void }) {
-    const [localNode, setLocalNode] = useState<EquipmentNode>(JSON.parse(JSON.stringify(tab.context!.node)))
-
-    const handleAddChildLocal = (parentNode: EquipmentNode) => {
-      const newNode: EquipmentNode = {
-        name: "New Node",
-        type: "RACK",
-        instanceID: null,
-        erId: "new-" + Date.now(),
-        status: "ACTIVE",
-        nodes: []
-      }
-
-      const updateRecursive = (current: EquipmentNode): EquipmentNode => {
-        if (current.erId === parentNode.erId) {
-          return { ...current, nodes: [...current.nodes, newNode] }
+    const [localNode, setLocalNode] = useState<EquipmentNode>(() => {
+      const buildPathTree = (root: EquipmentNode, targetId: string): EquipmentNode | null => {
+        if (root.erId === targetId) {
+          return { ...JSON.parse(JSON.stringify(root)), nodes: [] }
         }
-        return { ...current, nodes: current.nodes.map(updateRecursive) }
+        if (root.nodes && root.nodes.length > 0) {
+          for (const child of root.nodes) {
+            const childTree = buildPathTree(child, targetId)
+            if (childTree) {
+              return { ...JSON.parse(JSON.stringify(root)), nodes: [childTree] }
+            }
+          }
+        }
+        return null
+      }
+      return buildPathTree(searchResult!.equipment, tab.context!.node!.erId)!
+    })
+
+    const handleAddChildLocal = (clickedNode: EquipmentNode) => {
+      let targetParentErId = clickedNode.erId
+
+      if (tab.type === "add-sibling" && clickedNode.erId === tab.context!.node!.erId) {
+        const findParent = (root: EquipmentNode, childId: string): EquipmentNode | null => {
+          if (root.nodes?.some(n => n.erId === childId)) return root
+          if (root.nodes) {
+            for (const n of root.nodes) {
+              const p = findParent(n, childId)
+              if (p) return p
+            }
+          }
+          return null
+        }
+        const p = findParent(localNode, clickedNode.erId)
+        if (!p) return // Can't add sibling to root
+        targetParentErId = p.erId
       }
 
-      setLocalNode(updateRecursive(localNode))
+      const updateRec = (current: EquipmentNode): EquipmentNode => {
+        if (current.erId === targetParentErId) {
+          return { ...current, nodes: [...(current.nodes || []), { name: "New Node", type: "RACK", instanceID: null, erId: "new-" + Date.now(), status: "ACTIVE", nodes: [] }] }
+        }
+        return { ...current, nodes: current.nodes?.map(updateRec) ?? [] }
+      }
+      setLocalNode(updateRec(localNode))
     }
 
     return (
@@ -1718,27 +1978,40 @@ export function ResourceOverview() {
           <div className="text-[9px] text-muted-foreground font-mono">
             {tab.type === "edit"
               ? `Ref ID: ${tab.context?.node?.erId}`
-              : `Parent: ${tab.context?.node?.name}`}
+              : `Target: ${tab.context?.node?.name}`}
           </div>
         </CardHeader>
-        <CardContent className="pt-1 px-2 pb-1">
+
+        {/* Hierarchy Lock Context */}
+        {tab.breadcrumb && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-[10px]">
+            <Lock strokeWidth={3.5} className="h-3 w-3 text-amber-600 dark:text-amber-500 shrink-0" />
+            <span className="text-muted-foreground">Hierarchy locked:</span>
+            <span className="font-mono text-amber-700 dark:text-amber-400 font-medium truncate">{tab.breadcrumb}</span>
+          </div>
+        )}
+
+        <CardContent className="pt-2 px-2 pb-2">
           <div className="max-w-full space-y-3">
             <EditableHierarchyNode
               node={localNode}
+              targetId={tab.context!.node!.erId}
+              tabType={tab.type}
               onUpdate={setLocalNode}
               onAddChild={handleAddChildLocal}
               onRemove={(nodeToRemove) => {
                 const removeRecursive = (current: EquipmentNode): EquipmentNode => ({
                   ...current,
-                  nodes: current.nodes.filter(n => n.erId !== nodeToRemove.erId).map(removeRecursive)
+                  nodes: current.nodes?.filter(n => n.erId !== nodeToRemove.erId).map(removeRecursive) ?? []
                 })
                 setLocalNode(removeRecursive(localNode))
               }}
             />
+
             <div className="mt-4 pt-4 border-t border-border/50 flex justify-end gap-3">
               <Button variant="outline" size="sm" onClick={onCancel}>Cancel</Button>
               <Button size="sm" onClick={() => onSave(localNode)}>
-                {tab.type === "edit" ? "Update Record" : "Create Record"}
+                Submit
               </Button>
             </div>
           </div>
@@ -1793,8 +2066,50 @@ export function ResourceOverview() {
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full">
+        {conflictAlert && (
+          <Dialog open onOpenChange={() => setConflictAlert(null)}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-sm">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  Hierarchy Conflict Detected
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 text-xs">
+                <p className="text-muted-foreground">
+                  Cannot open <strong className="text-foreground capitalize">{conflictAlert.attempted.operationType.replace('-', ' ')}</strong> on:
+                </p>
+                <div className="font-mono text-[10px] bg-secondary/30 rounded px-2 py-1.5 text-foreground">
+                  {conflictAlert.attempted.breadcrumb}
+                </div>
+                <p className="text-muted-foreground">
+                  because this hierarchy is already locked by:
+                </p>
+                <div className="font-mono text-[10px] bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1.5 text-amber-500 font-medium">
+                  <span className="text-muted-foreground mr-1 capitalize">[{conflictAlert.blockedBy.type.replace('-', ' ')}]</span>
+                  {conflictAlert.blockedBy.breadcrumb}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Please complete or close the existing operation first.
+                </p>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button size="sm" variant="outline" onClick={() => setConflictAlert(null)}>
+                  Dismiss
+                </Button>
+                <Button size="sm" onClick={() => {
+                  setActiveTabId(conflictAlert.blockedBy.id)
+                  setConflictAlert(null)
+                }}>
+                  Go to Locked Tab
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
         {/* ServiceNow Style Tab Bar */}
-        <div className="flex items-center gap-0.5 border-b border-border/50 bg-secondary/5 px-1 pt-1 -mx-4 md:-mx-6 -mt-4 md:-mt-6 shadow-sm overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-0.5 border-b border-border/50 bg-secondary/5 px-1 pt-1 -mx-4 md:-mx-6 -mt-4 shadow-sm overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <div
               key={tab.id}
@@ -1818,12 +2133,23 @@ export function ResourceOverview() {
                 "p-1 rounded-sm",
                 activeTabId === tab.id ? "bg-primary/10 text-primary" : "text-muted-foreground/60"
               )}>
-                {tab.type === "search" && <Search className="h-3 w-3" />}
+                {tab.type === "search" && <Server className="h-3 w-3" />}
                 {tab.type === "new" && <Plus className="h-3 w-3" />}
                 {(tab.type === "edit" || tab.type === "add-child" || tab.type === "add-sibling") && <Pencil className="h-3 w-3" />}
               </div>
 
               <span className="max-w-[120px] truncate">{tab.title}</span>
+
+              {tab.hierarchyPath && tab.type !== "search" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Lock strokeWidth={3.5} className="h-3 w-3 text-amber-500 ml-1 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-[9px]">
+                    Locked: {tab.breadcrumb}
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
               {tab.closable && (
                 <Tooltip>
@@ -1858,9 +2184,24 @@ export function ResourceOverview() {
         </div>
 
         {/* Tab Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
-          {isTabLoading ? (
-            <div className="h-full min-h-[400px] flex flex-col items-center justify-center p-8 bg-secondary/5 rounded-xl border border-dashed border-border/50 animate-in fade-in duration-300">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 relative">
+          <div className={cn("h-full relative transition-opacity duration-300", isTabLoading && "opacity-0 pointer-events-none")}>
+            <div className={cn("h-full transition-opacity duration-200", activeTabId === "search" ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 pointer-events-none z-0")}>
+              {renderSearchTab()}
+            </div>
+            {tabs.filter(t => t.type !== "search").map(tab => (
+              <div
+                key={tab.id}
+                className={cn("h-full transition-opacity duration-200", activeTabId === tab.id ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 pointer-events-none z-0")}
+              >
+                {(tab.type === "edit" || tab.type === "add-child" || tab.type === "add-sibling") && renderEditorTab(tab)}
+                {tab.type === "new" && renderNewTab(tab)}
+              </div>
+            ))}
+          </div>
+
+          {isTabLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-background/50 backdrop-blur-sm rounded-xl animate-in fade-in duration-300 z-50">
               <div className="relative mb-6">
                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
                 <div className="relative bg-background p-4 rounded-full border border-primary/20 shadow-xl">
@@ -1879,21 +2220,6 @@ export function ResourceOverview() {
                 <div className="h-1 w-1 rounded-full bg-primary animate-bounce" />
               </div>
             </div>
-          ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTabId}
-                initial={{ opacity: 0, x: 5 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -5 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                className="h-full"
-              >
-                {activeTab?.type === "search" && renderSearchTab()}
-                {(activeTab?.type === "edit" || activeTab?.type === "add-child" || activeTab?.type === "add-sibling") && renderEditorTab(activeTab)}
-                {activeTab?.type === "new" && renderNewTab(activeTab)}
-              </motion.div>
-            </AnimatePresence>
           )}
         </div>
       </div>
