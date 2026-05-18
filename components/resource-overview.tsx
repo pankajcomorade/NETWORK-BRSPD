@@ -2101,7 +2101,7 @@ export function ResourceOverview() {
                   setActiveTabId(conflictAlert.blockedBy.id)
                   setConflictAlert(null)
                 }}>
-                  Go to Locked Tab
+                  Go to Working Tab
                 </Button>
               </DialogFooter>
             </DialogContent>

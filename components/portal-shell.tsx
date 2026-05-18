@@ -10,6 +10,10 @@ import {
   Activity,
   User,
   PanelLeftClose,
+  PanelLeft,
+  CircleChevronRight,
+  CircleChevronLeft,
+  ChevronLeft,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -81,7 +85,7 @@ export function PortalShell() {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Logo */}
       <div className={cn(
-        "flex items-center border-b border-border/50 transition-all duration-300",
+        "flex items-center border-b border-border/50 transition-all duration-300 relative",
         !isExpanded && !isMobile ? "justify-center p-3" : "justify-between p-4"
       )}>
         <div className="flex items-center gap-3">
@@ -99,6 +103,20 @@ export function PortalShell() {
             </motion.div>
           )}
         </div>
+        {/* Toggle Button for Desktop */}
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "absolute h-5 w-5  text-muted-foreground hover:text-foreground z-50 bg-background border border-border shadow-sm",
+              isExpanded ? "-right-2 top-14" : "-right-2 top-12"
+            )}
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </Button>
+        )}
       </div>
 
       {/* Menu items */}
@@ -211,16 +229,7 @@ export function PortalShell() {
           initial={false}
           animate={{ width: isExpanded ? 268 : 64 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed inset-y-0 left-0 z-30 hidden border-r border-border bg-background md:block overflow-hidden"
-          onMouseEnter={() => setIsExpanded(true)}
-          onMouseLeave={() => setIsExpanded(false)}
-          onFocus={() => setIsExpanded(true)}
-          onBlur={(e) => {
-            // Only collapse if the new focused element is not inside the sidebar
-            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-              setIsExpanded(false)
-            }
-          }}
+          className="fixed inset-y-0 left-0 z-30 hidden border-r border-border bg-background md:block overflow-visible"
         >
           {renderSidebarContent()}
         </motion.div>
@@ -243,7 +252,8 @@ export function PortalShell() {
         {/* ---- Main content area ---- */}
         <div
           className={cn(
-            "min-h-screen transition-all duration-300 md:pl-[64px]"
+            "min-h-screen transition-all duration-300",
+            isExpanded ? "md:pl-[268px]" : "md:pl-[64px]"
           )}
         >
           {/* ---- Top bar with submenu ---- */}
